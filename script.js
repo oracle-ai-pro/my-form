@@ -87,7 +87,31 @@ function setTheme(theme) {
 }
 
 function generateShareLink() {
-    alert("Ссылка на тест скопирована в буфер обмена! (Имитация)");
+    try {
+        const currentQuestions = localStorage.getItem('quiz_questions') || JSON.stringify(defaultQuestions);
+        
+        // Кодируем строку в Base64 с поддержкой кириллицы
+        const encodedData = btoa(encodeURIComponent(currentQuestions));
+        
+        // Получаем чистый URL текущей страницы без старых ?data=... параметров
+        const cleanUrl = window.location.href.split('?')[0];
+        
+        // Собираем итоговую ссылку для отправки другу
+        const shareUrl = cleanUrl + '?data=' + encodedData;
+        
+        // Проверяем доступность современного метода (работает на HTTPS GitHub Pages)
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                alert("Ссылка на этот тест успешно скопирована! Отправь её друзьям. 🚀");
+            }).catch(() => {
+                fallbackCopy(shareUrl); // На всякий случай
+            });
+        } else {
+            fallbackCopy(shareUrl); // Если открыли как локальный файл file:///
+        }
+    } catch (e) {
+        alert("Слишком много вопросов в тесте, ссылка превысила лимит длины.");
+    }
     toggleToolsMenu();
 }
 
