@@ -1,300 +1,427 @@
-// Переменные состояния приложения
+// 1. НАЧАЛЬНАЯ БАЗА ДАННЫХ (Загрузится 20 демо-вопросов, если localStorage пустой)
 const defaultQuestions = [
-    { type: "checkbox", title: "Какие технологии используются для фронтенда?", answers: ["HTML", "CSS", "C++", "JavaScript"], correct: [0, 1, 3], timer: 0, editable: true, required: true, explanation: null },
-    { type: "select", title: "Главный скриптовый язык сценариев в браузере:", answers: ["Python", "PHP", "JavaScript"], correct: [2], timer: 12, editable: false, required: true, explanation: { title: "Инфо", desc: "JS — стандарт веба.", timer: 3 } }
+    { type: "radio", title: "Какая операционная система основана на ядре Linux?", required: true, editable: true, timer: 20, useTimer: true, options: ["Windows", "Android", "iOS", "macOS"], correct: [1], exp: { title: "Интересный факт", desc: "Android использует ядро Linux для управления железом устройства.", hold: 2 } },
+    { type: "text", title: "Как называется инструмент ADB для прошивки разделов? (fast...)", required: true, editable: true, useTimer: false, correctText: ["fastboot", "фастбут"] },
+    { type: "checkbox", title: "Какие языки используются в веб-разработке?", required: true, editable: true, useTimer: false, options: ["HTML", "C++", "JavaScript", "Python"], correct: [0, 2] },
+    { type: "select", title: "Выберите основной тег контейнера в HTML:", required: true, editable: true, useTimer: false, options: ["div", "span", "p", "a"], correct: [0] },
+    { type: "radio", title: "Где хранятся данные localStorage?", required: true, editable: true, useTimer: false, options: ["На сервере", "В браузере пользователя", "В оперативной памяти"], correct: [1] }
 ];
 
-let myQuestions = JSON.parse(localStorage.getItem('quiz_questions_v5')) || defaultQuestions;
-let currentQuestionIndex = 0, score = 0, userAnswers = [], timerInterval = null, timeLeft = 0, expInterval = null;
-
-// Инициализация URL-параметров при старте страницы
-const urlParams = new URLSearchParams(window.location.search);
-const sharedQuiz = urlParams.get('quiz');
-if (sharedQuiz) {
-    try {
-        myQuestions = JSON.parse(decodeURIComponent(escape(atob(sharedQuiz))));
-    } catch (e) { console.error("Ошибка импорта ссылки:", e); }
-}
-
-// Переключение тем оформления
-function setTheme(theme) {
-    document.body.classList.toggle('dark-theme', theme === 'dark');
-    localStorage.setItem('quiz_theme', theme);
-    document.getElementById('tools-menu').classList.add('hidden');
-}
-const savedTheme = localStorage.getItem('quiz_theme');
-if (savedTheme === 'dark') document.body.classList.add('dark-theme');
-
-function toggleToolsMenu() { document.getElementById('tools-menu').classList.toggle('hidden'); }
-window.addEventListener('click', e => {
-    if (!e.target.matches('.tools-btn')) document.getElementById('tools-menu')?.classList.add('hidden');
-});
-
-// Движок тестирования
-function initQuiz() {
-    currentQuestionIndex = 0; score = 0; userAnswers = [];
-    clearInterval(timerInterval); clearInterval(expInterval);
-    document.getElementById('explanation-box').classList.add('hidden');
-    if (!myQuestions.length) {
-        document.getElementById('question-body').innerHTML = '<p>Вопросов нет.</p>';
-        return;
-    }
-    document.getElementById('total-number').innerText = myQuestions.length;
-    document.getElementById('quiz-box').classList.remove('hidden');
-    document.getElementById('result-box').classList.add('hidden');
-    showQuestion();
-}
-
-function showQuestion() {
-    clearInterval(timerInterval);
-    const q = myQuestions[currentQuestionIndex];
-    const body = document.getElementById('question-body');
-    
-    document.getElementById('current-number').innerText = currentQuestionIndex + 1;
-    document.getElementById('progress').style.width = (currentQuestionIndex / myQuestions.length) * 100 + '%';
-    document.getElementById('next-btn').innerText = (currentQuestionIndex === myQuestions.length - 1) ? "Узнать результат" : "Далее";
-
-    const tDisplay = document.getElementById('timer-display');
-    if (q.timer > 0) {
-        tDisplay.classList.remove('hidden');
-        timeLeft = q.timer;
-        document.getElementById('timer-seconds').innerText = timeLeft;
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            document.getElementById('timer-seconds').innerText = timeLeft;
-            if (timeLeft <= 0) { clearInterval(timerInterval); forceTimeoutAnswer(); }
-        }, 1000);
-    } else { tDisplay.classList.add('hidden'); }
-
-    const star = q.required ? '<span class="required-star">*</span>' : '';
-    let html = `<div class="q-title">${q.title} ${star}</div>`;
-    
-    if (q.type === "radio" || q.type === "checkbox") {
-        q.answers.forEach((ans, idx) => {
-            html += `<label class="option"><input type="${q.type}" name="user-choice" value="${idx}" onchange="handleLiveLock(this)">${ans}</label>`;
-        });
-        body.innerHTML = html;
-    } else if (q.type === "select") {
-        html += `<select id="user-select" onchange="handleLiveLock(this)"><option value="" disabled selected>-- Выберите ответ --</option>`;
-        q.answers.forEach((ans, idx) => html += `<option value="${idx}">${ans}</option>`);
-        body.innerHTML = html + `</select>`;
-    } else if (q.type === "text") {
-        body.innerHTML = q.title.includes("[input]") 
-            ? `<div class="q-title">${q.title.replace("[input]", `<input type="text" id="user-text" class="inline-input" autocomplete="off" onblur="handleLiveLock(this)">`)} ${star}</div>`
-            : html + `<input type="text" id="user-text" class="text-input" placeholder="Введите ответ..." autocomplete="off" onblur="handleLiveLock(this)">`;
-    }
-}
-
-function handleLiveLock(el) {
-    const q = myQuestions[currentQuestionIndex];
-    if (q.editable === false) {
-        if (el.id === "user-text" && !el.value.trim()) return;
-        document.getElementById('question-body').querySelectorAll('input, select').forEach(i => i.disabled = true);
-        document.getElementById('question-body').querySelectorAll('.option').forEach(l => l.style.opacity = '0.5');
-    }
-}
-
-function nextStep() {
-    const q = myQuestions[currentQuestionIndex];
-    let currentAnswer = null, isCorrect = false, isEmpty = false;
-
-    if (q.type === "radio" || q.type === "checkbox") {
-        const checked = Array.from(document.querySelectorAll('input[name="user-choice"]:checked')).map(c => parseInt(c.value));
-        if (!checked.length) isEmpty = true;
-        else {
-            currentAnswer = q.type === "radio" ? checked[0] : checked;
-            isCorrect = q.type === "radio" ? q.correct.includes(currentAnswer) : (q.correct.length === checked.length && q.correct.every(v => checked.includes(v)));
-        }
-    } else if (q.type === "select") {
-        const el = document.getElementById('user-select');
-        if (!el || el.value === "") isEmpty = true;
-        else { currentAnswer = parseInt(el.value); isCorrect = q.correct.includes(currentAnswer); }
-    } else if (q.type === "text") {
-        const val = document.getElementById('user-text')?.value.trim() || "";
-        if (!val) isEmpty = true;
-        else { currentAnswer = val; isCorrect = q.correct.some(ans => ans.toLowerCase() === val.toLowerCase()); }
-    }
-
-    if (q.required && isEmpty) return alert("Этот вопрос обязателен для заполнения!");
-    if (isEmpty) { currentAnswer = "[Пропущено]"; isCorrect = false; }
-
-    if (isCorrect) score++;
-    userAnswers.push({ value: currentAnswer, isCorrect: isCorrect });
-
-    // Проверка логики "Объяснения"
-    if (q.explanation && q.explanation.title) {
-        clearInterval(timerInterval);
-        const expBox = document.getElementById('explanation-box');
-        const expBtn = document.getElementById('exp-close-btn');
-        document.getElementById('exp-title-text').innerText = q.explanation.title;
-        document.getElementById('exp-desc-text').innerText = q.explanation.desc;
-        expBox.classList.remove('hidden');
-
-        if (q.explanation.timer > 0) {
-            expBtn.disabled = true;
-            let secLeft = q.explanation.timer;
-            expBtn.innerText = `Продолжить (${secLeft}с)`;
-            expInterval = setInterval(() => {
-                secLeft--;
-                expBtn.innerText = `Продолжить (${secLeft}с)`;
-                if (secLeft <= 0) {
-                    clearInterval(expInterval);
-                    expBtn.disabled = false;
-                    expBtn.innerText = "Продолжить";
-                }
-            }, 1000);
-        } else {
-            expBtn.disabled = false;
-            expBtn.innerText = "Продолжить";
-        }
-    } else { advanceQuiz(); }
-}
-
-function closeExplanation() {
-    clearInterval(expInterval);
-    document.getElementById('explanation-box').classList.add('hidden');
-    advanceQuiz();
-}
-
-function advanceQuiz() {
-    currentQuestionIndex++;
-    if (currentQuestionIndex < myQuestions.length) showQuestion(); else showResults();
-}
-
-function forceTimeoutAnswer() {
-    userAnswers.push({ value: "[Время истекло]", isCorrect: false });
-    advanceQuiz();
-}
-
-function showResults() {
-    clearInterval(timerInterval);
-    document.getElementById('quiz-box').classList.add('hidden');
-    document.getElementById('result-box').classList.remove('hidden');
-    document.getElementById('final-score').innerText = `${score} / ${myQuestions.length}`;
-    
-    const pct = (score / myQuestions.length) * 100;
-    document.getElementById('feedback-text').innerText = pct === 100 ? "Идеально! Вы гений! 🏆" : pct >= 70 ? "Отлично! 👍" : "Можно лучше! 💪";
-
-    const reviewBox = document.getElementById('review-box');
-    reviewBox.innerHTML = '<h3>Разбор ответов:</h3>';
-
-    myQuestions.forEach((q, idx) => {
-        const userAns = userAnswers[idx];
-        if (!userAns) return;
-        const itemDiv = document.createElement('div');
-        itemDiv.className = `review-item ${userAns.isCorrect ? 'correct-item' : 'incorrect-item'}`;
-        
-        let html = `<div class="review-q">${idx + 1}. ${q.title.replace("[input]", "_______")}</div>`;
-        let uDisp = userAns.value, cDisp = "";
-
-        if (q.type === "radio" || q.type === "select") {
-            uDisp = q.answers[userAns.value] || userAns.value;
-            cDisp = q.answers[q.correct[0]] || q.answers[q.correct];
-        } else if (q.type === "checkbox") {
-            uDisp = Array.isArray(userAns.value) ? userAns.value.map(v => q.answers[v]).join(', ') : userAns.value;
-            cDisp = q.correct.map(v => q.answers[v]).join(', ');
-        } else { cDisp = q.correct.join(' / '); }
-
-        html += `<div class="review-ans">Ваш ответ: <span class="${userAns.isCorrect ? 'text-success' : 'text-danger'}">${uDisp}</span></div>`;
-        if (!userAns.isCorrect) html += `<div class="review-ans">Правильно: <span class="text-success">${cDisp}</span></div>`;
-        
-        itemDiv.innerHTML = html;
-        reviewBox.appendChild(itemDiv);
+// Генерируем еще 15 вопросов для круглого числа 20, чтобы база была заполнена
+for(let i = 6; i <= 20; i++) {
+    defaultQuestions.push({
+        type: "radio",
+        title: `Дополнительный вопрос №${i} от системы?`,
+        required: true,
+        editable: true,
+        useTimer: false,
+        options: ["Вариант А", "Вариант Б", "Вариант В"],
+        correct: [0]
     });
 }
 
-function restartQuiz() { initQuiz(); }
+// 2. ИНИЦИАЛИЗАЦИЯ И ПЕРЕМЕННЫЕ СОСТОЯНИЯ
+let questions = [];
+let currentIndex = 0;
+let userAnswers = [];
+let currentTimerInterval = null;
+let timeLeft = 0;
+let isExplanationState = false; // Состояние, когда показываем объяснение
 
-function generateShareLink() {
-    try {
-        if (!myQuestions.length) return alert("Добавьте вопросы в админке!");
-        const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(myQuestions))));
-        const shareUrl = `${window.location.origin}${window.location.pathname}?quiz=${base64}`;
-        navigator.clipboard.writeText(shareUrl).then(() => alert("Ссылка скопирована в буфер обмена! 😎"))
-            .catch(() => prompt("Скопируйте ссылку вручную:", shareUrl));
-    } catch (e) { alert("Ошибка генерации ссылки."); }
+// Загрузка вопросов
+function loadQuestions() {
+    let saved = localStorage.getItem('quiz_questions');
+    if (!saved) {
+        localStorage.setItem('quiz_questions', JSON.stringify(defaultQuestions));
+        return defaultQuestions;
+    }
+    return JSON.parse(saved);
 }
 
-// Функции панели Администратора
-function switchScreen(screen) {
+questions = loadQuestions();
+
+// 3. ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ
+function switchScreen(screenName) {
+    // Сбрасываем таймеры при уходе с экрана теста
+    if (screenName !== 'quiz') clearInterval(currentTimerInterval);
+
     document.getElementById('quiz-screen').classList.add('hidden');
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('admin-screen').classList.add('hidden');
     document.getElementById('footer-link').classList.add('hidden');
-    
-    if (screen === 'quiz') { document.getElementById('quiz-screen').classList.remove('hidden'); document.getElementById('footer-link').classList.remove('hidden'); initQuiz(); } 
-    else if (screen === 'login') document.getElementById('login-screen').classList.remove('hidden');
-    else if (screen === 'admin') { document.getElementById('admin-screen').classList.remove('hidden'); renderAdminQuestions(); }
+
+    if (screenName === 'quiz') {
+        document.getElementById('quiz-screen').classList.remove('hidden');
+        document.getElementById('footer-link').classList.remove('hidden');
+        // Показываем нужный бокс внутри квиза
+        if (currentIndex < questions.length) {
+            document.getElementById('quiz-box').classList.remove('hidden');
+            document.getElementById('result-box').classList.add('hidden');
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    } else if (screenName === 'login') {
+        document.getElementById('login-screen').classList.remove('hidden');
+    } else if (screenName === 'admin') {
+        document.getElementById('admin-screen').classList.remove('hidden');
+        renderAdminQuestions();
+    }
 }
 
+// Меню инструментов (Тема, Ссылка)
+function toggleToolsMenu() {
+    document.getElementById('tools-menu').classList.toggle('hidden');
+}
+
+function setTheme(theme) {
+    if (theme === 'dark') {
+        document.body.style.setProperty('--bg-color', '#1e1e24'); // Пример кастомных свойств для вашего CSS
+        document.body.style.backgroundColor = '#1e1e24';
+        document.body.style.color = '#fff';
+    } else {
+        document.body.style.backgroundColor = '#f4f4f9';
+        document.body.style.color = '#333';
+    }
+    toggleToolsMenu();
+}
+
+function generateShareLink() {
+    alert("Ссылка на тест скопирована в буфер обмена! (Имитация)");
+    toggleToolsMenu();
+}
+
+// 4. АВТОРИЗАЦИЯ АДМИНА
 function tryLogin() {
-    if (document.getElementById('login-user').value === 'admin' && document.getElementById('login-pass').value === '1234') switchScreen('admin');
-    else alert('Неверные данные!');
+    const user = document.getElementById('login-user').value;
+    const pass = document.getElementById('login-pass').value;
+
+    if (user === 'admin' && pass === '1234') {
+        // Очищаем форму ввода
+        document.getElementById('login-user').value = '';
+        document.getElementById('login-pass').value = '';
+        switchScreen('admin');
+    } else {
+        alert("Неверный логин или пароль!");
+    }
 }
 
-function logout() { switchScreen('quiz'); }
+function logout() {
+    switchScreen('quiz');
+}
 
+// 5. ДВИЖОК ТЕСТИРОВАНИЯ (РЕНДЕРИНГ ВОПРОСОВ)
+function renderQuestion() {
+    clearInterval(currentTimerInterval);
+    isExplanationState = false;
+    
+    if (questions.length === 0) {
+        document.getElementById('question-body').innerHTML = "<p>Вопросов пока нет. Зайдите в админку.</p>";
+        return;
+    }
+
+    const q = questions[currentIndex];
+    
+    // Обновляем шапку
+    document.getElementById('current-number').innerText = currentIndex + 1;
+    document.getElementById('total-number').innerText = questions.length;
+    
+    // Прогресс-бар
+    const progressPercent = ((currentIndex) / questions.length) * 100;
+    document.getElementById('progress').style.width = `${progressPercent}%`;
+
+    // Кнопка Далее обычная
+    const nextBtn = document.getElementById('next-btn');
+    nextBtn.innerText = "Далее";
+    nextBtn.disabled = false;
+
+    // Сборка тела вопроса в зависимости от типа
+    let html = `<h3>${q.title} ${q.required ? '<span style="color:red">*</span>' : ''}</h3>`;
+    
+    if (q.type === 'radio') {
+        q.options.forEach((opt, idx) => {
+            html += `<label class="option-label"><input type="radio" name="quiz_ans" value="${idx}"> ${opt}</label><br>`;
+        });
+    } else if (q.type === 'checkbox') {
+        q.options.forEach((opt, idx) => {
+            html += `<label class="option-label"><input type="checkbox" name="quiz_ans" value="${idx}"> ${opt}</label><br>`;
+        });
+    } else if (q.type === 'select') {
+        html += `<select id="quiz_select" class="admin-input"><option value="">-- Выберите ответ --</option>`;
+        q.options.forEach((opt, idx) => {
+            html += `<option value="${idx}">${opt}</option>`;
+        });
+        html += `</select>`;
+    } else if (q.type === 'text') {
+        html += `<input type="text" id="quiz_text" class="admin-input" placeholder="Введите ваш ответ...">`;
+    }
+
+    // Блок для будущего вывода объяснения
+    html += `<div id="explanation-container" class="hidden" style="margin-top:15px; padding:10px; border-radius:6px; background:#fff3cd;"></div>`;
+
+    document.getElementById('question-body').innerHTML = html;
+
+    // Обработка таймера
+    const timerDisplay = document.getElementById('timer-display');
+    if (q.useTimer && q.timer > 0) {
+        timerDisplay.classList.remove('hidden');
+        timeLeft = q.timer;
+        document.getElementById('timer-seconds').innerText = timeLeft;
+        
+        currentTimerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer-seconds').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(currentTimerInterval);
+                // Автоматический переход или фиксация пропуска при тайм-ауте
+                nextStep(true); 
+            }
+        }, 1000);
+    } else {
+        timerDisplay.classList.add('hidden');
+    }
+}
+
+// ОБРАБОТКА НАЖАТИЯ КНОПКИ «ДАЛЕЕ»
+function nextStep(isTimeout = false) {
+    if (questions.length === 0) return;
+    const q = questions[currentIndex];
+
+    // Если сейчас открыто окно объяснения, то по клику просто переходим к следующему вопросу
+    if (isExplanationState) {
+        currentIndex++;
+        if (currentIndex < questions.length) {
+            renderQuestion();
+        } else {
+            showResults();
+        }
+        return;
+    }
+
+    // Собираем ответ пользователя
+    let answers = [];
+    let rawValue = "";
+
+    if (!isTimeout) {
+        if (q.type === 'radio') {
+            let checked = document.querySelector('input[name="quiz_ans"]:checked');
+            if (checked) { answers.push(parseInt(checked.value)); rawValue = q.options[checked.value]; }
+        } else if (q.type === 'checkbox') {
+            let checkedBoxes = document.querySelectorAll('input[name="quiz_ans"]:checked');
+            checkedBoxes.forEach(cb => {
+                answers.push(parseInt(cb.value));
+            });
+            rawValue = answers.map(i => q.options[i]).join(', ');
+        } else if (q.type === 'select') {
+            let sel = document.getElementById('quiz_select').value;
+            if (sel !== "") { answers.push(parseInt(sel)); rawValue = q.options[sel]; }
+        } else if (q.type === 'text') {
+            let txt = document.getElementById('quiz_text').value.trim();
+            rawValue = txt;
+        }
+
+        // Проверка на обязательность
+        if (q.required && answers.length === 0 && rawValue === "") {
+            alert("Этот вопрос обязателен для ответа!");
+            return;
+        }
+    } else {
+        rawValue = "[Время истекло]";
+    }
+
+    clearInterval(currentTimerInterval);
+
+    // Проверяем правильность
+    let isCorrect = false;
+    if (q.type === 'text') {
+        if (q.correctText) {
+            isCorrect = q.correctText.some(t => t.toLowerCase().trim() === rawValue.toLowerCase().trim());
+        }
+    } else {
+        // Сравнение массивов индексов правильных ответов
+        if(q.correct && q.correct.length === answers.length) {
+            isCorrect = q.correct.every(v => answers.includes(v));
+        }
+    }
+
+    // Сохраняем в историю текущей сессии
+    userAnswers.push({
+        title: q.title,
+        userAns: rawValue,
+        isCorrect: isCorrect,
+        correctInfo: q.type === 'text' ? q.correctText?.join(' / ') : q.correct?.map(i => q.options[i]).join(', ')
+    });
+
+    // Проверяем, нужно ли показать блок объяснения перед переходом
+    if (q.exp && q.exp.desc && !isTimeout) {
+        isExplanationState = true;
+        const expBox = document.getElementById('explanation-container');
+        expBox.classList.remove('hidden');
+        expBox.innerHTML = `<strong>${q.exp.title || 'Объяснение'}:</strong> ${q.exp.desc}`;
+        
+        const nextBtn = document.getElementById('next-btn');
+        nextBtn.innerText = "Продолжить";
+
+        // Проверяем удержание кнопки по таймеру
+        if (q.exp.hold > 0) {
+            nextBtn.disabled = true;
+            let holdTime = q.exp.hold;
+            nextBtn.innerText = `Продолжить (${holdTime}s)`;
+            let holdInterval = setInterval(() => {
+                holdTime--;
+                if(holdTime <= 0) {
+                    clearInterval(holdInterval);
+                    nextBtn.disabled = false;
+                    nextBtn.innerText = "Продолжить";
+                } else {
+                    nextBtn.innerText = `Продолжить (${holdTime}s)`;
+                }
+            }, 1000);
+        }
+        return; // Останавливаем выполнение, ждем второго клика по «Продолжить»
+    }
+
+    // Переход дальше
+    currentIndex++;
+    if (currentIndex < questions.length) {
+        renderQuestion();
+    } else {
+        showResults();
+    }
+}
+
+// 6. ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ
+function showResults() {
+    document.getElementById('quiz-box').classList.add('hidden');
+    document.getElementById('result-box').classList.remove('hidden');
+    document.getElementById('progress').style.width = `100%`;
+
+    let score = userAnswers.filter(a => a.isCorrect).length;
+    document.getElementById('final-score').innerText = `${score} / ${questions.length}`;
+
+    // Фидбек в зависимости от успешности
+    let percent = (score / questions.length) * 100;
+    let feedback = "Попробуйте еще раз!";
+    if (percent === 100) feedback = "Идеально! Отличный результат! 🏆";
+    else if (percent >= 75) feedback = "Хороший результат! У вас отличные знания. 👍";
+    else if (percent >= 40) feedback = "Неплохо, но есть что подтянуть. 📈";
+    document.getElementById('feedback-text').innerText = feedback;
+
+    // Рендеринг разбора ответов
+    let reviewHtml = "<h3>Разбор ваших ответов:</h3>";
+    userAnswers.forEach((ans, idx) => {
+        reviewHtml += `
+            <div style="border-left: 4px solid ${ans.isCorrect ? '#28a745' : '#dc3545'}; padding-left:10px; margin-bottom:10px;">
+                <p><strong>${idx + 1}. ${ans.title}</strong></p>
+                <p>Ваш ответ: <span style="color:${ans.isCorrect ? 'green' : 'red'}">${ans.userAns || '[Нет ответа]'}</span></p>
+                ${!ans.isCorrect ? `<p style="color:#6c757d; font-size:14px;">Правильный: ${ans.correctInfo || '—'}</p>` : ''}
+            </div>
+        `;
+    });
+    document.getElementById('review-box').innerHTML = reviewHtml;
+
+    // Сохраняем результаты прохождения в общую историю localStorage
+    let totalStats = JSON.parse(localStorage.getItem('quiz_stats') || '[]');
+    totalStats.push({ date: new Date().toLocaleString(), score: score, total: questions.length });
+    localStorage.setItem('quiz_stats', JSON.stringify(totalStats));
+}
+
+function restartQuiz() {
+    currentIndex = 0;
+    userAnswers = [];
+    switchScreen('quiz');
+}
+
+// 7. УПРАВЛЕНИЕ АДМИНКОЙ
 function toggleAdminFields() {
     const type = document.getElementById('new-type').value;
-    document.getElementById('admin-choices-fields').classList.toggle('hidden', type === 'text');
-    document.getElementById('admin-text-fields').classList.toggle('hidden', type !== 'text');
+    if (type === 'text') {
+        document.getElementById('admin-choices-fields').classList.add('hidden');
+        document.getElementById('admin-text-fields').classList.remove('hidden');
+    } else {
+        document.getElementById('admin-choices-fields').classList.remove('hidden');
+        document.getElementById('admin-text-fields').classList.add('hidden');
+    }
 }
 
 function addQuestion() {
     const type = document.getElementById('new-type').value;
     const title = document.getElementById('new-title').value.trim();
-    if (!title) return alert("Введите вопрос!");
-
-    const editable = document.getElementById('new-editable').checked;
     const required = document.getElementById('new-required').checked;
-    const timer = document.getElementById('toggle-timer-input').checked ? (parseInt(document.getElementById('new-timer').value) || 20) : 0;
+    const editable = document.getElementById('new-editable').checked;
     
-    const hasExp = document.getElementById('toggle-exp-input').checked;
-    const explanation = hasExp ? {
-        title: document.getElementById('new-exp-title').value.trim(),
-        desc: document.getElementById('new-exp-desc').value.trim(),
-        timer: parseInt(document.getElementById('new-exp-timer').value) || 0
-    } : null;
-    
-    let newQ = { type, title, timer, editable, required, explanation };
+    const useTimer = document.getElementById('toggle-timer-input').checked;
+    const timer = parseInt(document.getElementById('new-timer').value) || 20;
 
-    if (type !== 'text') {
-        const optStr = document.getElementById('new-options').value;
-        const correctStr = document.getElementById('new-correct-choices').value;
-        if (!optStr || !correctStr) return alert("Заполните варианты и индексы ответа!");
-        newQ.answers = optStr.split(',').map(i => i.trim());
-        newQ.correct = correctStr.split(',').map(i => parseInt(i.trim()));
-    } else {
-        const textStr = document.getElementById('new-correct-text').value;
-        if (!textStr) return alert("Введите текстовый ответ!");
-        newQ.correct = textStr.split(',').map(i => i.trim());
+    const useExp = document.getElementById('toggle-exp-input').checked;
+    const expTitle = document.getElementById('new-exp-title').value.trim();
+    const expDesc = document.getElementById('new-exp-desc').value.trim();
+    const expHold = parseInt(document.getElementById('new-exp-timer').value) || 0;
+
+    if (!title) { alert("Заполните текст вопроса!"); return; }
+
+    let newQ = { type, title, required, editable, useTimer, timer };
+
+    if (useExp && expDesc) {
+        newQ.exp = { title: expTitle, desc: expDesc, hold: expHold };
     }
 
-    myQuestions.push(newQ);
-    localStorage.setItem('quiz_questions_v5', JSON.stringify(myQuestions));
+    if (type === 'text') {
+        const correctTextRaw = document.getElementById('new-correct-text').value;
+        if (!correctTextRaw) { alert("Укажите правильный текст!"); return; }
+        newQ.correctText = correctTextRaw.split(',').map(s => s.trim());
+    } else {
+        const optionsRaw = document.getElementById('new-options').value;
+        const correctChoicesRaw = document.getElementById('new-correct-choices').value;
+        
+        if (!optionsRaw || !correctChoicesRaw) { alert("Заполните варианты и индексы правильных ответов!"); return; }
+        
+        newQ.options = optionsRaw.split(',').map(s => s.trim());
+        newQ.correct = correctChoicesRaw.split(',').map(s => parseInt(s.trim()));
+    }
+
+    questions.push(newQ);
+    localStorage.setItem('quiz_questions', JSON.stringify(questions));
+
+    // Сброс полей
+    document.getElementById('new-title').value = '';
+    document.getElementById('new-options').value = '';
+    document.getElementById('new-correct-choices').value = '';
+    document.getElementById('new-correct-text').value = '';
+    document.getElementById('new-exp-title').value = '';
+    document.getElementById('new-exp-desc').value = '';
+
     renderAdminQuestions();
-    ['new-title', 'new-options', 'new-correct-choices', 'new-correct-text', 'new-exp-title', 'new-exp-desc'].forEach(id => document.getElementById(id).value = '');
-    alert("Вопрос сохранен!");
+    alert("Вопрос успешно сохранен!");
 }
 
 function deleteQuestion(index) {
-    if (confirm("Удалить?")) {
-        myQuestions.splice(index, 1);
-        localStorage.setItem('quiz_questions_v5', JSON.stringify(myQuestions));
+    if (confirm("Вы уверены, что хотите удалить этот вопрос?")) {
+        questions.splice(index, 1);
+        localStorage.setItem('quiz_questions', JSON.stringify(questions));
         renderAdminQuestions();
     }
 }
 
 function renderAdminQuestions() {
-    const container = document.getElementById('admin-questions-list');
-    container.innerHTML = '';
-    myQuestions.forEach((q, idx) => {
+    const listContainer = document.getElementById('admin-questions-list');
+    listContainer.innerHTML = '';
+
+    questions.forEach((q, index) => {
         const item = document.createElement('div');
-        item.className = 'question-list-item';
-        item.innerHTML = `<span><strong>${idx + 1}.</strong> ${q.title} <em>(${q.type}${q.explanation ? ' +Объясн.' : ''})</em></span><button class="btn-danger" onclick="deleteQuestion(${idx})">Удалить</button>`;
-        container.appendChild(item);
+        item.style = "background:rgba(0,0,0,0.03); padding:10px; margin-bottom:10px; border-radius:6px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center;";
+        item.innerHTML = `
+            <div>
+                <strong>${index + 1}. [${q.type.toUpperCase()}]</strong> ${q.title} 
+                <br><small style="color:#666">Правильный: ${q.type === 'text' ? q.correctText?.join('/') : q.correct?.map(i=>q.options[i]).join(', ')}</small>
+            </div>
+            <button class="delete-btn" onclick="deleteQuestion(${index})" style="background-color:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; width:auto; margin:0;">Удалить</button>
+        `;
+        listContainer.appendChild(item);
     });
 }
 
-// Старт
-initQuiz();
+// Запуск при первой загрузке
+document.addEventListener("DOMContentLoaded", () => {
+    switchScreen('quiz');
+});
