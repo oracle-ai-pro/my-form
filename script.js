@@ -348,6 +348,50 @@ function showResults() {
     let totalStats = JSON.parse(localStorage.getItem('quiz_stats') || '[]');
     totalStats.push({ date: new Date().toLocaleString(), score: score, total: questions.length });
     localStorage.setItem('quiz_stats', JSON.stringify(totalStats));
+    // Добавь этот кусок в самый конец функции showResults(), прямо перед закрывающей скобкой }
+
+// Создаем блок для отправки результатов учителю
+const resultBox = document.getElementById('result-box');
+const shareResultsDiv = document.createElement('div');
+shareResultsDiv.style = "margin-top: 20px; padding: 15px; background: #e2f0d9; border-radius: 8px; text-align: center;";
+
+// Генерируем строку с результатами (Имя + ответы)
+let score = userAnswers.filter(a => a.isCorrect).length;
+let studentName = prompt("Введите ваше Имя и Фамилию для отчета:") || "Аноним";
+
+let reportData = {
+    student: studentName,
+    score: `${score} / ${questions.length}`,
+    date: new Date().toLocaleString(),
+    answers: userAnswers.map(a => ({q: a.title, ans: a.userAns, correct: a.isCorrect}))
+};
+
+// Кодируем результаты в короткую строку
+let encodedResults = btoa(encodeURIComponent(JSON.stringify(reportData)));
+
+shareResultsDiv.innerHTML = `
+    <h3>📥 Сдача работы учителю</h3>
+    <p>Чтобы учитель выставил оценку, нажмите кнопку ниже и отправьте скопированный код или файл учителю.</p>
+    <button onclick="navigator.clipboard.writeText('${encodedResults}'); alert('Код ответов скопирован! Отправь его учителю в чат.');" style="background-color: #28a745;">📋 Копировать код ответов</button>
+    <button id="download-txt-btn" style="background-color: #17a2b8; margin-top: 10px;">💾 Скачать файл отчета</button>
+`;
+
+resultBox.appendChild(shareResultsDiv);
+
+// Логика скачивания текстового файла (если буфер обмена не сработает)
+document.getElementById('download-txt-btn').addEventListener('click', () => {
+    let textContent = `ОТЧЕТ О ПРОХОЖДЕНИИ ТЕСТА\n`;
+    textContent += `Ученик: ${reportData.student}\nРезультат: ${reportData.score}\nДата: ${reportData.date}\n\n`;
+    reportData.answers.forEach((a, i) => {
+        textContent += `${i+1}. ${a.q}\nОтвет: ${a.ans} (${a.correct ? 'ВЕРНО' : 'НЕВЕРНО'})\n\n`;
+    });
+    
+    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Тест_${reportData.student}.txt`;
+    link.click();
+});
 }
 
 function restartQuiz() {
