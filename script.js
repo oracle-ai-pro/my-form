@@ -530,6 +530,9 @@ function renderAdminQuestions() {
 // ==========================================
 // 8. ЗАЩИЩЕННЫЙ ЗАПУСК ПРИЛОЖЕНИЯ
 // ==========================================
+// ==========================================
+// 8. ЗАЩИЩЕННЫЙ ЗАПУСК ПРИЛОЖЕНИЯ С ФИЧЕЙ ВЫХОДА
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sharedData = urlParams.get('data');
@@ -537,7 +540,19 @@ document.addEventListener("DOMContentLoaded", () => {
     currentIndex = 0;
     userAnswers = [];
 
+    const leaveBtn = document.getElementById('leave-shared-btn');
+
     if (sharedData) {
+        // Если зашли по ссылке — показываем кнопку «Вернуться»
+        if (leaveBtn) {
+            leaveBtn.classList.remove('hidden');
+            leaveBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Просто перенаправляем на чистый URL без параметров
+                window.location.href = window.location.href.split('?')[0];
+            });
+        }
+
         try {
             const decodedString = decodeURIComponent(atob(sharedData));
             const parsedQuestions = JSON.parse(decodedString);
@@ -553,6 +568,8 @@ document.addEventListener("DOMContentLoaded", () => {
             questions = loadQuestions();
         }
     } else {
+        // Если зашли обычно — прячем кнопку, грузим родной LocalStorage
+        if (leaveBtn) leaveBtn.classList.add('hidden');
         questions = loadQuestions();
     }
 
