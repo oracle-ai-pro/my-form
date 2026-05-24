@@ -8,16 +8,16 @@
 </head>
 <body>
 
-    <div class="quiz-container" style="margin-bottom: 10px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+    <div class="quiz-container" style="margin-bottom: 15px; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px;">
         <div style="position: relative;">
-            <button onclick="toggleToolsMenu()" style="margin: 0; padding: 5px 10px; background: #6c757d;">🛠️ Tools for User</button>
-            <div id="tools-menu" class="hidden" style="position: absolute; top: 35px; left: 0; background: inherit; border: 1px solid #ddd; border-radius: 4px; padding: 10px; z-index: 100; min-width: 180px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                <button onclick="setTheme('light')" style="width: 100%; margin-bottom: 5px; background: #f4f4f9; color: #333;">☀️ Светлая тема</button>
-                <button onclick="setTheme('dark')" style="width: 100%; margin-bottom: 5px; background: #333; color: #fff;">🌙 Темная тема</button>
-                <button onclick="generateShareLink()" style="width: 100%; background: #17a2b8;">🚀 Сжать ссылку</button>
+            <button onclick="toggleToolsMenu()" style="margin: 0; padding: 8px 14px; background: #6c757d; border-radius: 6px; font-weight: bold;">🛠️ Tools for User</button>
+            <div id="tools-menu" class="hidden" style="position: absolute; top: 45px; left: 0; background: inherit; border: 1px solid #333338; border-radius: 6px; padding: 10px; z-index: 100; min-width: 190px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <button onclick="setTheme('light')" style="width: 100%; margin-bottom: 6px; background: #f4f4f9; color: #333; border-radius: 4px;">☀️ Светлая тема</button>
+                <button onclick="setTheme('dark')" style="width: 100%; margin-bottom: 6px; background: #222226; color: #fff; border-radius: 4px; border: 1px solid #444;">🌙 Темная тема</button>
+                <button onclick="generateShareLink()" style="width: 100%; background: #17a2b8; border-radius: 4px;">🚀 Сжать ссылку</button>
             </div>
         </div>
-        <button onclick="switchScreen('login')" style="margin: 0; padding: 5px 10px; background: #007bff;">🔐 Админка</button>
+        <button onclick="switchScreen('login')" style="margin: 0; padding: 8px 14px; background: #007bff; border-radius: 6px; font-weight: bold;">🔐 Админка</button>
     </div>
 
     <div id="quiz-screen" class="quiz-container">
@@ -75,22 +75,22 @@
                 <option value="text">Текст</option>
             </select>
             
-            <div id="admin-choices-fields">
-                <input type="text" id="new-options" placeholder="Варианты через запятую">
-                <input type="text" id="new-correct-choices" placeholder="Индексы ответов (0,1)">
+            <div id="admin-choices-fields" style="display: flex; flex-direction: column; gap: 8px; margin: 8px 0;">
+                <input type="text" id="new-options" class="admin-input" placeholder="Варианты через запятую" style="width: 100%; box-sizing: border-box;">
+                <input type="text" id="new-correct-choices" class="admin-input" placeholder="Индексы ответов (0,1)" style="width: 100%; box-sizing: border-box;">
             </div>
-            <div id="admin-text-fields" class="hidden">
-                <input type="text" id="new-correct-text" placeholder="Правильный текст">
+            <div id="admin-text-fields" class="hidden" style="margin: 8px 0;">
+                <input type="text" id="new-correct-text" class="admin-input" placeholder="Правильный текст" style="width: 100%; box-sizing: border-box;">
             </div>
 
-            <button onclick="addQuestion()" id="save-btn" style="background:#28a745;">Сохранить вопрос</button>
-            <button onclick="changeAdminAuth()" style="background:#ffc107; color: black;">🔐 Сменить пароль</button>
-            <button onclick="logout()">Выход</button>
+            <button onclick="addQuestion()" id="save-btn" style="background:#28a745; margin-top: 10px;">➕ Сохранить вопрос</button>
+            <button onclick="changeAdminAuth()" style="background:#ffc107; color: black; margin-top: 5px;">🔐 Сменить пароль</button>
+            <button onclick="logout()" style="margin-top: 5px;">Выход</button>
         </div>
 
         <div class="admin-box" style="margin-top: 20px; border-top: 2px dashed #007bff; padding-top: 15px;">
             <h3>🔑 Проверить код ответа ученика</h3>
-            <input type="text" id="decode-input" class="admin-input" placeholder="Вставьте скопированный код ученика сюда...">
+            <input type="text" id="decode-input" class="admin-input" placeholder="Вставьте скопированный код ученика сюда..." style="width: 100%; box-sizing: border-box;">
             <button onclick="decodeStudentCode()" style="background: #17a2b8; width: 100%; margin-top: 10px;">Расшифровать данные</button>
             <div id="decode-result" style="margin-top: 15px; text-align: left; font-size: 14px;"></div>
         </div>
@@ -109,18 +109,23 @@
                 const decodedString = decodeURIComponent(atob(code));
                 const data = JSON.parse(decodedString);
                 
-                let html = `<div style="background: rgba(23,162,184,0.1); padding: 10px; border-radius: 6px; border: 1px solid #17a2b8;">`;
-                html += `<p>👤 <strong>Ученик:</strong> ${data.student}</p>`;
-                html += `<p>🎯 <strong>Результат:</strong> ${data.score}</p>`;
-                html += `<p>📅 <strong>Дата сдачи:</strong> ${data.date}</p><hr style="border: 0; border-top: 1px solid #ccc;">`;
+                // Проверяем текущую тему админки для красивого отображения плашки
+                const isDark = document.body.style.backgroundColor === 'rgb(18, 18, 20)' || document.body.style.backgroundColor === '#121214';
+                const bg = isDark ? 'rgba(23,162,184,0.15)' : 'rgba(23,162,184,0.1)';
+                const border = isDark ? '#17a2b8' : '#17a2b8';
+                
+                let html = `<div style="background: ${bg}; padding: 12px; border-radius: 6px; border: 1px solid ${border}; color: inherit;">`;
+                html += `<p style="margin: 4px 0;">👤 <strong>Ученик:</strong> ${data.student}</p>`;
+                html += `<p style="margin: 4px 0;">🎯 <strong>Результат:</strong> ${data.score}</p>`;
+                html += `<p style="margin: 4px 0;">📅 <strong>Дата сдачи:</strong> ${data.date}</p><hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.15); margin: 10px 0;">`;
                 
                 data.answers.forEach((ans, i) => {
-                    html += `<p style="margin: 4px 0;"><strong>${i+1}. ${ans.q}</strong><br>Ответ: <span style="color:${ans.correct ? 'green' : 'red'}">${ans.ans || '[Нет ответа]'}</span> (${ans.correct ? 'ВЕРНО' : 'НЕВЕРНО'})</p>`;
+                    html += `<p style="margin: 6px 0;"><strong>${i+1}. ${ans.q}</strong><br>Ответ: <span style="color:${ans.correct ? '#28a745' : '#dc3545'}">${ans.ans || '[Нет ответа]'}</span> (${ans.correct ? 'ВЕРНО' : 'НЕВЕРНО'})</p>`;
                 });
                 html += `</div>`;
                 resultDiv.innerHTML = html;
             } catch(e) {
-                resultDiv.innerHTML = `<span style="color:red;">❌ Ошибка расшифровки! Код поврежден или изменен.</span>`;
+                resultDiv.innerHTML = `<span style="color:#dc3545; font-weight:bold;">❌ Ошибка расшифровки! Код поврежден.</span>`;
             }
         }
     </script>
