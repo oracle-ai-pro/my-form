@@ -1,76 +1,63 @@
-/* Основные переменные для легкой смены тем */
 :root {
-    --bg-color: #f4f4f9;
-    --text-color: #333333;
-    --card-bg: #ffffff;
-    --border-color: #eeeeee;
-    --primary-color: #007bff;
+    --bg-color: #121214; /* Темная база */
+    --card-bg: #1e1e22;
+    --text-color: #ffffff;
+    --input-bg: #2a2a30;
+    --border-color: #333338;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
+    transition: all 0.3s ease;
     margin: 0;
-    padding: 10px;
-    transition: background 0.3s, color 0.3s;
+    padding: 20px;
 }
 
 /* Контейнеры */
 .quiz-container, .admin-box {
     max-width: 600px;
-    margin: 0 auto;
+    margin: 10px auto;
     background: var(--card-bg);
     padding: 20px;
     border-radius: 12px;
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
-/* Кнопки */
+/* Кнопки - СДЕЛАЛИ ЕДИНЫМИ */
+button, .admin-input, select {
+    display: block;
+    width: 100% !important; /* ПРИНУДИТЕЛЬНОЕ РАСШИРЕНИЕ */
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
 button {
-    background: var(--primary-color);
+    background: #007bff;
     color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
-    width: 100%;
-    margin-top: 10px;
+    border: none;
 }
 
-button:hover { opacity: 0.9; }
-
-/* Инпуты */
-.admin-input {
-    width: 100%;
-    padding: 10px;
-    margin: 8px 0;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    box-sizing: border-box; /* Чтобы не вылезали за края */
-}
-
-/* Служебные классы */
-.hidden { display: none !important; }
-
-/* Элементы админки */
-.admin-item {
-    padding: 10px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-}
-
-/* Меню инструментов */
-.tools-menu {
+/* Чтобы меню Tools не ломало верстку */
+#tools-menu {
     position: absolute;
-    top: 45px;
-    left: 0;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    top: 60px;
+    left: 20px;
+    background: #2a2a30;
     padding: 10px;
-    z-index: 1000;
+    border-radius: 8px;
+    border: 1px solid #444;
+    width: 200px;
+    z-index: 999;
 }
+
+.hidden { display: none !important; }
