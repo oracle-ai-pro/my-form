@@ -1,8 +1,8 @@
 // ==========================================
-// 1. БАЗА ДАННЫХ (ДЕФОЛТНЫЕ ВОПРОСОВ ДЛЯ СТАРТА)
+// 1. БАЗА ДАННЫХ (ДЕФОЛТНЫЕ ВОПРОСЫ ДЛЯ СТАРТА)
 // ==========================================
 const defaultQuestions = [
-    { type: "radio", title: "Какая операционная система основана на ядре Linux?", required: true, editable: true, timer: 20, useTimer: true, options: ["Windows", "Android", "iOS", "macOS"], correct: [1], exp: { title: "Интересный факт", desc: "Android использует ядро Linux для управления процессами.", hold: 2 } },
+    { type: "radio", title: "Какая операционная系统 основана на ядре Linux?", required: true, editable: true, timer: 20, useTimer: true, options: ["Windows", "Android", "iOS", "macOS"], correct: [1], exp: { title: "Интересный факт", desc: "Android использует ядро Linux для управления процессами.", hold: 2 } },
     { type: "text", title: "Как называется утилита ADB для прошивки разделов на низком уровне?", required: true, editable: true, useTimer: false, correctText: ["fastboot", "фастбут"] },
     { type: "checkbox", title: "Какие технологии являются базовыми для фронтенда?", required: true, editable: true, useTimer: false, options: ["HTML", "C++", "JavaScript", "CSS"], correct: [0, 2, 3] },
     { type: "select", title: "Выберите основной тег-контейнер для создания блочных элементов в HTML:", required: true, editable: true, useTimer: false, options: ["div", "span", "p", "a"], correct: [0] }
@@ -18,18 +18,25 @@ let currentTimerInterval = null;
 let timeLeft = 0;
 let isExplanationState = false;
 let currentTheme = 'light';
+let isDefaultSet = false; // Флаг, что используются дефолтные вопросы
 
 // Загрузка вопросов из LocalStorage
 function loadQuestions() {
     let saved = localStorage.getItem('quiz_questions');
     if (!saved) {
         localStorage.setItem('quiz_questions', JSON.stringify(defaultQuestions));
+        isDefaultSet = true;
         return defaultQuestions;
     }
     try {
         let parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+            // Проверяем, совпадает ли с дефолтным массивом
+            isDefaultSet = (JSON.stringify(parsed) === JSON.stringify(defaultQuestions));
+            return parsed;
+        }
     } catch(e) { console.error("Ошибка парсинга localStorage", e); }
+    isDefaultSet = true;
     return defaultQuestions;
 }
 
@@ -37,7 +44,7 @@ function loadQuestions() {
 function getAdminAuth() {
     const savedAuth = localStorage.getItem('quiz_admin_auth');
     if (savedAuth) return JSON.parse(savedAuth);
-    return { user: 'admin', pass: '1234' }; // Дефолты
+    return { user: 'admin', pass: '1234' };
 }
 
 // ==========================================
@@ -72,7 +79,8 @@ function switchScreen(screenName) {
 }
 
 function toggleToolsMenu() {
-    document.getElementById('tools-menu').classList.toggle('hidden');
+    const menu = document.getElementById('tools-menu');
+    if (menu) menu.classList.toggle('hidden');
 }
 
 function setTheme(theme) {
@@ -102,7 +110,7 @@ function applyThemeStyles(theme) {
     }
 }
 
-// Сжатие ссылки (Устранение ошибки URL TOO LONG)
+// Сжатие ссылки
 async function generateShareLink() {
     try {
         const currentQuestions = localStorage.getItem('quiz_questions') || JSON.stringify(defaultQuestions);
@@ -334,7 +342,6 @@ function showResults() {
         let textContent = `ОТЧЕТ О ПРОХОЖДЕНИИ ТЕСТА\nУченик: ${reportData.student}\nРезультат: ${reportData.score}\nДата: ${reportData.date}\n\n`;
         reportData.answers.forEach((a, i) => { textContent += `${i+1}. ${a.q}\nОтвет: ${a.ans} (${a.correct ? 'ВЕРНО' : 'НЕВЕРНО'})\n\n`; });
         
-        // Магический BOM фикс кириллицы
         const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
         const blob = new Blob([bom, textContent], { type: 'text/plain;charset=utf-8' });
         const link = document.createElement('a');
@@ -396,11 +403,16 @@ function addQuestion() {
         newQ.correct = choices.split(',').map(s => parseInt(s.trim()));
     }
 
-    if (editIdx > -1) questions[editIdx] = newQ; else questions.push(newQ);
+    if (editIdx > -1) {
+        questions[editIdx] = newQ;
+    } else {
+        questions.push(newQ);
+    }
 
     localStorage.setItem('quiz_questions', JSON.stringify(questions));
+    isDefaultSet = false; // Юзер внес изменения, плашка больше не нужна
     
-    // Сброс формы создания
+    // Сброс формы
     document.getElementById('edit-index').value = "-1";
     document.getElementById('new-title').value = '';
     document.getElementById('new-options').value = '';
@@ -416,22 +428,34 @@ function deleteQuestion(index) {
     if (confirm("Удалить этот вопрос?")) {
         questions.splice(index, 1);
         localStorage.setItem('quiz_questions', JSON.stringify(questions));
+        if(questions.length === 0) isDefaultSet = true;
         renderAdminQuestions();
     }
 }
 
-// Рендеринг списка вопросов со стрелочками и карандашом
+// Рендеринг списка вопросов с твоим приветственным баннером!
 function renderAdminQuestions() {
     const listContainer = document.getElementById('admin-questions-list');
+    if (!listContainer) return;
     listContainer.innerHTML = '';
+    
+    // НАША КРУТАЯ ПРИВЕТСТВЕННАЯ ПЛАШКА
+    if (isDefaultSet) {
+        const welcomeBanner = document.createElement('div');
+        welcomeBanner.style = "background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.15); animation: pulse 2s infinite;";
+        welcomeBanner.innerText = "🚀 Начни создавать формы, тесты и многое другое уже сейчас!";
+        listContainer.appendChild(welcomeBanner);
+    }
+
     questions.forEach((q, index) => {
         const item = document.createElement('div');
+        item.className = 'admin-item';
         item.style = "background:rgba(0,0,0,0.02); padding:10px; margin-bottom:8px; border-radius:6px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; color:inherit;";
         item.innerHTML = `
             <div style="text-align:left;"><strong>${index + 1}.</strong> ${q.title}</div>
             <div style="display:flex; gap:5px;">
                 <button onclick="editQuestion(${index})" style="background:#007bff; color:white; width:auto; padding:5px 10px; margin:0;">✏️</button>
-                <button onclick="deleteQuestion(${index})" style="background:#dc3545; color:white; width:auto; padding:5px 10px; margin:0;">🗑️</button>
+                <button onclick="deleteQuestion(${index})" style="background:#dc3545; color:white; width:auto; padding:5px 10px; margin:0;">❌</button>
             </div>
         `;
         listContainer.appendChild(item);
@@ -440,7 +464,7 @@ function renderAdminQuestions() {
 }
 
 // ==========================================
-// 8. ЗАПУСК ПРИЛОЖЕНИЯ С ДЕКОМПРЕССИЕЙ ССЫЛОК
+// 8. ЗАПУСК ПРИЛОЖЕНИЯ
 // ==========================================
 document.addEventListener("DOMContentLoaded", async () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -464,16 +488,21 @@ document.addEventListener("DOMContentLoaded", async () => {
             const response = new Response(stream);
             const decodedString = await response.text();
             questions = JSON.parse(decodedString);
+            isDefaultSet = false;
         } catch (e) { console.error("Ошибка zip:", e); questions = loadQuestions(); }
     } else if (sharedData) {
         try {
             const decodedString = decodeURIComponent(atob(sharedData));
             questions = JSON.parse(decodedString);
+            isDefaultSet = false;
         } catch (e) { questions = loadQuestions(); }
     } else {
         questions = loadQuestions();
     }
 
-    if (!questions || questions.length === 0) questions = defaultQuestions;
+    if (!questions || questions.length === 0) {
+        questions = defaultQuestions;
+        isDefaultSet = true;
+    }
     switchScreen('quiz');
 });
