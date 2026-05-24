@@ -1,19 +1,27 @@
 :root {
-    --bg-color: #121214; /* Темная база */
-    --card-bg: #1e1e22;
+    --bg-color: #f4f4f9;
+    --text-color: #333333;
+    --card-bg: #ffffff;
+    --border-color: #dddddd;
+    --btn-color: #007bff;
+}
+
+body.dark-theme {
+    --bg-color: #121214;
     --text-color: #ffffff;
-    --input-bg: #2a2a30;
+    --card-bg: #1e1e22;
     --border-color: #333338;
 }
 
 body {
-    font-family: 'Segoe UI', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
-    transition: all 0.3s ease;
-    margin: 0;
-    padding: 20px;
+    transition: background 0.3s, color 0.3s;
 }
+
+.quiz-container { background: var(--card-bg); border: 1px solid var(--border-color); }
+button { background: var(--btn-color); color: #fff; }
+.admin-input { background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); }
 
 /* Контейнеры */
 .quiz-container, .admin-box {
