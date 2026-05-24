@@ -1,19 +1,29 @@
+// --- 1. Инициализация и данные ---
 let questions = JSON.parse(localStorage.getItem('quiz_questions')) || [];
-let editingIndex = -1;
+const ADMIN_PASS = "1234"; // Пароль от админки
 
+// --- 2. Навигация между экранами ---
 function switchScreen(id) {
     document.querySelectorAll('.quiz-container').forEach(el => el.classList.add('hidden'));
     document.getElementById(id + '-screen').classList.remove('hidden');
 }
 
-function toggleToolsMenu() { document.getElementById('tools-menu').classList.toggle('hidden'); }
-
-function setTheme(theme) {
-    if (theme === 'dark') document.body.classList.add('dark-theme');
-    else document.body.classList.remove('dark-theme');
-    localStorage.setItem('theme', theme);
+// --- 3. Безопасность и Вход ---
+function tryLogin() {
+    const pass = document.getElementById('login-pass').value;
+    if (pass === ADMIN_PASS) {
+        switchScreen('admin');
+        renderAdminList();
+    } else {
+        alert("Неверный пароль!");
+    }
 }
 
+function logout() {
+    switchScreen('quiz');
+}
+
+// --- 4. Админка ---
 function toggleAdminFields() {
     const type = document.getElementById('new-type').value;
     document.getElementById('admin-choices-fields').classList.toggle('hidden', type === 'text');
@@ -28,13 +38,10 @@ function addQuestion() {
         correct: document.getElementById('new-correct-choices').value.split(','),
         correctText: document.getElementById('new-correct-text').value
     };
-    if (editingIndex === -1) questions.push(q);
-    else questions[editingIndex] = q;
-    
+    questions.push(q);
     localStorage.setItem('quiz_questions', JSON.stringify(questions));
-    editingIndex = -1;
     renderAdminList();
-    alert("Сохранено!");
+    alert("Вопрос сохранен!");
 }
 
 function renderAdminList() {
@@ -42,23 +49,38 @@ function renderAdminList() {
     list.innerHTML = questions.map((q, i) => `
         <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #444;">
             ${q.title}
-            <div>
-                <button onclick="editQuestion(${i})" style="width:auto; padding:5px;">✎</button>
-                <button onclick="deleteQuestion(${i})" style="width:auto; padding:5px; background:red;">✕</button>
-            </div>
+            <button onclick="deleteQuestion(${i})" style="width:auto; background:red;">✕</button>
         </div>
-    `).join('');
+    `).join('').concat(`<button onclick="logout()" style="background:#555;">Выйти из админки</button>`);
 }
 
-function editQuestion(i) {
-    editingIndex = i;
-    document.getElementById('new-title').value = questions[i].title;
-    switchScreen('admin');
+function deleteQuestion(i) {
+    questions.splice(i, 1);
+    localStorage.setItem('quiz_questions', JSON.stringify(questions));
+    renderAdminList();
 }
 
-function deleteQuestion(i) { questions.splice(i, 1); localStorage.setItem('quiz_questions', JSON.stringify(questions)); renderAdminList(); }
+// --- 5. Отрисовка теста ---
+function renderQuiz() {
+    const container = document.getElementById('question-body');
+    if (questions.length === 0) {
+        container.innerHTML = "<p>Вопросов пока нет. Зайдите в админку.</p>";
+        return;
+    }
+    // Пример отрисовки первого вопроса
+    container.innerHTML = `<h3>${questions[0].title}</h3>`;
+}
 
+// --- 6. Запуск ---
 document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-theme');
-    renderAdminList();
+    renderQuiz();
 });
+
+function setTheme(theme) {
+    if (theme === 'dark') document.body.classList.add('dark-theme');
+    else document.body.classList.remove('dark-theme');
+    localStorage.setItem('theme', theme);
+}
+
+function toggleToolsMenu() { document.getElementById('tools-menu').classList.toggle('hidden'); }
