@@ -2,52 +2,115 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>My easy form | Prestige HQ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Easy Form | Prestige HQ</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="quiz-container" style="display: flex; gap: 10px;">
-        <div style="position: relative; flex: 1;"><button onclick="toggleToolsMenu()" class="tool-btn">🛠️ Tools</button>
-            <div id="tools-menu" class="hidden">
-                <div class="menu-item" onclick="setTheme('light')">☀️ Светлая</div>
-                <div class="menu-item" onclick="setTheme('dark')">🌙 Темная</div>
-            </div>
+
+<!-- Экран тестирования -->
+<div id="quiz-screen" class="quiz-container">
+    <div class="tools-dropdown">
+        <button class="tools-btn" onclick="toggleToolsMenu()">Tools for User ▼</button>
+        <div id="tools-menu" class="tools-menu hidden">
+            <div class="tools-item" onclick="setTheme('light')">☀️ Светлая тема</div>
+            <div class="tools-item" onclick="setTheme('dark')">🌙 Темная тема</div>
+            <div class="tools-item" onclick="generateShareLink()">🔗 Поделиться тестом</div>
         </div>
-        <div style="flex: 1;"><button onclick="switchScreen('login')" class="tool-btn">🔐 Admin</button></div>
     </div>
 
-    <div id="start-screen" class="quiz-container">
-        <h2>Добро пожаловать</h2>
-        <input type="text" id="user-name" class="admin-input" placeholder="Имя и Фамилия">
-        <button onclick="startQuiz()">Начать тест</button>
-    </div>
-
-    <div id="quiz-screen" class="quiz-container hidden">
+    <div id="quiz-box">
+        <div class="quiz-header">
+            <div class="step-info">Вопрос <span id="current-number">1</span> из <span id="total-number">0</span></div>
+            <div id="timer-display" class="timer-box hidden">⏱️ <span id="timer-seconds">0</span>с</div>
+        </div>
+        <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
         <div id="question-body"></div>
-        <button onclick="nextStep()">Далее</button>
+        <button id="next-btn" onclick="nextStep()">Далее</button>
+    </div>
+    
+    <!-- Финал -->
+    <div id="result-box" class="result-card hidden">
+        <h2>Тест завершен! 🎉</h2>
+        <div class="score" id="final-score">0 / 0</div>
+        <p id="feedback-text"></p>
+        <button onclick="restartQuiz()">Пройти еще раз</button>
+        <div id="review-box" class="review-container"></div>
+    </div>
+</div>
+
+<!-- Окно авторизации -->
+<div id="login-screen" class="quiz-container hidden">
+    <h2>Вход в панель управления</h2>
+    <input type="text" id="login-user" class="admin-input" placeholder="Логин (admin)">
+    <input type="password" id="login-pass" class="admin-input" placeholder="Пароль (1234)">
+    <button onclick="tryLogin()">Войти</button>
+    <button class="btn-secondary" onclick="switchScreen('quiz')">Отмена</button>
+</div>
+
+<!-- Окно админки -->
+<div id="admin-screen" class="admin-box hidden">
+    <h2>Панель администратора 😎 <button class="btn-secondary" onclick="logout()" style="float:right; font-size:14px; width:auto; padding:6px 12px; margin:0;">Выйти</button></h2>
+    
+    <div style="border-bottom:2px solid var(--border-color); padding-bottom:20px; margin-bottom:20px;">
+        <h3>Добавить новый вопрос:</h3>
+        <label>Тип поля ввода:</label>
+        <select id="new-type" onchange="toggleAdminFields()">
+            <option value="radio">Одиночный выбор (Radio)</option>
+            <option value="checkbox">Множественный выбор (Checkbox)</option>
+            <option value="select">Выпадающий список (Select)</option>
+            <option value="text">Ввод текста / слова (Text)</option>
+        </select>
+        
+        <label>Текст вопроса (для Text можно использовать [input]):</label>
+        <input type="text" id="new-title" class="admin-input" placeholder="Введите текст...">
+        
+        <label class="switch-label"><span class="switch"><input type="checkbox" id="new-required" checked><span class="slider"></span></span> Обязательный вопрос</label>
+        <label class="switch-label"><span class="switch"><input type="checkbox" id="new-editable" checked><span class="slider"></span></span> Разрешать изменять (бета)</label>
+        <label class="switch-label"><span class="switch"><input type="checkbox" id="toggle-timer-input" onchange="document.getElementById('timer-val-box').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span> Включить таймер вопроса</label>
+        
+        <div id="timer-val-box" class="hidden">
+            <label>Время на ответ (сек):</label>
+            <input type="number" id="new-timer" class="admin-input" value="20" min="5">
+        </div>
+
+        <!-- ТУМБЛЕР И ПОЛЯ ДЛЯ ОБЪЯСНЕНИЯ -->
+        <label class="switch-label"><span class="switch"><input type="checkbox" id="toggle-exp-input" onchange="document.getElementById('exp-fields-box').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span> Добавить блок Объяснения после ответа</label>
+        <div id="exp-fields-box" class="hidden" style="background:var(--bg-option-hover); padding:15px; border-radius:8px; margin-bottom:15px;">
+            <label>Заголовок объяснения (необязательно):</label>
+            <input type="text" id="new-exp-title" class="admin-input" placeholder="Например: А вы знали?">
+            <label>Текст объяснения / Описание:</label>
+            <textarea id="new-exp-desc" class="text-input" style="height:80px;" placeholder="Подробный разбор правильного ответа..."></textarea>
+            <label>Удерживать кнопку 'Продолжить' (таймер в сек, 0 — без удержания):</label>
+            <input type="number" id="new-exp-timer" class="admin-input" value="0" min="0">
+        </div>
+
+        <div id="admin-choices-fields">
+            <label>Варианты ответов (через запятую):</label>
+            <input type="text" id="new-options" class="admin-input" placeholder="Вариант 1, Вариант 2">
+            <label>Индексы правильных ответов (через запятую, с 0):</label>
+            <input type="text" id="new-correct-choices" class="admin-input" placeholder="0">
+        </div>
+        <div id="admin-text-fields" class="hidden">
+            <label>Правильный текст (через запятую для синонимов):</label>
+            <input type="text" id="new-correct-text" class="admin-input" placeholder="ответ1, ответ2">
+        </div>
+
+        <button onclick="addQuestion()">Сохранить вопрос</button>
     </div>
 
-    <div id="result-screen" class="quiz-container hidden">
-        <h2>Ваш результат</h2>
-        <div id="score-display"></div>
-        <button onclick="copyResult()">📋 Копировать ответы</button>
-        <button onclick="downloadResult()">💾 Скачать .txt</button>
-    </div>
+    <h3>Текущие вопросы в базе:</h3>
+    <div id="admin-questions-list"></div>
+    <button class="btn-secondary" onclick="switchScreen('quiz')">Вернуться к тесту</button>
+</div>
 
-    <div id="login-screen" class="quiz-container hidden">
-        <input type="password" id="login-pass" class="admin-input" placeholder="Пароль">
-        <button onclick="tryLogin()">Войти</button>
-    </div>
+<div class="footer-nav" id="footer-link">
+    <a onclick="switchScreen('login')">🔒 Admin</a>
+</div>
+    <div style="margin-top: 15px; text-align: center;">
+    <a id="leave-shared-btn" href="#" class="hidden" style="color: #6c757d; text-decoration: none; font-size: 14px; font-weight: bold;">↩ Вернуться к своей форме</a>
+</div>
 
-    <div id="admin-screen" class="quiz-container hidden">
-        <h2>Админка</h2>
-        <input type="text" id="new-title" class="admin-input" placeholder="Вопрос">
-        <input type="number" id="new-points" class="admin-input" placeholder="Баллы">
-        <select id="new-type" class="admin-input"><option value="radio">Radio</option><option value="text">Текст</option></select>
-        <button onclick="addQuestion()" style="background:#28a745;">➕ Сохранить</button>
-        <div id="admin-questions-list"></div>
-    </div>
-
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
