@@ -64,12 +64,28 @@ function toggleAdminFields() {
 
 function renderAdminList() {
     const list = document.getElementById('admin-questions-list');
-    if (!list) return;
     list.innerHTML = questions.map((q, i) => `
-        <div class="admin-item" style="border:1px solid #ccc; padding:10px; margin:5px;">
-            ${i+1}. ${q.title} (${q.type})
+        <div class="admin-item" style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border-color);">
+            <span>${i + 1}. ${q.title}</span>
+            <div>
+                <button onclick="editQuestion(${i})" style="width:auto; margin-right:5px; background:#ffc107;">✎</button>
+                <button onclick="deleteQuestion(${i})" style="width:auto; background:#dc3545;">✕</button>
+            </div>
         </div>
     `).join('');
+}
+
+// Глобальная переменная для индекса редактирования
+let editingIndex = -1;
+
+function editQuestion(index) {
+    editingIndex = index;
+    const q = questions[index];
+    document.getElementById('new-title').value = q.title;
+    document.getElementById('new-type').value = q.type;
+    toggleAdminFields();
+    // Дополнительно можно заполнить поле options и т.д.
+    alert("Режим редактирования вопроса №" + (index + 1));
 }
 
 // --- УТИЛИТЫ ---
