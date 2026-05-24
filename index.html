@@ -2,12 +2,53 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My easy form | Prestige HQ</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="quiz-screen" class="quiz-container">...</div>
-    <div id="login-screen" class="hidden quiz-container">...</div>
+
+    <div id="quiz-screen" class="quiz-container">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold;">
+            <span>Вопрос <span id="current-number">0</span> из <span id="total-number">0</span></span>
+            <span id="timer-display" class="hidden" style="color: #dc3545;">⏱️ <span id="timer-seconds">0</span> сек.</span>
+        </div>
+        
+        <div style="background: #e9ecef; border-radius: 4px; height: 8px; margin-bottom: 20px; overflow: hidden;">
+            <div id="progress" style="background: #007bff; width: 0%; height: 100%; transition: width 0.3s ease;"></div>
+        </div>
+
+        <div id="quiz-box">
+            <div id="question-body">
+                </div>
+            <button id="next-btn" onclick="nextStep()" style="margin-top: 20px; width: 100%;">Далее</button>
+        </div>
+
+        <div id="result-box" class="hidden">
+            <h2>Тест завершен!</h2>
+            <div class="result-card" style="padding: 15px; margin-bottom: 15px; border-radius: 6px;">
+                <p>Ваш результат: <span id="final-score" style="font-size: 24px; font-weight: bold; color: #28a745;">0 / 0</span></p>
+            </div>
+            <div id="review-box" style="margin-top: 20px;"></div>
+            <button onclick="restartQuiz()" style="margin-top: 20px; width: 100%; background-color: #6c757d;">Пройти заново</button>
+        </div>
+        
+        <div style="margin-top: 15px; text-align: center;">
+            <a id="leave-shared-btn" href="#" class="hidden" style="color: #6c757d; text-decoration: none; font-size: 14px; font-weight: bold;">↩ Вернуться к своим вопросам</a>
+        </div>
+    </div>
+
+    <div id="login-screen" class="hidden quiz-container">
+        <h2>Вход в панель управления</h2>
+        <div class="admin-box">
+            <label>Логин:</label>
+            <input type="text" id="login-user" class="admin-input">
+            <label>Пароль:</label>
+            <input type="password" id="login-pass" class="admin-input">
+            <button onclick="tryLogin()" style="width: 100%; margin-top: 15px;">Войти</button>
+            <button onclick="logout()" style="width: 100%; background-color: #6c757d; margin-top: 5px;">Назад к тесту</button>
+        </div>
+    </div>
     
     <div id="admin-screen" class="hidden quiz-container">
         <h2>Админка LMSH 2.0</h2>
@@ -32,11 +73,12 @@
             </div>
 
             <button onclick="addQuestion()" id="save-btn" style="background:#28a745;">Сохранить вопрос</button>
-            <button onclick="changeAdminAuth()" style="background:#ffc107;">🔐 Сменить пароль</button>
+            <button onclick="changeAdminAuth()" style="background:#ffc107; color: black;">🔐 Сменить пароль</button>
             <button onclick="logout()">Выход</button>
         </div>
         <div id="admin-questions-list"></div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
