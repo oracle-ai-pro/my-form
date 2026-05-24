@@ -8,17 +8,20 @@
 </head>
 <body>
 
-    <div class="quiz-container" style="display: flex; gap: 10px;">
-        <div style="position: relative; flex: 1;">
-            <button onclick="toggleToolsMenu()">🛠️ Tools for User ▼</button>
-            <div id="tools-menu" class="hidden">
-                <div class="menu-item" onclick="setTheme('light')">☀️ Светлая</div>
-                <div class="menu-item" onclick="setTheme('dark')">🌙 Темная</div>
-                <div class="menu-item" onclick="generateShareLink()">🔗 Сжать ссылку</div>
-            </div>
+<div class="quiz-container" style="display: flex; gap: 10px;">
+    <div style="position: relative; flex: 1;">
+        <button onclick="toggleToolsMenu()" class="tool-btn">🛠️ Tools</button>
+        <div id="tools-menu" class="hidden">
+            <div class="menu-item" onclick="setTheme('light')">☀️ Светлая</div>
+            <div class="menu-item" onclick="setTheme('dark')">🌙 Темная</div>
+            <div class="menu-item" onclick="generateShareLink()">🔗 Сжать ссылку</div>
         </div>
-        <button onclick="switchScreen('login')">🔐 Админка</button>
     </div>
+    
+    <div style="flex: 1;">
+        <button onclick="switchScreen('login')" class="tool-btn">🔐 Admin</button>
+    </div>
+</div>
 
     <div id="quiz-screen" class="quiz-container">
         <div id="quiz-box">
