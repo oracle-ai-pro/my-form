@@ -8,6 +8,18 @@
 </head>
 <body>
 
+    <div class="quiz-container" style="margin-bottom: 10px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="position: relative;">
+            <button onclick="toggleToolsMenu()" style="margin: 0; padding: 5px 10px; background: #6c757d;">🛠️ Tools for User</button>
+            <div id="tools-menu" class="hidden" style="position: absolute; top: 35px; left: 0; background: inherit; border: 1px solid #ddd; border-radius: 4px; padding: 10px; z-index: 100; min-width: 180px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                <button onclick="setTheme('light')" style="width: 100%; margin-bottom: 5px; background: #f4f4f9; color: #333;">☀️ Светлая тема</button>
+                <button onclick="setTheme('dark')" style="width: 100%; margin-bottom: 5px; background: #333; color: #fff;">🌙 Темная тема</button>
+                <button onclick="generateShareLink()" style="width: 100%; background: #17a2b8;">🚀 Сжать ссылку</button>
+            </div>
+        </div>
+        <button onclick="switchScreen('login')" style="margin: 0; padding: 5px 10px; background: #007bff;">🔐 Админка</button>
+    </div>
+
     <div id="quiz-screen" class="quiz-container">
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold;">
             <span>Вопрос <span id="current-number">0</span> из <span id="total-number">0</span></span>
@@ -19,8 +31,7 @@
         </div>
 
         <div id="quiz-box">
-            <div id="question-body">
-                </div>
+            <div id="question-body"></div>
             <button id="next-btn" onclick="nextStep()" style="margin-top: 20px; width: 100%;">Далее</button>
         </div>
 
@@ -76,9 +87,42 @@
             <button onclick="changeAdminAuth()" style="background:#ffc107; color: black;">🔐 Сменить пароль</button>
             <button onclick="logout()">Выход</button>
         </div>
-        <div id="admin-questions-list"></div>
+
+        <div class="admin-box" style="margin-top: 20px; border-top: 2px dashed #007bff; padding-top: 15px;">
+            <h3>🔑 Проверить код ответа ученика</h3>
+            <input type="text" id="decode-input" class="admin-input" placeholder="Вставьте скопированный код ученика сюда...">
+            <button onclick="decodeStudentCode()" style="background: #17a2b8; width: 100%; margin-top: 10px;">Расшифровать данные</button>
+            <div id="decode-result" style="margin-top: 15px; text-align: left; font-size: 14px;"></div>
+        </div>
+
+        <div id="admin-questions-list" style="margin-top: 20px;"></div>
     </div>
 
     <script src="script.js"></script>
+    
+    <script>
+        function decodeStudentCode() {
+            const code = document.getElementById('decode-input').value.trim();
+            const resultDiv = document.getElementById('decode-result');
+            if(!code) { alert("Вставьте код!"); return; }
+            try {
+                const decodedString = decodeURIComponent(atob(code));
+                const data = JSON.parse(decodedString);
+                
+                let html = `<div style="background: rgba(23,162,184,0.1); padding: 10px; border-radius: 6px; border: 1px solid #17a2b8;">`;
+                html += `<p>👤 <strong>Ученик:</strong> ${data.student}</p>`;
+                html += `<p>🎯 <strong>Результат:</strong> ${data.score}</p>`;
+                html += `<p>📅 <strong>Дата сдачи:</strong> ${data.date}</p><hr style="border: 0; border-top: 1px solid #ccc;">`;
+                
+                data.answers.forEach((ans, i) => {
+                    html += `<p style="margin: 4px 0;"><strong>${i+1}. ${ans.q}</strong><br>Ответ: <span style="color:${ans.correct ? 'green' : 'red'}">${ans.ans || '[Нет ответа]'}</span> (${ans.correct ? 'ВЕРНО' : 'НЕВЕРНО'})</p>`;
+                });
+                html += `</div>`;
+                resultDiv.innerHTML = html;
+            } catch(e) {
+                resultDiv.innerHTML = `<span style="color:red;">❌ Ошибка расшифровки! Код поврежден или изменен.</span>`;
+            }
+        }
+    </script>
 </body>
 </html>
