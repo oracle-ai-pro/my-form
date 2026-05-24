@@ -74,9 +74,20 @@ function renderAdminList() {
 
 // --- УТИЛИТЫ ---
 function setTheme(theme) {
-    document.body.style.backgroundColor = (theme === 'dark') ? '#121214' : '#f4f4f9';
-    document.body.style.color = (theme === 'dark') ? '#ffffff' : '#333333';
+    if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+        localStorage.setItem('theme', 'dark');
+    } else {
+        document.body.classList.remove('dark-theme');
+        localStorage.setItem('theme', 'light');
+    }
 }
+
+// При загрузке страницы применяем сохраненную тему
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') document.body.classList.add('dark-theme');
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     if (questions.length > 0) {
