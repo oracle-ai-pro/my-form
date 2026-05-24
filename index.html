@@ -14,17 +14,23 @@
             <div id="tools-menu" class="hidden">
                 <div class="menu-item" onclick="setTheme('light')">☀️ Светлая</div>
                 <div class="menu-item" onclick="setTheme('dark')">🌙 Темная</div>
-                <div class="menu-item" onclick="generateShareLink()">🔗 Сжать ссылку</div>
             </div>
         </div>
         <div style="flex: 1;">
-            <button onclick="switchScreen('admin')" class="tool-btn">🔐 Admin</button>
+            <button onclick="switchScreen('login')" class="tool-btn">🔐 Admin</button>
         </div>
     </div>
 
     <div id="quiz-screen" class="quiz-container">
         <div id="question-body"></div>
         <button id="next-btn" onclick="nextStep()">Далее</button>
+    </div>
+
+    <div id="login-screen" class="quiz-container hidden">
+        <h2>Вход в Админку</h2>
+        <input type="password" id="login-pass" class="admin-input" placeholder="Введите пароль">
+        <button onclick="tryLogin()">Войти</button>
+        <button onclick="switchScreen('quiz')" style="background:#555;">Назад</button>
     </div>
 
     <div id="admin-screen" class="quiz-container hidden">
