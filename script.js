@@ -91,6 +91,9 @@ function setTheme(theme) {
 
 function applyThemeStyles(theme) {
     const containers = document.querySelectorAll('.quiz-container, .quiz-box, .result-card, .admin-box, .admin-item');
+    // Находим все инпуты и селекты, чтобы тоже их перекрасить!
+    const inputs = document.querySelectorAll('.admin-input, input[type="text"], input[type="password"], select');
+
     if (theme === 'dark') {
         document.body.style.backgroundColor = '#121214';
         document.body.style.color = '#ffffff';
@@ -99,6 +102,12 @@ function applyThemeStyles(theme) {
             el.style.color = '#ffffff';
             el.style.borderColor = '#333338';
         });
+        // Красим инпуты в темный Cosmo-стиль
+        inputs.forEach(el => {
+            el.style.backgroundColor = '#2a2a30';
+            el.style.color = '#ffffff';
+            el.style.borderColor = '#44444a';
+        });
     } else {
         document.body.style.backgroundColor = '#f4f4f9';
         document.body.style.color = '#333333';
@@ -106,6 +115,12 @@ function applyThemeStyles(theme) {
             el.style.backgroundColor = '#ffffff';
             el.style.color = '#333333';
             el.style.borderColor = '#eeeeee';
+        });
+        // Возвращаем инпутам светлый стиль
+        inputs.forEach(el => {
+            el.style.backgroundColor = '#ffffff';
+            el.style.color = '#333333';
+            el.style.borderColor = '#ccc';
         });
     }
 }
