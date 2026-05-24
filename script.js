@@ -121,21 +121,17 @@ function applyThemeStyles(theme) {
 function generateShareLink() {
     try {
         const currentQuestions = localStorage.getItem('quiz_questions') || JSON.stringify(defaultQuestions);
-        const encodedData = btoa(encodeURIComponent(currentQuestions));
+        // Сжимаем данные
+        const compressed = LZString.compressToEncodedURIComponent(currentQuestions);
         const cleanUrl = window.location.href.split('?')[0];
-        const shareUrl = cleanUrl + '?data=' + encodedData;
+        const shareUrl = `${cleanUrl}?zip=${compressed}`;
         
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(shareUrl).then(() => {
-                alert("Ссылка на этот тест успешно скопирована! Отправь её друзьям. 🚀");
-            }).catch(() => {
-                fallbackCopy(shareUrl);
-            });
-        } else {
-            fallbackCopy(shareUrl);
-        }
+        // ... (код копирования остается прежним)
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            alert("Короткая ссылка скопирована! 🚀");
+        });
     } catch (e) {
-        alert("Слишком много вопросов, ссылка превысила лимит длины.");
+        alert("Ошибка сжатия данных.");
     }
     toggleToolsMenu();
 }
@@ -532,29 +528,32 @@ function renderAdminQuestions() {
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const sharedData = urlParams.get('data');
+    const zipData = urlParams.get('zip'); // Ищем именно zip
 
     currentIndex = 0;
     userAnswers = [];
 
-    if (sharedData) {
+    if (zipData) {
         try {
-            const decodedString = decodeURIComponent(atob(sharedData));
-            const parsedQuestions = JSON.parse(decodedString);
+            // Распаковываем данные
+            const decompressed = LZString.decompressFromEncodedURIComponent(zipData);
+            const parsedQuestions = JSON.parse(decompressed);
             
             if (Array.isArray(parsedQuestions) && parsedQuestions.length > 0) {
                 questions = parsedQuestions;
-                console.log("Загружен тест по ссылке. Вопросов:", questions.length);
             } else {
-                throw new Error("Пустой массив данных");
+                throw new Error("Пустые данные");
             }
         } catch (e) {
-            console.error("Ошибка парсинга ссылки, грузим локальную базу.", e);
+            console.error("Ошибка при распаковке, загрузка локальной базы", e);
             questions = loadQuestions();
         }
     } else {
         questions = loadQuestions();
     }
+
+    switchScreen('quiz');
+});
 
     if (!questions || questions.length === 0) {
         questions = defaultQuestions;
