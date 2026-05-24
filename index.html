@@ -3,56 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LMSH 2.0 Admin</title>
+    <title>LMSH 2.0</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="quiz-container" style="display: flex; gap: 10px;">
-    <div style="position: relative; flex: 1;">
-        <button onclick="toggleToolsMenu()" class="tool-btn">🛠️ Tools</button>
-        <div id="tools-menu" class="hidden">
-            <div class="menu-item" onclick="setTheme('light')">☀️ Светлая</div>
-            <div class="menu-item" onclick="setTheme('dark')">🌙 Темная</div>
-            <div class="menu-item" onclick="generateShareLink()">🔗 Сжать ссылку</div>
+    <div class="quiz-container" style="display: flex; gap: 10px;">
+        <div style="position: relative; flex: 1;">
+            <button onclick="toggleToolsMenu()" class="tool-btn">🛠️ Tools</button>
+            <div id="tools-menu" class="hidden">
+                <div class="menu-item" onclick="setTheme('light')">☀️ Светлая</div>
+                <div class="menu-item" onclick="setTheme('dark')">🌙 Темная</div>
+                <div class="menu-item" onclick="generateShareLink()">🔗 Сжать ссылку</div>
+            </div>
+        </div>
+        <div style="flex: 1;">
+            <button onclick="switchScreen('admin')" class="tool-btn">🔐 Admin</button>
         </div>
     </div>
-    
-    <div style="flex: 1;">
-        <button onclick="switchScreen('login')" class="tool-btn">🔐 Admin</button>
-    </div>
-</div>
 
     <div id="quiz-screen" class="quiz-container">
-        <div id="quiz-box">
-            <div id="question-body"></div>
-            <button id="next-btn" onclick="nextStep()">Далее</button>
-        </div>
-    </div>
-
-    <div id="login-screen" class="quiz-container hidden">
-        <h2>Вход</h2>
-        <input type="text" id="login-user" class="admin-input" placeholder="Логин">
-        <input type="password" id="login-pass" class="admin-input" placeholder="Пароль">
-        <button onclick="tryLogin()">Войти</button>
-        <button onclick="switchScreen('quiz')" style="background:#6c757d;">Назад</button>
+        <div id="question-body"></div>
+        <button id="next-btn" onclick="nextStep()">Далее</button>
     </div>
 
     <div id="admin-screen" class="quiz-container hidden">
         <h2>Админка LMSH 2.0</h2>
         <select id="new-type" class="admin-input" onchange="toggleAdminFields()">
-            <option value="radio">Одиночный (Radio)</option>
-            <option value="checkbox">Множественный (Checkbox)</option>
+            <option value="radio">Radio</option>
+            <option value="checkbox">Checkbox</option>
             <option value="text">Текст</option>
         </select>
         <input type="text" id="new-title" class="admin-input" placeholder="Вопрос">
         
         <div id="admin-choices-fields">
             <input type="text" id="new-options" class="admin-input" placeholder="Варианты через запятую">
-            <input type="text" id="new-correct-choices" class="admin-input" placeholder="Индексы верных (0,1)">
+            <input type="text" id="new-correct-choices" class="admin-input" placeholder="Индексы (0,1)">
         </div>
         <div id="admin-text-fields" class="hidden">
-            <input type="text" id="new-correct-text" class="admin-input" placeholder="Правильный текст">
+            <input type="text" id="new-correct-text" class="admin-input" placeholder="Правильный ответ">
         </div>
 
         <button onclick="addQuestion()" style="background:#28a745;">➕ Сохранить вопрос</button>
