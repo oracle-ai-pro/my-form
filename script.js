@@ -1,3 +1,18 @@
+// Инициализация вопросов при старте
+let questions = JSON.parse(localStorage.getItem('quiz_questions')) || [
+    {
+        title: "Тестовый вопрос: LMSH 2.0 работает?",
+        type: "radio",
+        options: ["Да", "Конечно", "Определенно"],
+        correct: [0, 1, 2],
+        required: true
+    }
+];
+
+let currentIndex = 0;
+let userAnswers = [];
+// ... далее остальной твой код ...
+
 // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 let questions = [];
 let currentIndex = 0;
@@ -117,3 +132,8 @@ function switchScreen(screenId) {
         screen.classList.remove('hidden');
     }
 }
+
+// В самом конце script.js добавь это, если этого нет:
+document.addEventListener('DOMContentLoaded', () => {
+    if (questions.length > 0) renderQuestion();
+});
