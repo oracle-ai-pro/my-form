@@ -1,71 +1,15 @@
 :root {
-    --bg-color: #f4f4f9;
-    --text-color: #333333;
-    --card-bg: #ffffff;
-    --border-color: #dddddd;
-    --btn-color: #007bff;
+    --bg-color: #f4f4f9; --text-color: #333; --card-bg: #fff; --border-color: #ddd;
 }
-
 body.dark-theme {
-    --bg-color: #121214;
-    --text-color: #ffffff;
-    --card-bg: #1e1e22;
-    --border-color: #333338;
+    --bg-color: #121214; --text-color: #fff; --card-bg: #1e1e22; --border-color: #333;
 }
-
-body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    transition: background 0.3s, color 0.3s;
-}
-
-.quiz-container { background: var(--card-bg); border: 1px solid var(--border-color); }
-button { background: var(--btn-color); color: #fff; }
-.admin-input { background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); }
-
-/* Контейнеры */
-.quiz-container, .admin-box {
-    max-width: 600px;
-    margin: 10px auto;
-    background: var(--card-bg);
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-}
-
-/* Кнопки - СДЕЛАЛИ ЕДИНЫМИ */
-button, .admin-input, select {
-    display: block;
-    width: 100% !important; /* ПРИНУДИТЕЛЬНОЕ РАСШИРЕНИЕ */
-    padding: 12px;
-    margin: 10px 0;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--input-bg);
-    color: var(--text-color);
-    font-size: 16px;
-    box-sizing: border-box;
-}
-
-button {
-    background: #007bff;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-    border: none;
-}
-
-/* Чтобы меню Tools не ломало верстку */
-#tools-menu {
-    position: absolute;
-    top: 60px;
-    left: 20px;
-    background: #2a2a30;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #444;
-    width: 200px;
-    z-index: 999;
-}
-
+body { background-color: var(--bg-color); color: var(--text-color); font-family: sans-serif; padding: 20px; transition: 0.3s; }
+.quiz-container { max-width: 600px; margin: 15px auto; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+button, .admin-input { width: 100%; padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid var(--border-color); box-sizing: border-box; }
+button { background: #007bff; color: white; font-weight: bold; cursor: pointer; border: none; }
+.tool-btn { background: #444 !important; }
 .hidden { display: none !important; }
+#tools-menu { position: absolute; top: 60px; left: 20px; width: 150px; background: var(--card-bg); border: 1px solid var(--border-color); padding: 5px; border-radius: 8px; z-index: 10; }
+.menu-item { padding: 8px; cursor: pointer; }
+.menu-item:hover { background: #333; }
