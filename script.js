@@ -34,12 +34,14 @@ function toggleToolsMenu() { document.getElementById('tools-menu').classList.tog
 
 // 2. БЕЗОПАСНАЯ ЛОГИКА ПЕРЕХОДА
 function nextStep(isTimeout = false) {
-    const q = questions[currentIndex];
-    if (isExplanationState) {
-        currentIndex++;
-        if (currentIndex < questions.length) renderQuestion(); else showResults();
-        return;
+    // Проверка, есть ли вопросы
+    if (!questions || questions.length === 0 || !questions[currentIndex]) {
+        console.error("Вопросы не загружены или индекс неверный");
+        return; 
     }
+    const q = questions[currentIndex];
+    // ... остальной код функции
+}
 
     let answers = [];
     let rawValue = "";
@@ -103,3 +105,15 @@ function addQuestion() {
 }
 
 // ... ОСТАЛЬНЫЕ ФУНКЦИИ (switchScreen, generateShareLink и т.д.)
+function switchScreen(screenId) {
+    // Скрываем все экраны
+    document.getElementById('quiz-screen').classList.add('hidden');
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('admin-screen').classList.add('hidden');
+    
+    // Показываем нужный
+    const screen = document.getElementById(screenId + '-screen');
+    if (screen) {
+        screen.classList.remove('hidden');
+    }
+}
