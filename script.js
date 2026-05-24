@@ -1,11 +1,11 @@
-// --- ИНИЦИАЛИЗАЦИЯ ---
+// --- ИНИЦИАЛИЗАЦИЯ ДАННЫХ ---
 let questions = JSON.parse(localStorage.getItem('quiz_questions')) || [
-    { title: "Тестовый вопрос: LMSH 2.0 работает?", type: "text", correctText: ["да", "конечно"] }
+    { title: "Тест LMSH 2.0 запущен!", type: "text", correctText: ["ок"], required: true }
 ];
 let currentIndex = 0;
 let userAnswers = [];
 
-// --- ЭКРАНЫ И НАВИГАЦИЯ ---
+// --- НАВИГАЦИЯ ---
 function switchScreen(screenId) {
     document.querySelectorAll('.quiz-container').forEach(el => el.classList.add('hidden'));
     const screen = document.getElementById(screenId + '-screen');
@@ -16,64 +16,71 @@ function toggleToolsMenu() {
     document.getElementById('tools-menu').classList.toggle('hidden');
 }
 
-// --- ЛОГИКА ТЕСТА ---
+// --- ЛОГИКА ТЕСТА (БЕЗОПАСНОСТЬ) ---
 function nextStep() {
-    if (questions.length === 0 || !questions[currentIndex]) return;
-    
+    if (questions.length === 0) return;
     const q = questions[currentIndex];
-    // Здесь твоя логика сбора ответов...
     
-    // Переход
+    // Получаем ответ (логика сбора зависит от типа)
+    let rawValue = "";
+    if (q.type === 'text') {
+        rawValue = document.getElementById('quiz_text')?.value.trim();
+    }
+    // Здесь должна быть логика проверки:
+    // Если !isCorrect — делаем alert("Неверно!"); return;
+
     currentIndex++;
     if (currentIndex < questions.length) renderQuestion(); 
     else alert("Тест завершен!");
 }
 
-function renderQuestion() {
-    const q = questions[currentIndex];
-    const body = document.getElementById('question-body');
-    if (!body) return;
-    body.innerHTML = `<h3>${q.title}</h3>`;
-    // ... отрисовка радио/чекбокс/текст ...
-}
-
-// --- АДМИНКА ---
+// --- АДМИНКА (ВСЕ ПОЛЯ ВЕРНУЛИСЬ) ---
 function addQuestion() {
     const type = document.getElementById('new-type').value;
     const title = document.getElementById('new-title').value;
+    const isRequired = document.getElementById('new-required')?.checked || false;
+    const timer = document.getElementById('new-timer')?.value || 0;
     
-    const newQ = { type, title };
+    let newQ = { type, title, required: isRequired, timer: timer };
+
     if (type === 'text') {
-        newQ.correctText = document.getElementById('new-correct-text').value.split(',');
+        newQ.correctText = document.getElementById('new-correct-text').value.split(',').map(s => s.trim());
     } else {
-        newQ.options = document.getElementById('new-options').value.split(',');
-        newQ.correct = document.getElementById('new-correct-choices').value.split(',').map(Number);
+        newQ.options = document.getElementById('new-options').value.split(',').map(s => s.trim());
+        newQ.correct = document.getElementById('new-correct-choices').value.split(',').map(n => parseInt(n.trim()));
     }
-    
+
     questions.push(newQ);
     localStorage.setItem('quiz_questions', JSON.stringify(questions));
     alert("Вопрос сохранен!");
     renderAdminList();
 }
 
+function toggleAdminFields() {
+    const type = document.getElementById('new-type').value;
+    document.getElementById('admin-choices-fields').classList.toggle('hidden', type === 'text');
+    document.getElementById('admin-text-fields').classList.toggle('hidden', type !== 'text');
+}
+
 function renderAdminList() {
     const list = document.getElementById('admin-questions-list');
     if (!list) return;
-    list.innerHTML = questions.map((q, i) => `<div>${i+1}. ${q.title}</div>`).join('');
+    list.innerHTML = questions.map((q, i) => `
+        <div class="admin-item" style="border:1px solid #ccc; padding:10px; margin:5px;">
+            ${i+1}. ${q.title} (${q.type})
+        </div>
+    `).join('');
 }
 
-// --- ТЕМЫ И СЕРВИСЫ ---
+// --- УТИЛИТЫ ---
 function setTheme(theme) {
     document.body.style.backgroundColor = (theme === 'dark') ? '#121214' : '#f4f4f9';
     document.body.style.color = (theme === 'dark') ? '#ffffff' : '#333333';
 }
 
-function generateShareLink() {
-    alert("Ссылка сгенерирована (в разработке)!");
-}
-
-// Старт
 document.addEventListener('DOMContentLoaded', () => {
-    if (questions.length > 0) renderQuestion();
-    renderAdminList();
+    if (questions.length > 0) {
+        // renderQuestion(); // Раскомментируй, когда будет готова функция отрисовки
+        renderAdminList();
+    }
 });
