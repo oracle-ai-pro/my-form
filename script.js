@@ -1,139 +1,79 @@
-// Инициализация вопросов при старте
+// --- ИНИЦИАЛИЗАЦИЯ ---
 let questions = JSON.parse(localStorage.getItem('quiz_questions')) || [
-    {
-        title: "Тестовый вопрос: LMSH 2.0 работает?",
-        type: "radio",
-        options: ["Да", "Конечно", "Определенно"],
-        correct: [0, 1, 2],
-        required: true
-    }
+    { title: "Тестовый вопрос: LMSH 2.0 работает?", type: "text", correctText: ["да", "конечно"] }
 ];
-
 let currentIndex = 0;
 let userAnswers = [];
-// ... далее остальной твой код ...
 
-// ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
-let questions = [];
-let currentIndex = 0;
-let userAnswers = [];
-let currentTimerInterval = null;
-let currentTheme = 'light';
-let isExplanationState = false;
-
-// 1. ЗАГРУЗКА И ТЕМЫ
-function loadQuestions() {
-    let saved = localStorage.getItem('quiz_questions');
-    return saved ? JSON.parse(saved) : [];
+// --- ЭКРАНЫ И НАВИГАЦИЯ ---
+function switchScreen(screenId) {
+    document.querySelectorAll('.quiz-container').forEach(el => el.classList.add('hidden'));
+    const screen = document.getElementById(screenId + '-screen');
+    if (screen) screen.classList.remove('hidden');
 }
 
-function setTheme(theme) {
-    currentTheme = theme;
-    const isDark = theme === 'dark';
-    document.body.style.backgroundColor = isDark ? '#121214' : '#f4f4f9';
-    document.body.style.color = isDark ? '#ffffff' : '#333333';
-    
-    document.querySelectorAll('.quiz-container, .admin-box, .admin-item').forEach(el => {
-        el.style.backgroundColor = isDark ? '#1e1e22' : '#ffffff';
-        el.style.borderColor = isDark ? '#333338' : '#eee';
-    });
-    
-    document.querySelectorAll('input, select').forEach(el => {
-        el.style.backgroundColor = isDark ? '#2a2a30' : '#ffffff';
-        el.style.color = isDark ? '#fff' : '#000';
-    });
-    document.getElementById('tools-menu').classList.add('hidden');
+function toggleToolsMenu() {
+    document.getElementById('tools-menu').classList.toggle('hidden');
 }
 
-function toggleToolsMenu() { document.getElementById('tools-menu').classList.toggle('hidden'); }
-
-// 2. БЕЗОПАСНАЯ ЛОГИКА ПЕРЕХОДА
-function nextStep(isTimeout = false) {
-    // Проверка, есть ли вопросы
-    if (!questions || questions.length === 0 || !questions[currentIndex]) {
-        console.error("Вопросы не загружены или индекс неверный");
-        return; 
-    }
+// --- ЛОГИКА ТЕСТА ---
+function nextStep() {
+    if (questions.length === 0 || !questions[currentIndex]) return;
+    
     const q = questions[currentIndex];
-    // ... остальной код функции
-}
-
-    let answers = [];
-    let rawValue = "";
-
-    if (!isTimeout) {
-        // Сбор ответа
-        if (q.type === 'radio') {
-            let checked = document.querySelector('input[name="quiz_ans"]:checked');
-            if (checked) { answers.push(parseInt(checked.value)); rawValue = q.options[checked.value]; }
-        } else if (q.type === 'checkbox') {
-            document.querySelectorAll('input[name="quiz_ans"]:checked').forEach(cb => answers.push(parseInt(cb.value)));
-            rawValue = answers.map(i => q.options[i]).join(', ');
-        } else if (q.type === 'select') {
-            let sel = document.getElementById('quiz_select').value;
-            if(sel !== "") { answers.push(parseInt(sel)); rawValue = q.options[sel]; }
-        } else if (q.type === 'text') {
-            rawValue = document.getElementById('quiz_text').value.trim();
-        }
-
-        // БЛОКИРОВКА
-        if (q.required && answers.length === 0 && rawValue === "") { alert("Ответ обязателен!"); return; }
-        
-        let isCorrect = false;
-        if (q.type === 'text') {
-            isCorrect = q.correctText.some(t => t.toLowerCase().trim() === rawValue.toLowerCase().trim());
-        } else {
-            isCorrect = q.correct.length === answers.length && q.correct.every(v => answers.includes(v));
-        }
-
-        if (!isCorrect) { alert("Неверно! Попробуйте еще раз."); return; }
-    }
-
-    clearInterval(currentTimerInterval);
-    userAnswers.push({ title: q.title, ans: rawValue, isCorrect: true });
+    // Здесь твоя логика сбора ответов...
     
-    // Объяснение...
+    // Переход
     currentIndex++;
-    if (currentIndex < questions.length) renderQuestion(); else showResults();
+    if (currentIndex < questions.length) renderQuestion(); 
+    else alert("Тест завершен!");
 }
 
-// 3. АДМИНКА (Сбор данных со всех полей)
+function renderQuestion() {
+    const q = questions[currentIndex];
+    const body = document.getElementById('question-body');
+    if (!body) return;
+    body.innerHTML = `<h3>${q.title}</h3>`;
+    // ... отрисовка радио/чекбокс/текст ...
+}
+
+// --- АДМИНКА ---
 function addQuestion() {
     const type = document.getElementById('new-type').value;
     const title = document.getElementById('new-title').value;
-    const isRequired = document.getElementById('new-required').checked;
-    const timer = parseInt(document.getElementById('new-timer').value);
     
-    let newQ = { type, title, required: isRequired, timer: timer };
-
+    const newQ = { type, title };
     if (type === 'text') {
-        newQ.correctText = document.getElementById('new-correct-text').value.split(',').map(s => s.trim());
+        newQ.correctText = document.getElementById('new-correct-text').value.split(',');
     } else {
-        newQ.options = document.getElementById('new-options').value.split(',').map(s => s.trim());
-        newQ.correct = document.getElementById('new-correct-choices').value.split(',').map(s => parseInt(s.trim()));
+        newQ.options = document.getElementById('new-options').value.split(',');
+        newQ.correct = document.getElementById('new-correct-choices').value.split(',').map(Number);
     }
-
+    
     questions.push(newQ);
     localStorage.setItem('quiz_questions', JSON.stringify(questions));
-    alert("Вопрос добавлен!");
-    renderAdminQuestions();
+    alert("Вопрос сохранен!");
+    renderAdminList();
 }
 
-// ... ОСТАЛЬНЫЕ ФУНКЦИИ (switchScreen, generateShareLink и т.д.)
-function switchScreen(screenId) {
-    // Скрываем все экраны
-    document.getElementById('quiz-screen').classList.add('hidden');
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('admin-screen').classList.add('hidden');
-    
-    // Показываем нужный
-    const screen = document.getElementById(screenId + '-screen');
-    if (screen) {
-        screen.classList.remove('hidden');
-    }
+function renderAdminList() {
+    const list = document.getElementById('admin-questions-list');
+    if (!list) return;
+    list.innerHTML = questions.map((q, i) => `<div>${i+1}. ${q.title}</div>`).join('');
 }
 
-// В самом конце script.js добавь это, если этого нет:
+// --- ТЕМЫ И СЕРВИСЫ ---
+function setTheme(theme) {
+    document.body.style.backgroundColor = (theme === 'dark') ? '#121214' : '#f4f4f9';
+    document.body.style.color = (theme === 'dark') ? '#ffffff' : '#333333';
+}
+
+function generateShareLink() {
+    alert("Ссылка сгенерирована (в разработке)!");
+}
+
+// Старт
 document.addEventListener('DOMContentLoaded', () => {
     if (questions.length > 0) renderQuestion();
+    renderAdminList();
 });
