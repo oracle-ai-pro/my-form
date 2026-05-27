@@ -118,7 +118,20 @@ function nextStep() {
     if (currentIndex < questions.length) renderQuestion();
     else alert("Тест завершен!");
 }
+// Добавь это в секцию "2. ДВИЖОК ТЕМЫ И ЭКРАНОВ"
+function toggleToolsMenu() {
+    const menu = document.getElementById('tools-menu');
+    menu.classList.toggle('hidden');
+}
 
+// Добавь это в секцию "4. ДВИЖОК ТЕСТА", чтобы вопросы отображались
+function renderQuestion() {
+    if (questions.length === 0) return;
+    const q = questions[currentIndex];
+    const body = document.getElementById('question-body');
+    body.innerHTML = `<h3>${q.title}</h3>`;
+    // Тут будет отрисовка вариантов (radio/checkbox)
+}
 // ==========================================
 // 5. ИНИЦИАЛИЗАЦИЯ
 // ==========================================
