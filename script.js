@@ -552,9 +552,6 @@ document.addEventListener("DOMContentLoaded", () => {
         questions = loadQuestions();
     }
 
-    switchScreen('quiz');
-});
-
     if (!questions || questions.length === 0) {
         questions = defaultQuestions;
     }
