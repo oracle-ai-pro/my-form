@@ -7,13 +7,10 @@ const defaultQuestions = [
 
 let questions = JSON.parse(localStorage.getItem('quiz_questions')) || defaultQuestions;
 let currentIndex = 0;
-let userAnswers = [];
 let currentTimerInterval = null;
-let timeLeft = 0;
-let isExplanationState = false;
 
 // ==========================================
-// 2. ДВИЖОК ТЕМЫ И ЭКРАНОВ
+// 2. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (Темы и Экраны)
 // ==========================================
 function setTheme(theme) {
     if (theme === 'dark') {
@@ -23,11 +20,13 @@ function setTheme(theme) {
         document.body.classList.remove('dark-theme');
         localStorage.setItem('theme', 'light');
     }
-    document.getElementById('tools-menu').classList.add('hidden');
+}
+
+function toggleToolsMenu() {
+    document.getElementById('tools-menu').classList.toggle('hidden');
 }
 
 function switchScreen(screenName) {
-    clearInterval(currentTimerInterval);
     document.querySelectorAll('.quiz-container, .admin-box').forEach(el => el.classList.add('hidden'));
     
     if (screenName === 'quiz') {
@@ -54,6 +53,19 @@ function changeAdminCreds() {
     }
 }
 
+function tryLogin() {
+    const user = document.getElementById('login-user').value;
+    const pass = document.getElementById('login-pass').value;
+    const savedUser = localStorage.getItem('admin_user') || 'admin';
+    const savedPass = localStorage.getItem('admin_pass') || '1234';
+
+    if (user === savedUser && pass === savedPass) {
+        switchScreen('admin');
+    } else {
+        alert("Неверный логин или пароль!");
+    }
+}
+
 function saveAndRefresh() {
     localStorage.setItem('quiz_questions', JSON.stringify(questions));
     renderAdminQuestions();
@@ -71,12 +83,17 @@ function editQuestion(index) {
     const q = questions[index];
     document.getElementById('new-title').value = q.title;
     document.getElementById('new-type').value = q.type;
-    alert("Вопрос загружен в форму для редактирования.");
+    alert("Вопрос загружен в поля ввода.");
 }
 
 function previewQuestion(index) {
     currentIndex = index;
     switchScreen('quiz');
+}
+
+function deleteQuestion(index) {
+    questions.splice(index, 1);
+    saveAndRefresh();
 }
 
 function renderAdminQuestions() {
@@ -97,11 +114,6 @@ function renderAdminQuestions() {
     });
 }
 
-function deleteQuestion(index) {
-    questions.splice(index, 1);
-    saveAndRefresh();
-}
-
 // ==========================================
 // 4. ДВИЖОК ТЕСТА
 // ==========================================
@@ -110,7 +122,8 @@ function renderQuestion() {
     const q = questions[currentIndex];
     document.getElementById('current-number').innerText = currentIndex + 1;
     document.getElementById('total-number').innerText = questions.length;
-    // ... логика отрисовки вопроса (html сборка) ...
+    // Отрисовка тела вопроса
+    document.getElementById('question-body').innerHTML = `<div class="q-title">${q.title}</div>`;
 }
 
 function nextStep() {
@@ -118,38 +131,12 @@ function nextStep() {
     if (currentIndex < questions.length) renderQuestion();
     else alert("Тест завершен!");
 }
-// Добавь это в секцию "2. ДВИЖОК ТЕМЫ И ЭКРАНОВ"
-function toggleToolsMenu() {
-    const menu = document.getElementById('tools-menu');
-    menu.classList.toggle('hidden');
-}
 
-// Добавь это в секцию "4. ДВИЖОК ТЕСТА", чтобы вопросы отображались
-function renderQuestion() {
-    if (questions.length === 0) return;
-    const q = questions[currentIndex];
-    const body = document.getElementById('question-body');
-    body.innerHTML = `<h3>${q.title}</h3>`;
-    // Тут будет отрисовка вариантов (radio/checkbox)
-}
 // ==========================================
 // 5. ИНИЦИАЛИЗАЦИЯ
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-    // Восстановление темы
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
-
-    // Загрузка вопросов из URL (zip) или localStorage
-    const urlParams = new URLSearchParams(window.location.search);
-    const zipData = urlParams.get('zip');
-    
-    if (zipData) {
-        try {
-            const decompressed = LZString.decompressFromEncodedURIComponent(zipData);
-            questions = JSON.parse(decompressed);
-        } catch (e) { console.error(e); }
-    }
-    
     switchScreen('quiz');
 });
