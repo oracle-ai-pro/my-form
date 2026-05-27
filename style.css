@@ -61,3 +61,25 @@ input:checked + .slider:before { transform: translateX(20px); }
 .question-list-item { background: var(--bg-option-hover); padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid var(--border-color); }
 .footer-nav { margin-top: 20px; font-size: 14px; }
 .footer-nav a { color: var(--primary); text-decoration: none; cursor: pointer; font-weight: bold; }
+
+/* Перекрашиваем стандартные элементы в темной теме */
+body.dark-theme input[type="radio"],
+body.dark-theme input[type="checkbox"] {
+    accent-color: var(--primary); /* Делаем галочку/точку яркой */
+    filter: brightness(0.8);      /* Немного приглушаем сам элемент */
+}
+
+body.dark-theme select, 
+body.dark-theme input[type="text"], 
+body.dark-theme input[type="number"], 
+body.dark-theme textarea {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+/* Стили для выпадающего списка (select) в темной теме */
+body.dark-theme select option {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+}
