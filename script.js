@@ -484,6 +484,12 @@ function editQuestion(i) {
     
     document.querySelector('.admin-box').scrollTop = 0;
 }
+function deleteQuestion(i) {
+    allForms[currentFormId].questions.splice(i, 1);
+    save(); // Сохраняем изменения в localStorage
+    renderAdminQuestions(); // Обновляем список на экране
+}
+
 
 function exportFormToJSON() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allForms[currentFormId]));
