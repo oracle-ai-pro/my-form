@@ -309,7 +309,6 @@ const resetMic = btn => {
 // ==========================================
 // 4. ОПЦИИ И ИНТЕРФЕЙС (ТЕМЫ И МЕНЮ)
 // ==========================================
-const toggleToolsMenu = () => document.getElementById('tools-menu').classList.toggle('hidden');
 
 document.addEventListener('click', e => {
     const m = document.getElementById('tools-menu');
