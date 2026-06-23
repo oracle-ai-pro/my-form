@@ -109,13 +109,6 @@ function renderQuestion() {
     isExplanationState = currentVoiceAnswer = null;
     const nextBtn = document.getElementById('next-btn');
     if (nextBtn) { nextBtn.innerText = "Далее"; nextBtn.disabled = false; nextBtn.classList.remove('hidden'); }
-    let html = `
-        <h3 style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <span>${q.title}</span> ${q.required ? '<span style="color:red">*</span>' : ''}
-            <button class="speak-btn" onclick="speakText('${q.title.replace(/'/g, "\\'")}')" title="Озвучить вопрос">
-                <span class="material-symbols-rounded" style="font-size: 16px;">volume_up</span>
-            </button>
-        </h3>`;
 
     if (!questions?.length) {
         document.getElementById('question-body').innerHTML = `
@@ -127,7 +120,14 @@ function renderQuestion() {
         document.getElementById('current-number').innerText = document.getElementById('total-number').innerText = "0";
         return;
     }
-
+let html = `
+        <h3 style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span>${q.title}</span> ${q.required ? '<span style="color:red">*</span>' : ''}
+            <button class="speak-btn" onclick="speakText('${q.title.replace(/'/g, "\\'")}')" title="Озвучить вопрос">
+                <span class="material-symbols-rounded" style="font-size: 16px;">volume_up</span>
+            </button>
+        </h3>`;
+    
     const q = questions[currentIndex];
     document.getElementById('current-number').innerText = currentIndex + 1;
     document.getElementById('total-number').innerText = questions.length;
