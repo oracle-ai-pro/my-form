@@ -64,8 +64,8 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 /* Стили для продвинутой карточки */
 .voice-card {
-    background: #ffffff;
-    border: 2px solid #e0e0e0;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
     border-radius: 16px;
     padding: 40px 20px;
     text-align: center;
@@ -75,19 +75,20 @@ input:checked + .slider:before { transform: translateX(20px); }
     margin: 20px 0;
 }
 
+/* Красный бордер при наведении показывает, что клик сбросит ответ */
 .voice-card:hover {
     transform: translateY(-2px);
-    border-color: #ff4d4f;
+    border-color: var(--danger);
 }
 
 .voice-card h3 {
     margin-bottom: 20px;
     font-size: 22px;
-    color: #333;
+    color: var(--text-main);
 }
 
 .voice-btn {
-    background: #1890ff;
+    background: var(--primary);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -98,15 +99,17 @@ input:checked + .slider:before { transform: translateX(20px); }
     align-items: center;
     gap: 8px;
     transition: background 0.2s;
+    width: auto; /* Отменяет ширину 100% от базовых кнопок */
+    margin: 0 auto;
 }
 
 .voice-btn:hover {
-    background: #40a9ff;
+    background: var(--primary-hover);
 }
 
 /* Эффект записи */
 .voice-btn.recording {
-    background: #ff4d4f;
+    background: var(--danger);
     animation: pulse 1.5s infinite;
 }
 
@@ -119,7 +122,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 .voice-status {
     margin-top: 15px;
     font-size: 14px;
-    color: #666;
+    color: var(--text-muted);
     min-height: 20px;
 }
-
