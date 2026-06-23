@@ -464,3 +464,37 @@ async function generateShareLink() {
         alert("Ошибка сжатия. Если форма невероятно огромная, используйте скачивание .json файла в админке!");
     }
 }
+// ==========================================
+// 6. НАВИГАЦИЯ, АВТОРИЗАЦИЯ И ВХОД В АДМИНКУ
+// ==========================================
+
+// Функция для переключения экранов (скрывает одни окна и показывает другие)
+function switchScreen(screen) {
+    document.getElementById('quiz-screen').classList.toggle('hidden', screen !== 'quiz');
+    document.getElementById('login-screen').classList.toggle('hidden', screen !== 'login');
+    document.getElementById('admin-screen').classList.toggle('hidden', screen !== 'admin');
+    
+    // Если перешли в админку — сразу обновляем там список вопросов текущей формы
+    if (screen === 'admin') renderAdminQuestions();
+}
+
+// Проверка логина и пароля при входе в панель управления
+function tryLogin() {
+    const userField = document.getElementById('login-user');
+    const passField = document.getElementById('login-pass');
+    
+    if (userField.value === 'admin' && passField.value === '1234') {
+        // Очищаем поля ввода для безопасности
+        userField.value = '';
+        passField.value = '';
+        // Переводим на экран админки
+        switchScreen('admin');
+    } else {
+        alert("Неверный логин или пароль! Попробуйте еще раз.");
+    }
+}
+
+// Выход из панели администратора обратно к тестам
+function logout() {
+    switchScreen('quiz');
+}
