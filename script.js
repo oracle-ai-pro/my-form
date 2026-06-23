@@ -105,8 +105,6 @@ function deleteForm(e, id) {
 // 2. ДВИЖОК ТЕСТИРОВАНИЯ
 // ==========================================
 // Переменная теперь хранит объект: { text: "что сказал", status: "correct"/"incorrect"/"skipped" }
-let currentVoiceAnswer = null; 
-
 function renderQuestion() {
     clearInterval(currentTimerInterval);
     isExplanationState = currentVoiceAnswer = null;
