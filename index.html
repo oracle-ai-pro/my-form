@@ -55,11 +55,14 @@
     <div style="border-bottom:2px solid var(--border-color); padding-bottom:20px; margin-bottom:20px;">
         <h3>Добавить новый вопрос:</h3>
         <label>Тип поля ввода:</label>
-        <select id="new-type" onchange="toggleAdminFields()">
-            <option value="radio">Одиночный выбор (Radio)</option>
-            <option value="checkbox">Множественный выбор (Checkbox)</option>
-            <option value="select">Выпадающий список (Select)</option>
-            <option value="text">Ввод текста / слова (Text)</option>
+            <select id="new-type" onchange="toggleAdminFields()">
+    <option value="radio">Одиночный выбор (Radio)</option>
+    <option value="checkbox">Множественный выбор (Checkbox)</option>
+    <option value="select">Выпадающий список (Select)</option>
+    <option value="text">Ввод текста / слова (Text)</option>
+    <option value="voice_card">Продвинутые карточки (Голос)</option>
+</select>
+
         </select>
         
         <label>Текст вопроса (для Text можно использовать [input]):</label>
