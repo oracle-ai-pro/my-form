@@ -104,6 +104,9 @@ function deleteForm(e, id) {
 // ==========================================
 // 2. ДВИЖОК ТЕСТИРОВАНИЯ
 // ==========================================
+// Переменная теперь хранит объект: { text: "что сказал", status: "correct"/"incorrect"/"skipped" }
+let currentVoiceAnswer = null; 
+
 function renderQuestion() {
     clearInterval(currentTimerInterval);
     isExplanationState = currentVoiceAnswer = null;
@@ -137,10 +140,15 @@ function renderQuestion() {
         html += `
             <div class="voice-card" onclick="handleVoiceCardFail()">
                 <h3>${q.title}</h3>
-                <button class="voice-btn" id="mic-btn" onclick="startVoiceRecognition(event, '${q.correctText?.join(',') || ''}')">
-                    <span class="material-symbols-rounded">mic</span> Нажать и сказать
-                </button>
-                <div class="voice-status" id="voice-status">Скажите ответ или нажмите на карточку, если не знаете его.</div>
+                <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+                    <button class="voice-btn" id="mic-btn" onclick="startVoiceRecognition(event, '${q.correctText?.join(',') || ''}')">
+                        <span class="material-symbols-rounded">mic</span> Нажать и сказать
+                    </button>
+                    <button class="skip-voice-btn" onclick="event.stopPropagation(); handleVoiceCardFail('Не могу говорить');">
+                        <span class="material-symbols-rounded" style="font-size:16px;">volume_off</span> Я не могу говорить
+                    </button>
+                </div>
+                <div class="voice-status" id="voice-status">Скажите ответ или нажмите на карточку, чтобы посмотреть его.</div>
             </div>`;
     }
     document.getElementById('question-body').innerHTML = html + `<div id="explanation-container" class="hidden" style="margin-top:15px; padding:15px; border-radius:12px; background:#fff3cd; color:#333;"></div>`;
@@ -166,7 +174,7 @@ function nextStep(isTimeout = false) {
         return;
     }
 
-    let answers = [], rawValue = "";
+    let answers = [], rawValue = "", voiceStatus = null;
 
     if (!isTimeout) {
         if (q.type === 'radio') {
@@ -182,22 +190,38 @@ function nextStep(isTimeout = false) {
         } else if (q.type === 'text') {
             rawValue = document.getElementById('quiz_text').value.trim();
         } else if (q.type === 'voice_card') {
-            if (currentVoiceAnswer === null) { alert("Ответьте голосом или нажмите на карточку, если не знаете ответ!"); return; }
-            rawValue = currentVoiceAnswer;
+            if (currentVoiceAnswer === null) { alert("Ответьте голосом или откройте карточку!"); return; }
+            rawValue = currentVoiceAnswer.text;
+            voiceStatus = currentVoiceAnswer.status; // забираем статус "correct", "incorrect" или "skipped"
         }
         if (q.required && answers.length === 0 && rawValue === "" && q.type !== 'voice_card') { alert("Этот вопрос обязателен!"); return; }
     } else { rawValue = "[Время истекло]"; }
 
     clearInterval(currentTimerInterval);
-    let isCorrect = false;
-
-    if (q.type === 'text' || q.type === 'voice_card') {
-        if (q.correctText) isCorrect = q.correctText.some(t => t.toLowerCase().trim() === rawValue.toLowerCase().trim());
+    
+    // Определяем финальное состояние: правильный, неправильный или пропущенный
+    let finalStatus = "incorrect"; 
+    
+    if (q.type === 'voice_card' && voiceStatus) {
+        finalStatus = voiceStatus; // Для голоса статус ставит сам микрофон или тап по карте
+    } else if (q.type === 'text') {
+        if (q.correctText) {
+            let ok = q.correctText.some(t => t.toLowerCase().trim() === rawValue.toLowerCase().trim());
+            finalStatus = ok ? "correct" : "incorrect";
+        }
     } else {
-        if (q.correct && q.correct.length === answers.length) isCorrect = q.correct.every(v => answers.includes(v));
+        if (q.correct && q.correct.length === answers.length) {
+            let ok = q.correct.every(v => answers.includes(v));
+            finalStatus = ok ? "correct" : "incorrect";
+        }
     }
 
-    userAnswers.push({ title: q.title, userAns: rawValue, isCorrect, correctInfo: (q.type === 'text' || q.type === 'voice_card') ? q.correctText?.join(' / ') : q.correct?.map(i => q.options[i]).join(', ') });
+    userAnswers.push({ 
+        title: q.title, 
+        userAns: rawValue, 
+        finalStatus: finalStatus, // сохраняем точный статус
+        correctInfo: (q.type === 'text' || q.type === 'voice_card') ? q.correctText?.join(' / ') : q.correct?.map(i => q.options[i]).join(', ') 
+    });
 
     if (q.exp && q.exp.desc && !isTimeout) {
         isExplanationState = true;
@@ -221,17 +245,58 @@ function nextStep(isTimeout = false) {
 function showResults() {
     document.getElementById('quiz-box').classList.add('hidden');
     document.getElementById('result-box').classList.remove('hidden');
-    let correctCount = userAnswers.filter(a => a.isCorrect).length;
+    
+    // Считаем только реально угаданные
+    let correctCount = userAnswers.filter(a => a.finalStatus === "correct").length;
     document.getElementById('final-score').innerText = `${correctCount} / ${userAnswers.length}`;
     
-    document.getElementById('review-box').innerHTML = userAnswers.map(a => `
-        <div class="review-item ${a.isCorrect ? 'correct-item' : 'incorrect-item'}">
-            <strong>${a.title}</strong><br>
-            Ваш ответ: <span class="${a.isCorrect ? 'text-success' : 'text-danger'}">${a.userAns || '[Пусто]'}</span><br>
-            Правильный: <span class="text-success">${a.correctInfo || '[Нет данных]'}</span>
-        </div>
-    `).join('');
+    document.getElementById('review-box').innerHTML = userAnswers.map(a => {
+        let itemClass = "incorrect-item";
+        let textClass = "text-danger";
+        let displayAns = a.userAns || '[Пусто]';
+        
+        if (a.finalStatus === "correct") {
+            itemClass = "correct-item"; textClass = "text-success";
+        } else if (a.finalStatus === "skipped") {
+            itemClass = "skipped-item"; textClass = "text-skipped";
+        }
+
+        return `
+            <div class="review-item ${itemClass}">
+                <strong>${a.title}</strong><br>
+                Ваш ответ: <span class="${textClass}">${displayAns}</span><br>
+                Правильный: <span class="text-success">${a.correctInfo || '[Нет данных]'}</span>
+            </div>
+        `;
+    }).join('');
 }
+
+// УПРАВЛЕНИЕ МИКРОФОНОМ И ТАПОМ ПО КАРТЕ
+function handleVoiceCardFail(reason = "Подсмотрел(-а)") {
+    const status = document.getElementById('voice-status');
+    const q = questions[currentIndex];
+    const correctAnswersText = q.correctText ? q.correctText.join(' / ') : '';
+    
+    if (status) status.innerHTML = `⚠️ <strong>${reason}:</strong> За картой было слово: "${correctAnswersText}"`;
+    
+    // Ставим статус СКРЫТОГО / ОТЛОЖЕННОГО ответа
+    currentVoiceAnswer = { text: `[${reason}]`, status: "skipped" };
+    
+    const card = document.querySelector('.voice-card');
+    if (card) card.style.borderColor = 'var(--gray)';
+    
+    setTimeout(() => nextStep(), 1500); // Даем полторы секунды увидеть правильный ответ перед переходом
+}
+
+function startVoiceRecognition(event, correctAnswersStr) {
+    event.stopPropagation();
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) { alert("Ваш браузер не поддерживает распознавание речи. Используйте Google Chrome."); return; }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU'; recognition.interimResults = false;
+    const btn = document.getElementById('mic-btn'), status = document.getElementById('voice-status'), card = document.querySelector('.voice-card');
+btn.classList.add('recording'); btn.innerText = "Слушаю...";if (status) status.innerText = "Говорите слово...";recognition.start();recognition.onresult = function(e) {const userSpeech = e.results[0].transcript.trim();if (status) status.innerText = Вы сказали: "${userSpeech}";const allowed = correctAnswersStr.split(',').map(item => item.trim().toLowerCase());if (allowed.includes(userSpeech.toLowerCase())) {if (status) status.innerHTML = 🎉 <strong>Правильно!</strong> Вы сказали: "${userSpeech}";if (card) card.style.borderColor = 'var(--success)';currentVoiceAnswer = { text: userSpeech, status: "correct" };} else {if (status) status.innerHTML = ❌ <strong>Неверно.</strong> Вы сказали: "${userSpeech}".<br><small>Ожидалось: ${correctAnswersStr}</small>;if (card) card.style.borderColor = 'var(--danger)';currentVoiceAnswer = { text: userSpeech, status: "incorrect" };}};recognition.onerror = () => { if(status) status.innerText = "Ошибка работы микрофона."; resetMic(btn); };recognition.onend = () => resetMic(btn);}    
 
 function restartQuiz() {
     currentIndex = 0; userAnswers = [];
@@ -386,18 +451,62 @@ function addQuestion() {
 function renderAdminQuestions() {
     const list = document.getElementById('admin-questions-list');
     if (!list) return;
+    
     list.innerHTML = (allForms[currentFormId].questions || []).map((q, i) => `
-        <div class="question-list-item"> 
-            <span>${i + 1}. ${q.title} (${q.type})</span> 
-            <button class="btn-danger" onclick="deleteQuestion(${i})">Удалить</button> 
+        <div class="question-list-item" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <span style="flex-grow:1;">${i + 1}. ${q.title} <strong>(${q.type})</strong></span>
+            <div style="display:flex; gap:5px;">
+                <button class="btn-secondary" onclick="editQuestion(${i})" style="margin:0; padding:6px 10px; font-size:12px; width:auto;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Изменить</button>
+                <button class="btn-danger" onclick="deleteQuestion(${i})" style="margin:0; padding:6px 10px; font-size:12px; width:auto;"><span class="material-symbols-rounded" style="font-size:14px;">delete</span></button>
+            </div>
         </div>
     `).join('');
 }
 
-function deleteQuestion(i) {
+// Загружает вопрос обратно в форму для редактирования
+function editQuestion(i) {
+    const q = allForms[currentFormId].questions[i];
+    
+    // Заполняем базовые поля
+    document.getElementById('new-type').value = q.type;
+    document.getElementById('new-title').value = q.title;
+    document.getElementById('new-required').checked = q.required || false;
+    document.getElementById('toggle-timer-input').checked = q.useTimer || false;
+    document.getElementById('new-timer').value = q.timer || 20;
+    
+    // Включаем отображение полей таймера, если надо
+    document.getElementById('timer-val-box').classList.toggle('hidden', !q.useTimer);
+
+    // Заполняем объяснения, если они есть
+    if (q.exp) {
+        document.getElementById('toggle-exp-input').checked = true;
+        document.getElementById('exp-fields-box').classList.remove('hidden');
+        document.getElementById('new-exp-title').value = q.exp.title || '';
+        document.getElementById('new-exp-desc').value = q.exp.desc || '';
+        document.getElementById('new-exp-timer').value = q.exp.hold || 0;
+    } else {
+        document.getElementById('toggle-exp-input').checked = false;
+        document.getElementById('exp-fields-box').classList.add('hidden');
+    }
+
+    // Заполняем ответы в зависимости от типа
+    if (q.type === 'text' || q.type === 'voice_card') {
+        document.getElementById('new-correct-text').value = q.correctText ? q.correctText.join(', ') : '';
+    } else {
+        document.getElementById('new-options').value = q.options ? q.options.join(', ') : '';
+        document.getElementById('new-correct-choices').value = q.correct ? q.correct.join(', ') : '';
+    }
+
+    // Переключаем видимость полей админки (текст/варианты)
+    toggleAdminFields();
+
+    // Удаляем старую версию вопроса из массива, чтобы новое сохранение встало на его место
     allForms[currentFormId].questions.splice(i, 1);
-    save(); 
+    save();
     renderAdminQuestions();
+    
+    // Скроллим админку наверх к форме ввода
+    document.querySelector('.admin-box').scrollTop = 0;
 }
 
 function exportFormToJSON() {
