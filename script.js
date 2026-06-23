@@ -109,6 +109,13 @@ function renderQuestion() {
     isExplanationState = currentVoiceAnswer = null;
     const nextBtn = document.getElementById('next-btn');
     if (nextBtn) { nextBtn.innerText = "Далее"; nextBtn.disabled = false; nextBtn.classList.remove('hidden'); }
+    let html = `
+        <h3 style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span>${q.title}</span> ${q.required ? '<span style="color:red">*</span>' : ''}
+            <button class="speak-btn" onclick="speakText('${q.title.replace(/'/g, "\\'")}')" title="Озвучить вопрос">
+                <span class="material-symbols-rounded" style="font-size: 16px;">volume_up</span>
+            </button>
+        </h3>`;
 
     if (!questions?.length) {
         document.getElementById('question-body').innerHTML = `
@@ -273,15 +280,21 @@ function restartQuiz() {
 function handleVoiceCardFail(reason = "Подсмотрел(-а)") {
     const status = document.getElementById('voice-status');
     const q = questions[currentIndex];
+    const firstCorrectAnswer = q.correctText ? q.correctText[0] : ''; // Берем первый синоним
     const correctAnswersText = q.correctText ? q.correctText.join(' / ') : '';
     
     if (status) status.innerHTML = `⚠️ <strong>${reason}:</strong> За картой было слово: "${correctAnswersText}"`;
-    currentVoiceAnswer = { text: `[${reason}]`, status: "skipped" };
     
+    // Автоматически проговариваем правильное слово!
+    if (firstCorrectAnswer) speakText(firstCorrectAnswer);
+    
+    currentVoiceAnswer = { text: `[${reason}]`, status: "skipped" };
     const card = document.querySelector('.voice-card');
     if (card) card.style.borderColor = 'var(--gray)';
-    setTimeout(() => nextStep(), 1500);
+    
+    setTimeout(() => nextStep(), 1800); // Чуть увеличили таймер, чтобы успело договорить
 }
+
 
 function startVoiceRecognition(event, correctAnswersStr) {
     event.stopPropagation();
@@ -583,4 +596,21 @@ async function generateShareLink() {
         console.error(e);
         alert("Ошибка сжатия. Используйте скачивание .json файла!");
     }
+}
+// Функция озвучки текста голосом
+function speakText(text) {
+    if (!('speechSynthesis' in window)) {
+        alert("Ваш браузер не поддерживает озвучку текста.");
+        return;
+    }
+    // Останавливаем прошлую озвучку, если она еще говорит
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Автоматически определяем язык: если есть английские буквы — читаем по-английски
+    utterance.lang = /[a-zA-Z]/.test(text) ? 'en-US' : 'ru-RU';
+    utterance.rate = 1.0; // Скорость речи
+    
+    window.speechSynthesis.speak(utterance);
 }
