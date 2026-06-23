@@ -1,44 +1,41 @@
 :root {
-    --bg-body: #f0f2f5; 
-    --bg-card: #ffffff; 
-    --text-main: #212529; 
-    --text-muted: #6c757d;
-    --border-color: #e9ecef; 
-    --bg-option-hover: #f8f9fa; 
-    --bg-review-correct: #f4fbf6; 
-    --bg-review-incorrect: #fff5f5;
-    --primary: #007bff; 
-    --primary-hover: #0056b3; 
-    --success: #28a745; 
-    --danger: #dc3545; 
-    --gray: #6c757d;
-    --radius-max: 24px; 
-    --radius-mid: 14px;  
+    --bg-body: #f0f2f5; --bg-card: #ffffff; --text-main: #212529; --text-muted: #6c757d;
+    --border-color: #e9ecef; --bg-option-hover: #f8f9fa; 
+    --bg-review-correct: #f4fbf6; --bg-review-incorrect: #fff5f5;
+    --bg-review-skipped: #f1f3f5; /* НОВОЕ: Серый фон для пропущенных */
+    --primary: #007bff; --primary-hover: #0056b3; --success: #28a745; --danger: #dc3545; --gray: #6c757d;
+    --radius-max: 24px; --radius-mid: 14px;  
 }
 
 body.dark-theme {
-    --bg-body: #050505; 
-    --bg-card: #0f0f0f; 
-    --text-main: #f0f2f5; 
-    --text-muted: #a0a0a0;
-    --border-color: #222222; 
-    --bg-option-hover: #1a1a1a; 
-    --bg-review-correct: #14251b; 
-    --bg-review-incorrect: #2d1616;
+    --bg-body: #050505; --bg-card: #0f0f0f; --text-main: #f0f2f5; --text-muted: #a0a0a0;
+    --border-color: #222222; --bg-option-hover: #1a1a1a; 
+    --bg-review-correct: #14251b; --bg-review-incorrect: #2d1616;
+    --bg-review-skipped: #1d1d1d; /* НОВОЕ: Темно-серый для темной темы */
 }
 
-body { 
-    font-family: 'Segoe UI', sans-serif; 
-    background: var(--bg-body); 
-    margin: 0; 
-    padding: 20px; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    min-height: 100vh; 
-    transition: 0.3s; 
-    color: var(--text-main); 
+/* Финальные карточки отчета */
+.review-item.correct-item { border-left-color: var(--success); background: var(--bg-review-correct); }
+.review-item.incorrect-item { border-left-color: var(--danger); background: var(--bg-review-incorrect); }
+.review-item.skipped-item { border-left-color: var(--gray); background: var(--bg-review-skipped); } /* Серый статус */
+
+.text-success { color: var(--success); font-weight: bold; }
+.text-danger { color: var(--danger); font-weight: bold; }
+.text-skipped { color: var(--gray); font-weight: bold; } /* Серый текст */
+
+/* Вспомогательный класс для кнопок пропуска внутри карточки */
+.skip-voice-btn {
+    background: var(--gray) !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    border-radius: 50px !important;
+    cursor: pointer;
+    width: auto !important;
+    margin: 10px auto 0 auto !important;
 }
+.skip-voice-btn:hover { background: #5a6268 !important; }
 
 .quiz-container, .admin-box { 
     width: 100%; 
