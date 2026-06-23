@@ -260,3 +260,105 @@ input:checked + .slider:before { transform: translateX(20px); }
     color: var(--text-muted);
     min-height: 20px;
 }
+/* ==========================================
+   ИСПРАВЛЕНИЕ ПОЗИЦИОНИРОВАНИЯ И ВЕРСТКИ
+   ========================================== */
+
+/* Блок вкладок должен растягиваться на всю ширину */
+.forms-tabs-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 12px;
+    width: 100%;
+}
+
+.forms-tabs-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    flex-grow: 1;
+}
+
+/* Сами вкладки должны быть компактными строками, а не блоками на весь экран */
+.form-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-option-hover);
+    color: var(--text-main);
+    padding: 6px 14px;
+    border-radius: var(--radius-mid);
+    border: 1px solid var(--border-color);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: 0.2s ease;
+}
+
+/* Кнопка-плюсик */
+.add-form-btn {
+    background: var(--success);
+    color: white;
+    border: none;
+    width: 34px;
+    height: 34px;
+    min-width: 34px; /* Чтобы не сжималась */
+    padding: 0;
+    margin: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ограничиваем базовые кнопки, чтобы они не растягивали иконки в меню */
+button { 
+    display: inline-flex; /* Поменяли display, чтобы кнопки вели себя предсказуемо */
+    align-items: center; 
+    justify-content: center; 
+    gap: 8px; 
+    width: 100%; 
+    background: var(--primary); 
+    color: white; 
+    border: none; 
+    padding: 14px; 
+    font-size: 16px; 
+    font-weight: bold; 
+    border-radius: var(--radius-mid); 
+    cursor: pointer; 
+    margin-top: 20px; 
+    transition: 0.2s; 
+}
+
+/* Кнопка "Опции" в углу должна оставаться маленькой */
+.tools-btn {
+    width: auto !important;
+    padding: 6px 12px !important;
+    margin-top: 0 !important;
+}
+
+/* Кнопка "Перейти в админку" на пустом экране */
+.quiz-container button {
+    width: auto;
+    display: inline-flex;
+    padding: 10px 20px;
+    margin-top: 10px;
+}
+
+/* Исправляем кнопку закрытия на вкладке */
+.form-tab .close-tab-btn {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    color: inherit;
+    cursor: pointer;
+}
