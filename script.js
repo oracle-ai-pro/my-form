@@ -104,7 +104,6 @@ function deleteForm(e, id) {
 // ==========================================
 // 2. ДВИЖОК ТЕСТИРОВАНИЯ
 // ==========================================
-// Переменная теперь хранит объект: { text: "что сказал", status: "correct"/"incorrect"/"skipped" }
 function renderQuestion() {
     clearInterval(currentTimerInterval);
     isExplanationState = currentVoiceAnswer = null;
@@ -153,7 +152,7 @@ function renderQuestion() {
 
     const tDisplay = document.getElementById('timer-display');
     if (q.useTimer && q.timer > 0) {
-        tDisplay.classList.remove('hidden');
+        if (tDisplay) tDisplay.classList.remove('hidden');
         timeLeft = q.timer; document.getElementById('timer-seconds').innerText = timeLeft;
         currentTimerInterval = setInterval(() => {
             timeLeft--; document.getElementById('timer-seconds').innerText = timeLeft;
@@ -190,18 +189,16 @@ function nextStep(isTimeout = false) {
         } else if (q.type === 'voice_card') {
             if (currentVoiceAnswer === null) { alert("Ответьте голосом или откройте карточку!"); return; }
             rawValue = currentVoiceAnswer.text;
-            voiceStatus = currentVoiceAnswer.status; // забираем статус "correct", "incorrect" или "skipped"
+            voiceStatus = currentVoiceAnswer.status;
         }
         if (q.required && answers.length === 0 && rawValue === "" && q.type !== 'voice_card') { alert("Этот вопрос обязателен!"); return; }
     } else { rawValue = "[Время истекло]"; }
 
     clearInterval(currentTimerInterval);
-    
-    // Определяем финальное состояние: правильный, неправильный или пропущенный
     let finalStatus = "incorrect"; 
-    
+
     if (q.type === 'voice_card' && voiceStatus) {
-        finalStatus = voiceStatus; // Для голоса статус ставит сам микрофон или тап по карте
+        finalStatus = voiceStatus;
     } else if (q.type === 'text') {
         if (q.correctText) {
             let ok = q.correctText.some(t => t.toLowerCase().trim() === rawValue.toLowerCase().trim());
@@ -217,14 +214,17 @@ function nextStep(isTimeout = false) {
     userAnswers.push({ 
         title: q.title, 
         userAns: rawValue, 
-        finalStatus: finalStatus, // сохраняем точный статус
+        finalStatus: finalStatus, 
         correctInfo: (q.type === 'text' || q.type === 'voice_card') ? q.correctText?.join(' / ') : q.correct?.map(i => q.options[i]).join(', ') 
     });
 
     if (q.exp && q.exp.desc && !isTimeout) {
         isExplanationState = true;
         const expBox = document.getElementById('explanation-container');
-        expBox.classList.remove('hidden'); expBox.innerHTML = `<strong>${q.exp.title || 'Объяснение'}:</strong> ${q.exp.desc}`;
+        if (expBox) {
+            expBox.classList.remove('hidden'); 
+            expBox.innerHTML = `<strong>${q.exp.title || 'Объяснение'}:</strong> ${q.exp.desc}`;
+        }
         const nextBtn = document.getElementById('next-btn');
         if (q.exp.hold > 0 && nextBtn) {
             nextBtn.disabled = true; let holdTime = q.exp.hold; nextBtn.innerText = `Продолжить (${holdTime}s)`;
@@ -244,46 +244,43 @@ function showResults() {
     document.getElementById('quiz-box').classList.add('hidden');
     document.getElementById('result-box').classList.remove('hidden');
     
-    // Считаем только реально угаданные
     let correctCount = userAnswers.filter(a => a.finalStatus === "correct").length;
     document.getElementById('final-score').innerText = `${correctCount} / ${userAnswers.length}`;
     
     document.getElementById('review-box').innerHTML = userAnswers.map(a => {
-        let itemClass = "incorrect-item";
-        let textClass = "text-danger";
-        let displayAns = a.userAns || '[Пусто]';
-        
-        if (a.finalStatus === "correct") {
-            itemClass = "correct-item"; textClass = "text-success";
-        } else if (a.finalStatus === "skipped") {
-            itemClass = "skipped-item"; textClass = "text-skipped";
-        }
-
+        let itemClass = "incorrect-item", textClass = "text-danger", displayAns = a.userAns || '[Пусто]';
+        if (a.finalStatus === "correct") { itemClass = "correct-item"; textClass = "text-success"; }
+        else if (a.finalStatus === "skipped") { itemClass = "skipped-item"; textClass = "text-skipped"; }
         return `
             <div class="review-item ${itemClass}">
                 <strong>${a.title}</strong><br>
                 Ваш ответ: <span class="${textClass}">${displayAns}</span><br>
                 Правильный: <span class="text-success">${a.correctInfo || '[Нет данных]'}</span>
-            </div>
-        `;
+            </div>`;
     }).join('');
 }
 
-// УПРАВЛЕНИЕ МИКРОФОНОМ И ТАПОМ ПО КАРТЕ
+function restartQuiz() {
+    currentIndex = 0; userAnswers = [];
+    document.getElementById('result-box').classList.add('hidden');
+    document.getElementById('quiz-box').classList.remove('hidden');
+    renderQuestion();
+}
+
+// ==========================================
+// 3. УПРАВЛЕНИЕ МИКРОФОНОМ И ТАПОМ ПО КАРТЕ
+// ==========================================
 function handleVoiceCardFail(reason = "Подсмотрел(-а)") {
     const status = document.getElementById('voice-status');
     const q = questions[currentIndex];
     const correctAnswersText = q.correctText ? q.correctText.join(' / ') : '';
     
     if (status) status.innerHTML = `⚠️ <strong>${reason}:</strong> За картой было слово: "${correctAnswersText}"`;
-    
-    // Ставим статус СКРЫТОГО / ОТЛОЖЕННОГО ответа
     currentVoiceAnswer = { text: `[${reason}]`, status: "skipped" };
     
     const card = document.querySelector('.voice-card');
     if (card) card.style.borderColor = 'var(--gray)';
-    
-    setTimeout(() => nextStep(), 1500); // Даем полторы секунды увидеть правильный ответ перед переходом
+    setTimeout(() => nextStep(), 1500);
 }
 
 function startVoiceRecognition(event, correctAnswersStr) {
@@ -294,72 +291,41 @@ function startVoiceRecognition(event, correctAnswersStr) {
     const recognition = new SpeechRecognition();
     recognition.lang = 'ru-RU'; recognition.interimResults = false;
     const btn = document.getElementById('mic-btn'), status = document.getElementById('voice-status'), card = document.querySelector('.voice-card');
-btn.classList.add('recording'); btn.innerText = "Слушаю...";if (status) status.innerText = "Говорите слово...";recognition.start();recognition.onresult = function(e) {const userSpeech = e.results[0].transcript.trim();if (status) status.innerText = Вы сказали: "${userSpeech}";const allowed = correctAnswersStr.split(',').map(item => item.trim().toLowerCase());if (allowed.includes(userSpeech.toLowerCase())) {if (status) status.innerHTML = 🎉 <strong>Правильно!</strong> Вы сказали: "${userSpeech}";if (card) card.style.borderColor = 'var(--success)';currentVoiceAnswer = { text: userSpeech, status: "correct" };} else {if (status) status.innerHTML = ❌ <strong>Неверно.</strong> Вы сказали: "${userSpeech}".<br><small>Ожидалось: ${correctAnswersStr}</small>;if (card) card.style.borderColor = 'var(--danger)';currentVoiceAnswer = { text: userSpeech, status: "incorrect" };}};recognition.onerror = () => { if(status) status.innerText = "Ошибка работы микрофона."; resetMic(btn); };recognition.onend = () => resetMic(btn);}    
-
-function restartQuiz() {
-    currentIndex = 0; userAnswers = [];
-    document.getElementById('result-box').classList.add('hidden');
-    document.getElementById('quiz-box').classList.remove('hidden');
-    renderQuestion();
-}
-
-// ==========================================
-// 3. ГОЛОСОВЫЕ КАРТОЧКИ (МИКРОФОН)
-// ==========================================
-function handleVoiceCardFail() {
-    const status = document.getElementById('voice-status');
-    if (status) status.innerText = "❌ Вы отметили этот ответ как неверный.";
-    currentVoiceAnswer = "[Не знаю ответ]";
-    const card = document.querySelector('.voice-card');
-    if (card) card.style.borderColor = 'var(--danger)';
-    setTimeout(() => nextStep(), 800);
-}
-
-function startVoiceRecognition(event, correctAnswersStr) {
-    event.stopPropagation();
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) { 
-        alert("Ваш браузер не поддерживает распознавание речи. Используйте Google Chrome."); 
-        return; 
-    }
     
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'ru-RU'; 
-    recognition.interimResults = false;
-    
-    const btn = document.getElementById('mic-btn');
-    const status = document.getElementById('voice-status');
-    const card = document.querySelector('.voice-card');
-    
-    if (btn) {
-        btn.classList.add('recording'); 
-        btn.innerText = "Слушаю...";
-    }
+    if (btn) { btn.classList.add('recording'); btn.innerText = "Слушаю..."; }
     if (status) status.innerText = "Говорите слово...";
-    
     recognition.start();
 
     recognition.onresult = function(e) {
-        const userSpeech = e.results[0].transcript.trim();
+        const userSpeech = e.results[0][0].transcript.trim();
         if (status) status.innerText = `Вы сказали: "${userSpeech}"`;
-        currentVoiceAnswer = userSpeech;
         
         const allowed = correctAnswersStr.split(',').map(item => item.trim().toLowerCase());
         
         if (allowed.includes(userSpeech.toLowerCase())) {
             if (status) status.innerHTML = `🎉 <strong>Правильно!</strong> Вы сказали: "${userSpeech}"`;
             if (card) card.style.borderColor = 'var(--success)';
+            currentVoiceAnswer = { text: userSpeech, status: "correct" };
         } else {
             if (status) status.innerHTML = `❌ <strong>Неверно.</strong> Вы сказали: "${userSpeech}".<br><small>Ожидалось: ${correctAnswersStr}</small>`;
             if (card) card.style.borderColor = 'var(--danger)';
+            currentVoiceAnswer = { text: userSpeech, status: "incorrect" };
         }
     };
-    
+
     recognition.onerror = () => { 
         if (status) status.innerText = "Ошибка работы микрофона."; 
         resetMic(btn); 
     };
+    
     recognition.onend = () => resetMic(btn);
+}
+function restartQuiz() {
+    currentIndex = 0; 
+    userAnswers = [];
+    document.getElementById('result-box').classList.add('hidden');
+    document.getElementById('quiz-box').classList.remove('hidden');
+    renderQuestion();
 }
 
 const resetMic = btn => { 
@@ -372,7 +338,6 @@ const resetMic = btn => {
 // ==========================================
 // 4. ОПЦИИ И ИНТЕРФЕЙС (ТЕМЫ И МЕНЮ)
 // ==========================================
-
 document.addEventListener('click', e => {
     const m = document.getElementById('tools-menu');
     const b = document.querySelector('.tools-btn');
@@ -403,7 +368,6 @@ function tryLogin() {
 }
 
 function logout() { switchScreen('quiz'); }
-
 // ==========================================
 // 5. ПАНЕЛЬ АДМИНИСТРАТОРА И ЭКСПОРТ
 // ==========================================
@@ -411,6 +375,17 @@ function toggleAdminFields() {
     const type = document.getElementById('new-type').value;
     document.getElementById('admin-choices-fields').classList.toggle('hidden', type === 'text' || type === 'voice_card');
     document.getElementById('admin-text-fields').classList.toggle('hidden', type !== 'text' && type !== 'voice_card');
+    
+    const textLabel = document.getElementById('admin-text-fields')?.querySelector('label');
+    if (textLabel) {
+        if (type === 'voice_card') {
+            textLabel.innerHTML = '🎤 Произносимое слово (можно через запятую для синонимов):';
+            document.getElementById('new-correct-text').placeholder = 'привет, hello, хай';
+        } else {
+            textLabel.innerHTML = 'Правильный текст (через запятую для синонимов):';
+            document.getElementById('new-correct-text').placeholder = 'ответ1, ответ2';
+        }
+    }
 }
 
 function addQuestion() {
@@ -461,21 +436,17 @@ function renderAdminQuestions() {
     `).join('');
 }
 
-// Загружает вопрос обратно в форму для редактирования
 function editQuestion(i) {
     const q = allForms[currentFormId].questions[i];
     
-    // Заполняем базовые поля
     document.getElementById('new-type').value = q.type;
     document.getElementById('new-title').value = q.title;
     document.getElementById('new-required').checked = q.required || false;
     document.getElementById('toggle-timer-input').checked = q.useTimer || false;
     document.getElementById('new-timer').value = q.timer || 20;
     
-    // Включаем отображение полей таймера, если надо
     document.getElementById('timer-val-box').classList.toggle('hidden', !q.useTimer);
 
-    // Заполняем объяснения, если они есть
     if (q.exp) {
         document.getElementById('toggle-exp-input').checked = true;
         document.getElementById('exp-fields-box').classList.remove('hidden');
@@ -487,7 +458,6 @@ function editQuestion(i) {
         document.getElementById('exp-fields-box').classList.add('hidden');
     }
 
-    // Заполняем ответы в зависимости от типа
     if (q.type === 'text' || q.type === 'voice_card') {
         document.getElementById('new-correct-text').value = q.correctText ? q.correctText.join(', ') : '';
     } else {
@@ -495,15 +465,11 @@ function editQuestion(i) {
         document.getElementById('new-correct-choices').value = q.correct ? q.correct.join(', ') : '';
     }
 
-    // Переключаем видимость полей админки (текст/варианты)
     toggleAdminFields();
-
-    // Удаляем старую версию вопроса из массива, чтобы новое сохранение встало на его место
     allForms[currentFormId].questions.splice(i, 1);
     save();
     renderAdminQuestions();
     
-    // Скроллим админку наверх к форме ввода
     document.querySelector('.admin-box').scrollTop = 0;
 }
 
@@ -539,62 +505,24 @@ function importFormFromJSON(input) {
     reader.readAsText(file);
 }
 
-async function generateShareLink() {
-    try {
-        const currentForm = allForms[currentFormId];
-        if (!currentForm || !currentForm.questions || currentForm.questions.length === 0) {
-            alert("Нельзя поделиться пустой формой! Сначала добавьте вопросы.");
-            return;
-        }
-
-        // Переводим форму в текст и сжимаем с помощью алгоритма Deflate
-        const jsonStr = JSON.stringify(currentForm);
-        const byteArray = new TextEncoder().encode(jsonStr);
-        
-        const stream = new Response(byteArray).body.pipeThrough(new CompressionStream("deflate"));
-        const compressedBuffer = await new Response(stream).arrayBuffer();
-        
-        // Превращаем сжатые байты в безопасную для URL строку Base64
-        const base64Str = btoa(String.fromCharCode(...new Uint8Array(compressedBuffer)))
-            .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); // Делаем Base64 URL-безопасным
-
-        // Формируем финальную короткую ссылку
-        const shareUrl = `${window.location.origin}${window.location.pathname}?zip=${base64Str}`;
-        
-        // Копируем в буфер обмена
-        await navigator.clipboard.writeText(shareUrl);
-        alert(`Форма "${currentForm.name}" сжата и скопирована в буфер обмена! Ссылка теперь короткая и откроется везде.`);
-        
-    } catch (e) {
-        console.error(e);
-        alert("Ошибка сжатия. Если форма невероятно огромная, используйте скачивание .json файла в админке!");
-    }
-}
-
 // ==========================================
 // 5.5 ОПЦИИ МЕНЮ И ФИЧА "BLACK SCREEN"
 // ==========================================
-
-// Переключение видимости меню опций
 function toggleToolsMenu() {
     const menu = document.getElementById('tools-menu');
     if (menu) menu.classList.toggle('hidden');
 }
 
-// Закрытие меню опций при клике в любое другое место экрана
 document.addEventListener('click', (e) => {
     const menu = document.getElementById('tools-menu');
     const btn = document.querySelector('.tools-btn');
     if (menu && !menu.classList.contains('hidden') && e.target !== menu && e.target !== btn && !btn?.contains(e.target)) {
-        m.classList.add('hidden');
+        menu.classList.add('hidden');
     }
 });
 
-// Активация режима черного экрана (A/V Mute)
 function toggleBlackScreen() {
     let overlay = document.getElementById('black-screen-overlay');
-    
-    // Если оверлея еще нет, создаем его динамически
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'black-screen-overlay';
@@ -614,60 +542,45 @@ function toggleBlackScreen() {
         overlay.style.fontSize = '12px';
         overlay.innerHTML = '<span>A/V MUTE (Tap or CTRL+M to exit)</span>';
         
-        // Выход из режима по тапу на экран
         overlay.onclick = () => overlay.classList.add('hidden');
         document.body.appendChild(overlay);
     }
-    
     overlay.classList.remove('hidden');
     const menu = document.getElementById('tools-menu');
-    if (menu) menu.classList.add('hidden'); // прячем меню опций
+    if (menu) menu.classList.add('hidden');
 }
 
-// Отслеживание сочетания клавиш CTRL+M для выхода или входа
 document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
-        e.preventDefault(); // отменяем стандартное действие браузера
+        e.preventDefault();
         const overlay = document.getElementById('black-screen-overlay');
         if (overlay && !overlay.classList.contains('hidden')) {
-            overlay.classList.add('hidden'); // если включен — выключаем
+            overlay.classList.add('hidden');
         } else {
-            toggleBlackScreen(); // если выключен — включаем
+            toggleBlackScreen();
         }
     }
 });
 
-// ==========================================
-// 6. НАВИГАЦИЯ, АВТОРИЗАЦИЯ И ВХОД В АДМИНКУ
-// ==========================================
-
-// Функция для переключения экранов (скрывает одни окна и показывает другие)
-function switchScreen(screen) {
-    document.getElementById('quiz-screen').classList.toggle('hidden', screen !== 'quiz');
-    document.getElementById('login-screen').classList.toggle('hidden', screen !== 'login');
-    document.getElementById('admin-screen').classList.toggle('hidden', screen !== 'admin');
-    
-    // Если перешли в админку — сразу обновляем там список вопросов текущей формы
-    if (screen === 'admin') renderAdminQuestions();
-}
-
-// Проверка логина и пароля при входе в панель управления
-function tryLogin() {
-    const userField = document.getElementById('login-user');
-    const passField = document.getElementById('login-pass');
-    
-    if (userField.value === 'admin' && passField.value === '1234') {
-        // Очищаем поля ввода для безопасности
-        userField.value = '';
-        passField.value = '';
-        // Переводим на экран админки
-        switchScreen('admin');
-    } else {
-        alert("Неверный логин или пароль! Попробуйте еще раз.");
+async function generateShareLink() {
+    try {
+        const currentForm = allForms[currentFormId];
+        if (!currentForm || !currentForm.questions || currentForm.questions.length === 0) {
+            alert("Нельзя поделиться пустой формой! Сначала добавьте вопросы.");
+            return;
+        }
+        const jsonStr = JSON.stringify(currentForm);
+        const byteArray = new TextEncoder().encode(jsonStr);
+        const stream = new Response(byteArray).body.pipeThrough(new CompressionStream("deflate"));
+        const compressedBuffer = await new Response(stream).arrayBuffer();
+        const base64Str = btoa(String.fromCharCode(...new Uint8Array(compressedBuffer)))
+            .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+            
+        const shareUrl = `${window.location.origin}${window.location.pathname}?zip=${base64Str}`;
+        await navigator.clipboard.writeText(shareUrl);
+        alert(`Форма "${currentForm.name}" сжата и скопирована в буфер обмена! Ссылка теперь короткая и откроется везде.`);
+    } catch (e) {
+        console.error(e);
+        alert("Ошибка сжатия. Используйте скачивание .json файла!");
     }
-}
-
-// Выход из панели администратора обратно к тестам
-function logout() {
-    switchScreen('quiz');
 }
