@@ -12,13 +12,15 @@
     --success: #28a745; 
     --danger: #dc3545; 
     --gray: #6c757d;
-    --radius-max: 24px; /* Ультра-скругление */
-    --radius-mid: 14px;
+    
+    /* Новые переменные для трендового дизайна */
+    --radius-max: 24px; /* Максимальное скругление */
+    --radius-mid: 14px;  /* Среднее скругление */
 }
 
 body.dark-theme {
-    --bg-body: #050505; /* Твой новый цвет фона */
-    --bg-card: #0f0f0f; /* Твой новый цвет формы */
+    --bg-body: #050505; /* Твой ультра-темный фон */
+    --bg-card: #0f0f0f; /* Твоя ультра-темная форма */
     --text-main: #f0f2f5; 
     --text-muted: #a0a0a0;
     --border-color: #222222; 
@@ -40,48 +42,221 @@ body {
     color: var(--text-main); 
 }
 
-/* Применяем максимальное скругление к основным контейнерам */
 .quiz-container, .admin-box { 
     width: 100%; 
     max-width: 650px; 
     background: var(--bg-card); 
     padding: 30px; 
     border-radius: var(--radius-max); 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
     box-sizing: border-box; 
     position: relative; 
 }
 
-/* Стили для летающих вкладок (форм) */
+.hidden { display: none !important; }
+
+/* Универсальный класс для Material Icons */
+.material-symbols-rounded {
+    font-size: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+/* ==========================================
+   НОВЫЕ КЛАССЫ: ЛЕТАЮЩИЕ ВКЛАДКИ (ТАБЫ)
+   ========================================== */
+.forms-tabs-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 12px;
+    overflow-x: auto;
+}
+
+.forms-tabs-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+/* Эффект летающих округлых вкладок */
 .form-tab {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     background: var(--bg-option-hover);
     color: var(--text-main);
     padding: 8px 16px;
-    border-radius: var(--radius-mid); /* Красивые округлые вкладки */
+    border-radius: var(--radius-mid);
     border: 1px solid var(--border-color);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.2s ease;
+}
+
+.form-tab:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .form-tab.active-tab {
     background: var(--primary);
     color: white;
     border-color: var(--primary);
-    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
-/* Обновляем инпуты и кнопки под новые скругления */
-.text-input, .admin-input, select, textarea, button { 
-    border-radius: var(--radius-mid) !important; 
+.form-tab .close-tab-btn {
+    background: transparent;
+    color: inherit;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: 16px;
+    cursor: pointer;
+    width: auto;
+    display: inline-flex;
 }
-.option {
-    border-radius: var(--radius-mid) !important;
+
+.form-tab .close-tab-btn:hover {
+    color: var(--danger);
 }
+
+.add-form-btn {
+    background: var(--success);
+    color: white;
+    border: none;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    margin: 0;
+    font-size: 18px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: 0.2s;
+}
+
+.add-form-btn:hover {
+    background: #218838;
+    transform: scale(1.05);
+}
+
+/* ==========================================
+   ОСТАЛЬНЫЕ ЭЛЕМЕНТЫ С НОВЫМИ СКРУГЛЕНИЯМИ
+   ========================================== */
+.tools-dropdown { position: absolute; top: 15px; right: 15px; z-index: 100; }
+.tools-btn { background: var(--gray); color: #fff; padding: 6px 12px; font-size: 13px; border-radius: var(--radius-mid); border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 4px; }
+.tools-menu { position: absolute; right: 0; top: 32px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-mid); box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 5px 0; width: 190px; overflow: hidden; }
+.tools-item { padding: 10px 14px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--text-main); text-decoration: none; }
+.tools-item:hover { background: var(--bg-option-hover); }
+
+.quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-right: 130px; }
+.step-info { font-size: 14px; color: var(--text-muted); font-weight: bold; }
+.timer-box { font-size: 14px; font-weight: bold; color: var(--danger); background: var(--bg-review-incorrect); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 4px; }
+.progress-bar { height: 6px; background: var(--border-color); border-radius: 3px; margin-bottom: 25px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.3s ease; }
+
+.option { display: flex; align-items: center; padding: 14px; margin: 10px 0; border: 2px solid var(--border-color); border-radius: var(--radius-mid); cursor: pointer; transition: 0.2s; background: var(--bg-card); }
+.option:hover { background: var(--bg-option-hover); border-color: var(--primary); }
+.option input { margin-right: 12px; transform: scale(1.2); accent-color: var(--primary); }
+
+.text-input, .admin-input, select, textarea { width: 100%; padding: 12px; box-sizing: border-box; border: 2px solid var(--border-color); border-radius: var(--radius-mid); font-size: 16px; outline: none; transition: 0.2s; margin-bottom: 15px; background: var(--bg-card); color: var(--text-main); }
+.text-input:focus, .admin-input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+
+button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: var(--primary); color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: var(--radius-mid); cursor: pointer; margin-top: 20px; transition: 0.2s; }
+button:hover { background: var(--primary-hover); }
+button:disabled { background: var(--gray); cursor: not-allowed; opacity: 0.6; }
+.btn-secondary { background: var(--gray); }
+.btn-secondary:hover { background: #5a6268; }
+
+.switch-label { display: flex; align-items: center; cursor: pointer; margin-bottom: 15px; font-weight: 500; font-size: 15px; }
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; margin-right: 10px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
+.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--success); }
+input:checked + .slider:before { transform: translateX(20px); }
+
+.score { font-size: 48px; color: var(--success); font-weight: bold; margin: 15px 0; }
+.review-container { text-align: left; margin-top: 30px; border-top: 2px solid var(--border-color); padding-top: 20px; }
+.review-item { padding: 15px; border-radius: var(--radius-mid); margin-bottom: 12px; border-left: 5px solid #ccc; background: var(--bg-card); border: 1px solid var(--border-color); border-left-width: 5px; }
+.review-item.correct-item { border-left-color: var(--success); background: var(--bg-review-correct); }
+.review-item.incorrect-item { border-left-color: var(--danger); background: var(--bg-review-incorrect); }
+
+.question-list-item { background: var(--bg-option-hover); padding: 12px; border-radius: var(--radius-mid); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid var(--border-color); }
+.footer-nav { margin-top: 20px; font-size: 14px; }
+.footer-nav a { color: var(--primary); text-decoration: none; cursor: pointer; font-weight: bold; }
+
+/* ==========================================
+   КЛАССЫ ДЛЯ ПРОДВИНУТОЙ ГОЛОСОВОЙ КАРТОЧКИ
+   ========================================== */
 .voice-card {
-    border-radius: var(--radius-max) !important;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-max);
+    padding: 40px 20px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    margin: 20px 0;
+}
+
+.voice-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--danger);
+}
+
+.voice-card h3 {
+    margin-bottom: 20px;
+    font-size: 22px;
+    color: var(--text-main);
+}
+
+.voice-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+    width: auto;
+    margin: 0 auto;
+}
+
+.voice-btn:hover {
+    background: var(--primary-hover);
+}
+
+.voice-btn.recording {
+    background: var(--danger);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.voice-status {
+    margin-top: 15px;
+    font-size: 14px;
+    color: var(--text-muted);
+    min-height: 20px;
 }
