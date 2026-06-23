@@ -444,12 +444,15 @@ function restartQuiz() {
 // ==========================================
 function toggleAdminFields() {
     const type = document.getElementById('new-type').value;
-    if (type === 'text') {
-        document.getElementById('admin-choices-fields').classList.add('hidden');
-        document.getElementById('admin-text-fields').classList.remove('hidden');
+    const choicesFields = document.getElementById('admin-choices-fields');
+    const textFields = document.getElementById('admin-text-fields');
+
+    if (type === 'text' || type === 'voice_card') {
+        choicesFields.classList.add('hidden');
+        textFields.classList.remove('hidden');
     } else {
-        document.getElementById('admin-choices-fields').classList.remove('hidden');
-        document.getElementById('admin-text-fields').classList.add('hidden');
+        choicesFields.classList.remove('hidden');
+        textFields.classList.add('hidden');
     }
 }
 
@@ -562,3 +565,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     switchScreen('quiz');
 });
+
+// Этот кусок кода нужно встроить в вашу функцию отрисовки вопросов
+function renderQuestion(question) {
+    const container = document.getElementById('question-body');
+    container.innerHTML = ''; // Очищаем старый контент
+
+    // ... тут ваш старый код для radio, checkbox, text ...
+
+    if (question.type === 'voice_card') {
+        const cardHtml = `
+            <div class="voice-card" onclick="handleVoiceCardFail()">
+                <h3>${question.title}</h3>
+                <button class="voice-btn" id="mic-btn" onclick="startVoiceRecognition(event, '${question.correctText}')">
+                    🎤 Нажать и сказать
+                </button>
+                <div class="voice-status" id="voice-status">Нажмите кнопку, чтобы ответить голосом. Нажмите на саму карточку, если не знаете ответ.</div>
+            </div>
+        `;
+        container.innerHTML = cardHtml;
+    }
+}
