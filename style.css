@@ -61,3 +61,65 @@ input:checked + .slider:before { transform: translateX(20px); }
 .question-list-item { background: var(--bg-option-hover); padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid var(--border-color); }
 .footer-nav { margin-top: 20px; font-size: 14px; }
 .footer-nav a { color: var(--primary); text-decoration: none; cursor: pointer; font-weight: bold; }
+
+/* Стили для продвинутой карточки */
+.voice-card {
+    background: #ffffff;
+    border: 2px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 40px 20px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    margin: 20px 0;
+}
+
+.voice-card:hover {
+    transform: translateY(-2px);
+    border-color: #ff4d4f;
+}
+
+.voice-card h3 {
+    margin-bottom: 20px;
+    font-size: 22px;
+    color: #333;
+}
+
+.voice-btn {
+    background: #1890ff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.voice-btn:hover {
+    background: #40a9ff;
+}
+
+/* Эффект записи */
+.voice-btn.recording {
+    background: #ff4d4f;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.voice-status {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #666;
+    min-height: 20px;
+}
+
