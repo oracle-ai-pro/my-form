@@ -1,28 +1,7 @@
 // ==========================================
-// 1. ПОЛНАЯ БАЗА ДАННЫХ (ДЕФОЛТНЫЕ 20 ВОПРОСОВ)
+// 1. ПОЛНАЯ БАЗА ДАННЫХ (ДЕФОЛТНЫЕ ВОПРОСЫ)
 // ==========================================
-const defaultQuestions = [
-    { type: "radio", title: "Какая операционная система основана на ядре Linux?", required: true, editable: true, timer: 20, useTimer: true, options: ["Windows", "Android", "iOS", "macOS"], correct: [1], exp: { title: "Интересный факт", desc: "Android использует ядро Linux для управления процессами и железом.", hold: 2 } },
-    { type: "text", title: "Как называется утилита командной строки (ADB) для прошивки разделов на низком уровне?", required: true, editable: true, useTimer: false, correctText: ["fastboot", "фастбут"] },
-    { type: "checkbox", title: "Какие технологии являются базовыми для фронтенд-разработки веб-интерфейсов?", required: true, editable: true, useTimer: false, options: ["HTML", "C++", "JavaScript", "CSS"], correct: [0, 2, 3] },
-    { type: "select", title: "Выберите основной тег-контейнер для создания блочных элементов в HTML:", required: true, editable: true, useTimer: false, options: ["div", "span", "p", "a"], correct: [0] },
-    { type: "radio", title: "Где физически хранятся данные после записи в localStorage?", required: true, editable: true, useTimer: false, options: ["На удаленном сервере", "В локальном кэше браузера на девайсе", "В оперативной памяти до закрытия вкладки"], correct: [1], exp: { title: "Справка", desc: "localStorage сохраняет данные на устройстве пользователя бессрочно, пока их не очистят.", hold: 0 } },
-    { type: "radio", title: "Какая кастомная прошивка на Android является преемницей легендарной CyanogenMod?", required: true, editable: true, useTimer: false, options: ["MIUI", "LineageOS", "Pixel Experience", "OneUI"], correct: [1] },
-    { type: "text", title: "Какой метод JavaScript используется для преобразования объекта в строку перед отправкой в localStorage?", required: true, editable: true, useTimer: false, correctText: ["JSON.stringify", "JSON.stringify()"] },
-    { type: "radio", title: "В каком формате данные извлекаются из localStorage с помощью JSON.parse()?", required: true, editable: true, useTimer: false, options: ["В виде строки", "В виде исходного объекта/массива", "В виде бинарного кода"], correct: [1] },
-    { type: "checkbox", title: "Какие из этих кастомных рекавери (Recovery) наиболее популярны для прошивки смартфонов?", required: true, editable: true, useTimer: false, options: ["TWRP", "OrangeFox", "Stock Recovery", "Mi Recovery"], correct: [0, 1] },
-    { type: "select", title: "Какой протокол передачи данных обычно используется для работы сайтов в интернете?", required: true, editable: true, useTimer: false, options: ["FTP", "HTTP / HTTPS", "SSH", "SMTP"], correct: [1] },
-    { type: "radio", title: "Что произойдет с данными в localStorage, если полностью закрыть браузер или перезагрузить ПК?", required: true, editable: true, useTimer: false, options: ["Они полностью сотрутся", "Они останутся на месте", "Они повредятся"], correct: [1] },
-    { type: "text", title: "Какое ключевое слово в JavaScript используется для объявления переменной, которую нельзя переприсвоить?", required: true, editable: true, useTimer: false, correctText: ["const", "конст"] },
-    { type: "radio", title: "Какое событие (Event) в JS срабатывает, когда пользователь отправляет HTML-форму?", required: true, editable: true, useTimer: false, options: ["click", "submit", "change", "load"], correct: [1] },
-    { type: "checkbox", title: "Какие методы используются для скрытия элементов на веб-странице через CSS?", required: true, editable: true, useTimer: false, options: ["display: none", "visibility: hidden", "opacity: 0", "color: black"], correct: [0, 1, 2] },
-    { type: "select", title: "Какое свойство CSS отвечает за скругление углов у контейнеров?", required: true, editable: true, useTimer: false, options: ["border-radius", "box-shadow", "padding", "margin"], correct: [0] },
-    { type: "radio", title: "Каков максимальный примерный объем данных, который можно сохранить в localStorage для одного сайта?", required: true, editable: true, useTimer: false, options: ["Около 500 Кб", "Около 5 Мб", "Без ограничений", "1 Гб"], correct: [1] },
-    { type: "text", title: "Как называется встроенная в браузер панель, где можно посмотреть логи `console.log` и вкладку Application?", required: true, editable: true, useTimer: false, correctText: ["консоль", "console", "devtools", "инструменты разработчика"] },
-    { type: "radio", title: "Какая функция в JS позволяет выполнять код циклически через определенные промежутки времени?", required: true, editable: true, timer: 15, useTimer: true, options: ["setTimeout", "setInterval", "requestAnimationFrame"], correct: [1] },
-    { type: "checkbox", title: "Что из этого НЕ относится к языкам программирования или разметки?", required: true, editable: true, useTimer: false, options: ["JSON", "PNG", "Python", "TXT"], correct: [1, 3] },
-    { type: "radio", title: "Финальный вопрос: можно ли связать localStorage с внешним сервером без использования API?", required: true, editable: true, useTimer: false, options: ["Да, напрямую", "Нет, localStorage работает строго внутри браузера клиента"], correct: [1] }
-];
+const defaultQuestions = [];
 
 // ==========================================
 // 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ СОСТОЯНИЯ
@@ -97,7 +76,8 @@ function setTheme(theme) {
 }
 
 function applyThemeStyles(theme) {
-    const containers = document.querySelectorAll('.quiz-container, .quiz-box, .result-card, .admin-box');
+    // Добавили .voice-card в эту строку
+    const containers = document.querySelectorAll('.quiz-container, .quiz-box, .result-card, .admin-box, .voice-card');
     if (theme === 'dark') {
         document.body.style.backgroundColor = '#121214';
         document.body.style.color = '#ffffff';
@@ -184,28 +164,31 @@ function logout() {
 // ==========================================
 // 5. ДВИЖОК ТЕСТИРОВАНИЯ
 // ==========================================
+let currentVoiceAnswer = null; // статус голосового ответа текущего вопроса
+
 function renderQuestion() {
     clearInterval(currentTimerInterval);
     isExplanationState = false;
+    currentVoiceAnswer = null; 
     
+    // Если база вопросов пуста, показываем красивую заглушку
     if (!questions || questions.length === 0) {
-        document.getElementById('question-body').innerHTML = "<p>Вопросов пока нет. Зайдите в админку.</p>";
+        document.getElementById('question-body').innerHTML = `
+            <div style="text-align: center; padding: 30px 10px;">
+                <h3 style="margin-bottom: 15px;">У вас нет форм 🤷‍♂️</h3>
+                <p style="color: var(--text-muted); font-size: 15px; margin-bottom: 20px;">Создайте их через панель управления.</p>
+                <button onclick="switchScreen('login')" style="width: auto; display: inline-block; padding: 10px 20px; font-size: 14px;">Перейти в админку</button>
+            </div>
+        `;
+        // Скрываем кнопку "Далее", так как нажимать пока не на что
+        document.getElementById('next-btn').classList.add('hidden');
+        document.getElementById('current-number').innerText = "0";
+        document.getElementById('total-number').innerText = "0";
         return;
     }
-
-    const q = questions[currentIndex];
     
-    document.getElementById('current-number').innerText = currentIndex + 1;
-    document.getElementById('total-number').innerText = questions.length;
-    
-    const progressPercent = (currentIndex / questions.length) * 100;
-    document.getElementById('progress').style.width = `${progressPercent}%`;
-
-    const nextBtn = document.getElementById('next-btn');
-    nextBtn.innerText = "Далее";
-    nextBtn.disabled = false;
-
-    let html = `<h3>${q.title} ${q.required ? '<span style="color:red">*</span>' : ''}</h3>`;
+    // Если вопросы есть, возвращаем кнопку "Далее" на место
+    document.getElementById('next-btn').classList.remove('hidden');
     
     if (q.type === 'radio') {
         q.options.forEach((opt, idx) => {
@@ -223,11 +206,22 @@ function renderQuestion() {
         html += `</select>`;
     } else if (q.type === 'text') {
         html += `<input type="text" id="quiz_text" class="admin-input" style="width:100%; padding:8px; margin-top:10px;" placeholder="Введите ваш ответ...">`;
+    } else if (q.type === 'voice_card') {
+        const correctStr = q.correctText ? q.correctText.join(', ') : '';
+        html = `
+            <div class="voice-card" onclick="handleVoiceCardFail()">
+                <h3>${q.title}</h3>
+                <button class="voice-btn" id="mic-btn" onclick="startVoiceRecognition(event, '${correctStr}')">
+                    🎤 Нажать и сказать
+                </button>
+                <div class="voice-status" id="voice-status">Нажмите кнопку, чтобы ответить голосом. Нажмите на саму карточку, если не знаете ответ.</div>
+            </div>
+        `;
     }
-
+    
     html += `<div id="explanation-container" class="hidden" style="margin-top:15px; padding:15px; border-radius:6px; background:#fff3cd; color:#333;"></div>`;
     document.getElementById('question-body').innerHTML = html;
-
+    
     const timerDisplay = document.getElementById('timer-display');
     if (q.useTimer && q.timer > 0) {
         timerDisplay.classList.remove('hidden');
@@ -250,7 +244,6 @@ function renderQuestion() {
 function nextStep(isTimeout = false) {
     if (questions.length === 0) return;
     const q = questions[currentIndex];
-
     if (isExplanationState) {
         currentIndex++;
         if (currentIndex < questions.length) {
@@ -263,7 +256,7 @@ function nextStep(isTimeout = false) {
 
     let answers = [];
     let rawValue = "";
-
+    
     if (!isTimeout) {
         if (q.type === 'radio') {
             let checked = document.querySelector('input[name="quiz_ans"]:checked');
@@ -278,9 +271,15 @@ function nextStep(isTimeout = false) {
         } else if (q.type === 'text') {
             let txt = document.getElementById('quiz_text').value.trim();
             rawValue = txt;
+        } else if (q.type === 'voice_card') {
+            if (currentVoiceAnswer === null) {
+                alert("Пожалуйста, ответьте голосом или нажмите на карточку, если не знаете ответ!");
+                return;
+            }
+            rawValue = currentVoiceAnswer;
         }
-
-        if (q.required && answers.length === 0 && rawValue === "") {
+        
+        if (q.required && answers.length === 0 && rawValue === "" && q.type !== 'voice_card') {
             alert("Этот вопрос обязателен для ответа!");
             return;
         }
@@ -289,9 +288,9 @@ function nextStep(isTimeout = false) {
     }
 
     clearInterval(currentTimerInterval);
-
     let isCorrect = false;
-    if (q.type === 'text') {
+    
+    if (q.type === 'text' || q.type === 'voice_card') {
         if (q.correctText) {
             isCorrect = q.correctText.some(t => t.toLowerCase().trim() === rawValue.toLowerCase().trim());
         }
@@ -300,15 +299,14 @@ function nextStep(isTimeout = false) {
             isCorrect = q.correct.every(v => answers.includes(v));
         }
     }
-
+    
     userAnswers.push({
         title: q.title,
         userAns: rawValue,
         isCorrect: isCorrect,
-        correctInfo: q.type === 'text' ? q.correctText?.join(' / ') : q.correct?.map(i => q.options[i]).join(', ')
+        correctInfo: (q.type === 'text' || q.type === 'voice_card') ? q.correctText?.join(' / ') : q.correct?.map(i => q.options[i]).join(', ')
     });
-
-    // Блок объяснения
+    
     if (q.exp && q.exp.desc && !isTimeout) {
         isExplanationState = true;
         const expBox = document.getElementById('explanation-container');
@@ -317,7 +315,6 @@ function nextStep(isTimeout = false) {
         
         const nextBtn = document.getElementById('next-btn');
         nextBtn.innerText = "Продолжить";
-
         if (q.exp.hold > 0) {
             nextBtn.disabled = true;
             let holdTime = q.exp.hold;
@@ -335,12 +332,95 @@ function nextStep(isTimeout = false) {
         }
         return;
     }
-
+    
     currentIndex++;
     if (currentIndex < questions.length) {
         renderQuestion();
     } else {
         showResults();
+    }
+}
+
+function restartQuiz() {
+    currentIndex = 0;
+    userAnswers = [];
+    switchScreen('quiz');
+}
+
+// ==========================================
+// 5.1 ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ГОЛОСОВЫХ КАРТОЧЕК
+// ==========================================
+
+function handleVoiceCardFail() {
+    const statusDisplay = document.getElementById('voice-status');
+    if (statusDisplay) {
+        statusDisplay.innerText = "❌ Вы отметили этот ответ как неверный.";
+    }
+    
+    currentVoiceAnswer = "[Не знаю ответ]"; 
+    
+    const card = document.querySelector('.voice-card');
+    if (card) card.style.borderColor = '#ff4d4f';
+    
+    setTimeout(() => {
+        nextStep();
+    }, 800);
+}
+
+function startVoiceRecognition(event, correctAnswersStr) {
+    event.stopPropagation(); 
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        alert("К сожалению, ваш браузер не поддерживает распознавание речи. Пожалуйста, используйте Google Chrome.");
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU'; 
+    recognition.interimResults = false;
+    
+    const btn = document.getElementById('mic-btn');
+    const statusDisplay = document.getElementById('voice-status');
+    const card = document.querySelector('.voice-card');
+    
+    btn.classList.add('recording');
+    btn.innerText = "🛑 Слушаю...";
+    statusDisplay.innerText = "Говорите слово...";
+
+    recognition.start();
+
+    recognition.onresult = function(e) {
+        const userSpeech = e.results.transcript.trim();
+        statusDisplay.innerText = `Вы сказали: "${userSpeech}"`;
+        
+        currentVoiceAnswer = userSpeech;
+
+        const allowedAnswers = correctAnswersStr.split(',').map(item => item.trim().toLowerCase());
+
+        if (allowedAnswers.includes(userSpeech.toLowerCase())) {
+            statusDisplay.innerHTML = `🎉 <strong>Правильно!</strong> Вы сказали: "${userSpeech}"`;
+            if (card) card.style.borderColor = '#52c41a'; 
+        } else {
+            statusDisplay.innerHTML = `❌ <strong>Неверно.</strong> Вы сказали: "${userSpeech}".<br><small>Ожидалось: ${correctAnswersStr}</small>`;
+            if (card) card.style.borderColor = '#ff4d4f'; 
+        }
+    };
+
+    recognition.onerror = function() {
+        statusDisplay.innerText = "Ошибка распознавания. Попробуйте еще раз.";
+        resetMicButton(btn);
+    };
+
+    recognition.onend = function() {
+        resetMicButton(btn);
+    };
+}
+
+function resetMicButton(btn) {
+    if (btn) {
+        btn.classList.remove('recording');
+        btn.innerText = "🎤 Нажать и сказать";
     }
 }
 
@@ -463,21 +543,20 @@ function addQuestion() {
     const editable = document.getElementById('new-editable').checked;
     const useTimer = document.getElementById('toggle-timer-input').checked;
     const timer = parseInt(document.getElementById('new-timer').value) || 20;
-
     const useExp = document.getElementById('toggle-exp-input').checked;
     const expTitle = document.getElementById('new-exp-title').value.trim();
     const expDesc = document.getElementById('new-exp-desc').value.trim();
     const expHold = parseInt(document.getElementById('new-exp-timer').value) || 0;
 
     if (!title) { alert("Заполните текст вопроса!"); return; }
-
     let newQ = { type, title, required, editable, useTimer, timer };
-
+    
     if (useExp && expDesc) {
         newQ.exp = { title: expTitle, desc: expDesc, hold: expHold };
     }
-
-    if (type === 'text') {
+    
+    // Новое: обрабатываем правильный ответ для текста И для голосовых карточек
+    if (type === 'text' || type === 'voice_card') {
         const correctTextRaw = document.getElementById('new-correct-text').value;
         if (!correctTextRaw) { alert("Укажите правильный текст!"); return; }
         newQ.correctText = correctTextRaw.split(',').map(s => s.trim());
@@ -485,22 +564,26 @@ function addQuestion() {
         const optionsRaw = document.getElementById('new-options').value;
         const correctChoicesRaw = document.getElementById('new-correct-choices').value;
         
-        if (!optionsRaw || !correctChoicesRaw) { alert("Заполните варианты и индексы ответов!"); return; }
+        if (!optionsRaw || !correctChoicesRaw) { 
+            alert("Заполните варианты и индексы ответов!"); 
+            return; 
+        }
         
         newQ.options = optionsRaw.split(',').map(s => s.trim());
         newQ.correct = correctChoicesRaw.split(',').map(s => parseInt(s.trim()));
     }
-
+    
     questions.push(newQ);
     localStorage.setItem('quiz_questions', JSON.stringify(questions));
-
+    
+    // Очищаем поля формы после сохранения
     document.getElementById('new-title').value = '';
     document.getElementById('new-options').value = '';
     document.getElementById('new-correct-choices').value = '';
     document.getElementById('new-correct-text').value = '';
     document.getElementById('new-exp-title').value = '';
     document.getElementById('new-exp-desc').value = '';
-
+    
     renderAdminQuestions();
     alert("Вопрос сохранен!");
 }
