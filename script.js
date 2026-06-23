@@ -464,6 +464,73 @@ async function generateShareLink() {
         alert("Ошибка сжатия. Если форма невероятно огромная, используйте скачивание .json файла в админке!");
     }
 }
+
+// ==========================================
+// 5.5 ОПЦИИ МЕНЮ И ФИЧА "BLACK SCREEN"
+// ==========================================
+
+// Переключение видимости меню опций
+function toggleToolsMenu() {
+    const menu = document.getElementById('tools-menu');
+    if (menu) menu.classList.toggle('hidden');
+}
+
+// Закрытие меню опций при клике в любое другое место экрана
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('tools-menu');
+    const btn = document.querySelector('.tools-btn');
+    if (menu && !menu.classList.contains('hidden') && e.target !== menu && e.target !== btn && !btn?.contains(e.target)) {
+        m.classList.add('hidden');
+    }
+});
+
+// Активация режима черного экрана (A/V Mute)
+function toggleBlackScreen() {
+    let overlay = document.getElementById('black-screen-overlay');
+    
+    // Если оверлея еще нет, создаем его динамически
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'black-screen-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100vw';
+        overlay.style.height = '100vh';
+        overlay.style.backgroundColor = '#000000';
+        overlay.style.zIndex = '99999';
+        overlay.style.cursor = 'pointer';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.color = '#333';
+        overlay.style.fontFamily = 'monospace';
+        overlay.style.fontSize = '12px';
+        overlay.innerHTML = '<span>A/V MUTE (Tap or CTRL+M to exit)</span>';
+        
+        // Выход из режима по тапу на экран
+        overlay.onclick = () => overlay.classList.add('hidden');
+        document.body.appendChild(overlay);
+    }
+    
+    overlay.classList.remove('hidden');
+    const menu = document.getElementById('tools-menu');
+    if (menu) menu.classList.add('hidden'); // прячем меню опций
+}
+
+// Отслеживание сочетания клавиш CTRL+M для выхода или входа
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
+        e.preventDefault(); // отменяем стандартное действие браузера
+        const overlay = document.getElementById('black-screen-overlay');
+        if (overlay && !overlay.classList.contains('hidden')) {
+            overlay.classList.add('hidden'); // если включен — выключаем
+        } else {
+            toggleBlackScreen(); // если выключен — включаем
+        }
+    }
+});
+
 // ==========================================
 // 6. НАВИГАЦИЯ, АВТОРИЗАЦИЯ И ВХОД В АДМИНКУ
 // ==========================================
