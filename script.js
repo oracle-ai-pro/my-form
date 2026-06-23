@@ -120,20 +120,19 @@ function renderQuestion() {
         document.getElementById('current-number').innerText = document.getElementById('total-number').innerText = "0";
         return;
     }
-let html = `
-        <h3 style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <span>${q.title}</span> ${q.required ? '<span style="color:red">*</span>' : ''}
-            <button class="speak-btn" onclick="speakText('${q.title.replace(/'/g, "\\'")}')" title="Озвучить вопрос">
-                <span class="material-symbols-rounded" style="font-size: 16px;">volume_up</span>
-            </button>
-        </h3>`;
     
     const q = questions[currentIndex];
     document.getElementById('current-number').innerText = currentIndex + 1;
     document.getElementById('total-number').innerText = questions.length;
     document.getElementById('progress').style.width = `${(currentIndex / questions.length) * 100}%`;
 
-    let html = `<h3>${q.title} ${q.required ? '<span style="color:red">*</span>' : ''}</h3>`;
+    let html = `
+        <h3 style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span>${q.title}</span> ${q.required ? '<span style="color:red">*</span>' : ''}
+            <button class="speak-btn" onclick="speakText('${q.title.replace(/'/g, "\\'")}')" title="Озвучить вопрос">
+                <span class="material-symbols-rounded" style="font-size: 16px;">volume_up</span>
+            </button>
+        </h3>`;
     if (q.type === 'radio' || q.type === 'checkbox') {
         q.options.forEach((opt, i) => html += `<label class="option"><input type="${q.type}" name="quiz_ans" value="${i}"> ${opt}</label>`);
     } else if (q.type === 'select') {
