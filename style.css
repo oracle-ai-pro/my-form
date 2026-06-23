@@ -12,15 +12,13 @@
     --success: #28a745; 
     --danger: #dc3545; 
     --gray: #6c757d;
-    
-    /* Новые переменные для трендового дизайна */
-    --radius-max: 24px; /* Максимальное скругление */
-    --radius-mid: 14px;  /* Среднее скругление */
+    --radius-max: 24px; 
+    --radius-mid: 14px;  
 }
 
 body.dark-theme {
-    --bg-body: #050505; /* Твой ультра-темный фон */
-    --bg-card: #0f0f0f; /* Твоя ультра-темная форма */
+    --bg-body: #050505; 
+    --bg-card: #0f0f0f; 
     --text-main: #f0f2f5; 
     --text-muted: #a0a0a0;
     --border-color: #222222; 
@@ -55,7 +53,6 @@ body {
 
 .hidden { display: none !important; }
 
-/* Универсальный класс для Material Icons */
 .material-symbols-rounded {
     font-size: inherit;
     display: inline-flex;
@@ -65,26 +62,26 @@ body {
 }
 
 /* ==========================================
-   НОВЫЕ КЛАССЫ: ЛЕТАЮЩИЕ ВКЛАДКИ (ТАБЫ)
+   ВКЛАДКИ (ТАБЫ) ФОРМ
    ========================================== */
 .forms-tabs-container {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
     margin-bottom: 25px;
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 12px;
-    overflow-x: auto;
+    width: 100%;
 }
 
 .forms-tabs-list {
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    white-space: nowrap;
+    flex-grow: 1;
 }
 
-/* Эффект летающих округлых вкладок */
 .form-tab {
     display: inline-flex;
     align-items: center;
@@ -97,6 +94,7 @@ body {
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
+    white-space: nowrap;
     transition: 0.2s ease;
 }
 
@@ -113,19 +111,21 @@ body {
 }
 
 .form-tab .close-tab-btn {
-    background: transparent;
-    color: inherit;
-    border: none;
-    padding: 0;
-    margin: 0;
+    background: transparent !important;
+    color: inherit !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: auto !important;
+    height: auto !important;
     font-size: 16px;
     cursor: pointer;
-    width: auto;
-    display: inline-flex;
+    display: inline-flex !important;
+    box-shadow: none !important;
 }
 
 .form-tab .close-tab-btn:hover {
-    color: var(--danger);
+    color: var(--danger) !important;
 }
 
 .add-form-btn {
@@ -134,6 +134,7 @@ body {
     border: none;
     width: 34px;
     height: 34px;
+    min-width: 34px;
     padding: 0;
     margin: 0;
     font-size: 18px;
@@ -152,14 +153,82 @@ body {
 }
 
 /* ==========================================
-   ОСТАЛЬНЫЕ ЭЛЕМЕНТЫ С НОВЫМИ СКРУГЛЕНИЯМИ
+   КНОПКИ ОБЩИЕ (ГЛАВНЫЕ ДЕЙСТВИЯ)
+   ========================================== */
+/* Применяем стили только к кнопкам действий, чтобы не ломать мелкие кнопочки */
+button:not(.tools-btn):not(.close-tab-btn):not(.add-form-btn) { 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: var(--radius-mid);
+    cursor: pointer;
+    margin-top: 20px;
+    transition: 0.2s;
+}
+
+button:not(.tools-btn):not(.close-tab-btn):not(.add-form-btn):hover { 
+    background: var(--primary-hover); 
+}
+
+button:disabled { background: var(--gray) !important; cursor: not-allowed; opacity: 0.6; }
+.btn-secondary { background: var(--gray) !important; }
+.btn-secondary:hover { background: #5a6268 !important; }
+
+/* ==========================================
+   МЕНЮ ОПЦИЙ (TOOLS)
    ========================================== */
 .tools-dropdown { position: absolute; top: 15px; right: 15px; z-index: 100; }
-.tools-btn { background: var(--gray); color: #fff; padding: 6px 12px; font-size: 13px; border-radius: var(--radius-mid); border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 4px; }
-.tools-menu { position: absolute; right: 0; top: 32px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-mid); box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 5px 0; width: 190px; overflow: hidden; }
-.tools-item { padding: 10px 14px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--text-main); text-decoration: none; }
+
+.tools-btn { 
+    background: var(--gray); 
+    color: #fff; 
+    padding: 6px 12px; 
+    font-size: 13px; 
+    border-radius: var(--radius-mid); 
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold; 
+    display: flex; 
+    align-items: center; 
+    gap: 4px; 
+    width: auto !important;
+    margin: 0 !important;
+}
+
+.tools-menu { 
+    position: absolute; 
+    right: 0; 
+    top: 35px; 
+    background: var(--bg-card); 
+    border: 1px solid var(--border-color); 
+    border-radius: var(--radius-mid); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+    padding: 5px 0; 
+    width: 190px; 
+    overflow: hidden; 
+}
+
+.tools-item { 
+    padding: 10px 14px; 
+    font-size: 13px; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    color: var(--text-main); 
+    text-decoration: none; 
+}
 .tools-item:hover { background: var(--bg-option-hover); }
 
+/* ИНПУТЫ И ТЕКСТ */
 .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-right: 130px; }
 .step-info { font-size: 14px; color: var(--text-muted); font-weight: bold; }
 .timer-box { font-size: 14px; font-weight: bold; color: var(--danger); background: var(--bg-review-incorrect); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 4px; }
@@ -172,12 +241,6 @@ body {
 
 .text-input, .admin-input, select, textarea { width: 100%; padding: 12px; box-sizing: border-box; border: 2px solid var(--border-color); border-radius: var(--radius-mid); font-size: 16px; outline: none; transition: 0.2s; margin-bottom: 15px; background: var(--bg-card); color: var(--text-main); }
 .text-input:focus, .admin-input:focus, select:focus, textarea:focus { border-color: var(--primary); }
-
-button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: var(--primary); color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: var(--radius-mid); cursor: pointer; margin-top: 20px; transition: 0.2s; }
-button:hover { background: var(--primary-hover); }
-button:disabled { background: var(--gray); cursor: not-allowed; opacity: 0.6; }
-.btn-secondary { background: var(--gray); }
-.btn-secondary:hover { background: #5a6268; }
 
 .switch-label { display: flex; align-items: center; cursor: pointer; margin-bottom: 15px; font-weight: 500; font-size: 15px; }
 .switch { position: relative; display: inline-block; width: 44px; height: 24px; margin-right: 10px; flex-shrink: 0; }
@@ -197,9 +260,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .footer-nav { margin-top: 20px; font-size: 14px; }
 .footer-nav a { color: var(--primary); text-decoration: none; cursor: pointer; font-weight: bold; }
 
-/* ==========================================
-   КЛАССЫ ДЛЯ ПРОДВИНУТОЙ ГОЛОСОВОЙ КАРТОЧКИ
-   ========================================== */
+/* ПРОДВИНУТАЯ ГОЛОСОВАЯ КАРТОЧКА */
 .voice-card {
     background: var(--bg-card);
     border: 2px solid var(--border-color);
@@ -211,154 +272,28 @@ input:checked + .slider:before { transform: translateX(20px); }
     transition: transform 0.2s, border-color 0.2s;
     margin: 20px 0;
 }
-
-.voice-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--danger);
-}
-
-.voice-card h3 {
-    margin-bottom: 20px;
-    font-size: 22px;
-    color: var(--text-main);
-}
-
+.voice-card:hover { transform: translateY(-2px); border-color: var(--danger); }
+.voice-card h3 { margin-bottom: 20px; font-size: 22px; color: var(--text-main); }
 .voice-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    font-size: 16px;
-    border-radius: 50px;
+    background: var(--primary) !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    font-size: 16px !important;
+    border-radius: 50px !important;
     cursor: pointer;
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     gap: 8px;
-    transition: background 0.2s;
-    width: auto;
-    margin: 0 auto;
+    width: auto !important;
+    margin: 0 auto !important;
 }
-
-.voice-btn:hover {
-    background: var(--primary-hover);
-}
-
-.voice-btn.recording {
-    background: var(--danger);
-    animation: pulse 1.5s infinite;
-}
+.voice-btn:hover { background: var(--primary-hover) !important; }
+.voice-btn.recording { background: var(--danger) !important; animation: pulse 1.5s infinite; }
 
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
 }
-
-.voice-status {
-    margin-top: 15px;
-    font-size: 14px;
-    color: var(--text-muted);
-    min-height: 20px;
-}
-/* ==========================================
-   ИСПРАВЛЕНИЕ ПОЗИЦИОНИРОВАНИЯ И ВЕРСТКИ
-   ========================================== */
-
-/* Блок вкладок должен растягиваться на всю ширину */
-.forms-tabs-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 25px;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 12px;
-    width: 100%;
-}
-
-.forms-tabs-list {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    flex-grow: 1;
-}
-
-/* Сами вкладки должны быть компактными строками, а не блоками на весь экран */
-.form-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--bg-option-hover);
-    color: var(--text-main);
-    padding: 6px 14px;
-    border-radius: var(--radius-mid);
-    border: 1px solid var(--border-color);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: 0.2s ease;
-}
-
-/* Кнопка-плюсик */
-.add-form-btn {
-    background: var(--success);
-    color: white;
-    border: none;
-    width: 34px;
-    height: 34px;
-    min-width: 34px; /* Чтобы не сжималась */
-    padding: 0;
-    margin: 0;
-    border-radius: 50%;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Ограничиваем базовые кнопки, чтобы они не растягивали иконки в меню */
-button { 
-    display: inline-flex; /* Поменяли display, чтобы кнопки вели себя предсказуемо */
-    align-items: center; 
-    justify-content: center; 
-    gap: 8px; 
-    width: 100%; 
-    background: var(--primary); 
-    color: white; 
-    border: none; 
-    padding: 14px; 
-    font-size: 16px; 
-    font-weight: bold; 
-    border-radius: var(--radius-mid); 
-    cursor: pointer; 
-    margin-top: 20px; 
-    transition: 0.2s; 
-}
-
-/* Кнопка "Опции" в углу должна оставаться маленькой */
-.tools-btn {
-    width: auto !important;
-    padding: 6px 12px !important;
-    margin-top: 0 !important;
-}
-
-/* Кнопка "Перейти в админку" на пустом экране */
-.quiz-container button {
-    width: auto;
-    display: inline-flex;
-    padding: 10px 20px;
-    margin-top: 10px;
-}
-
-/* Исправляем кнопку закрытия на вкладке */
-.form-tab .close-tab-btn {
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: auto !important;
-    height: auto !important;
-    color: inherit;
-    cursor: pointer;
-}
+.voice-status { margin-top: 15px; font-size: 14px; color: var(--text-muted); min-height: 20px; }
