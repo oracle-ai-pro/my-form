@@ -320,3 +320,25 @@ input:checked + .slider:before { transform: translateX(20px); }
     100% { transform: scale(1); }
 }
 .voice-status { margin-top: 15px; font-size: 14px; color: var(--text-muted); min-height: 20px; }
+
+/* Кнопка озвучки */
+.speak-btn {
+    background: var(--bg-option-hover) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    margin: 0 0 0 10px !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    vertical-align: middle;
+}
+.speak-btn:hover {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+}
