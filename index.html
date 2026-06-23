@@ -11,19 +11,32 @@
 
 <!-- Экран тестирования -->
 <div id="quiz-screen" class="quiz-container">
+    
+    <!-- Вкладки для переключения и создания разных форм -->
+    <div class="forms-tabs-container">
+        <div id="forms-tabs-list" class="forms-tabs-list">
+            <!-- Сюда JS будет добавлять вкладки динамически -->
+        </div>
+        <button class="add-form-btn" onclick="createNewFormPrompt()">
+            <span class="material-symbols-rounded">add</span>
+        </button>
+    </div>
+
     <div class="tools-dropdown">
-        <button class="tools-btn" onclick="toggleToolsMenu()">Tools for User ▼</button>
+        <button class="tools-btn" onclick="toggleToolsMenu()">
+            <span class="material-symbols-rounded" style="font-size:16px;">settings</span> Опции ▼
+        </button>
         <div id="tools-menu" class="tools-menu hidden">
-            <div class="tools-item" onclick="setTheme('light')">Светлая тема</div>
-            <div class="tools-item" onclick="setTheme('dark')">Темная тема</div>
-            <div class="tools-item" onclick="generateShareLink()">Поделиться тестом</div>
+            <div class="tools-item" onclick="setTheme('light')"><span class="material-symbols-rounded">light_mode</span> Светлая тема</div>
+            <div class="tools-item" onclick="setTheme('dark')"><span class="material-symbols-rounded">dark_mode</span> Темная тема</div>
+            <div class="tools-item" onclick="generateShareLink()"><span class="material-symbols-rounded">share</span> Поделиться формой</div>
         </div>
     </div>
 
     <div id="quiz-box">
         <div class="quiz-header">
             <div class="step-info">Вопрос <span id="current-number">1</span> из <span id="total-number">0</span></div>
-            <div id="timer-display" class="timer-box hidden"> <span id="timer-seconds">0</span>с</div>
+            <div id="timer-display" class="timer-box hidden"><span class="material-symbols-rounded">timer</span> <span id="timer-seconds">0</span>с</div>
         </div>
         <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
         <div id="question-body"></div>
@@ -32,7 +45,7 @@
     
     <!-- Финал -->
     <div id="result-box" class="result-card hidden">
-        <h2>Тест завершен!</h2>
+        <h2>Тест завершен! 🎉</h2>
         <div class="score" id="final-score">0 / 0</div>
         <p id="feedback-text"></p>
         <button onclick="restartQuiz()">Пройти еще раз</button>
@@ -51,22 +64,20 @@
 
 <!-- Окно админки -->
 <div id="admin-screen" class="admin-box hidden">
-    <h2>Панель администратора <button class="btn-secondary" onclick="logout()" style="float:right; font-size:14px; width:auto; padding:6px 12px; margin:0;">Выйти</button></h2>
+    <h2>Панель администратора 😎 <button class="btn-secondary" onclick="logout()" style="float:right; font-size:14px; width:auto; padding:6px 12px; margin:0;">Выйти</button></h2>
     
     <div style="border-bottom:2px solid var(--border-color); padding-bottom:20px; margin-bottom:20px;">
         <h3>Добавить новый вопрос:</h3>
         <label>Тип поля ввода:</label>
-            <select id="new-type" onchange="toggleAdminFields()">
-    <option value="radio">Одиночный выбор (Radio)</option>
-    <option value="checkbox">Множественный выбор (Checkbox)</option>
-    <option value="select">Выпадающий список (Select)</option>
-    <option value="text">Ввод текста / слова (Text)</option>
-    <option value="voice_card">Продвинутые карточки (Голос)</option>
-</select>
-
+        <select id="new-type" onchange="toggleAdminFields()">
+            <option value="radio">Одиночный выбор (Radio)</option>
+            <option value="checkbox">Множественный выбор (Checkbox)</option>
+            <option value="select">Выпадающий список (Select)</option>
+            <option value="text">Ввод текста / слова (Text)</option>
+            <option value="voice_card">Продвинутые карточки (Голос)</option>
         </select>
         
-        <label>Текст вопроса (для Text можно использовать [input]):</label>
+        <label style="margin-top: 10px; display: block;">Текст вопроса:</label>
         <input type="text" id="new-title" class="admin-input" placeholder="Введите текст...">
         
         <label class="switch-label"><span class="switch"><input type="checkbox" id="new-required" checked><span class="slider"></span></span> Обязательный вопрос</label>
@@ -103,6 +114,13 @@
         <button onclick="addQuestion()">Сохранить вопрос</button>
     </div>
 
+    <!-- Раздел экспорта / импорта форм -->
+    <div style="border-bottom:2px solid var(--border-color); padding-bottom:20px; margin-bottom:20px; display: flex; gap: 10px;">
+        <button class="btn-secondary" onclick="exportFormToJSON()" style="margin:0;"><span class="material-symbols-rounded">download</span> Скачать форму (.json)</button>
+        <button class="btn-secondary" onclick="document.getElementById('import-file').click()" style="margin:0;"><span class="material-symbols-rounded">upload</span> Загрузить форму</button>
+        <input type="file" id="import-file" class="hidden" accept=".json" onchange="importFormFromJSON(this)">
+    </div>
+
     <h3>Текущие вопросы в базе:</h3>
     <div id="admin-questions-list"></div>
     <button class="btn-secondary" onclick="switchScreen('quiz')">Вернуться к тесту</button>
@@ -111,7 +129,7 @@
 <div class="footer-nav" id="footer-link">
     <a onclick="switchScreen('login')">🔒 Войти в Редактор</a>
 </div>
-    <div style="margin-top: 15px; text-align: center;">
+<div style="margin-top: 15px; text-align: center;">
     <a id="leave-shared-btn" href="#" class="hidden" style="color: #6c757d; text-decoration: none; font-size: 14px; font-weight: bold;">↩ Закрыть Ссылку</a>
 </div>
 
