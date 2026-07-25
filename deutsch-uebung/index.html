@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deutsch Lernen: HTML Übung</title>
+    <style>
+        :root {
+            --primary: #0052b4;
+            --success: #2e7d32;
+            --error: #c62828;
+            --bg: #f5f7fa;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1 { color: var(--primary); text-align: center; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-style: italic; }
+        .rule-box {
+            background: #eef2f7;
+            padding: 15px;
+            border-left: 5px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 25px;
+        }
+        .exercise-item {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+        select {
+            padding: 6px 10px;
+            font-size: 1rem;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: all 0.3s;
+        }
+        select.correct { border-color: var(--success); background-color: #e8f5e9; }
+        select.wrong { border-color: var(--error); background-color: #ffebee; }
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: background 0.2s;
+        }
+        button:hover { background: #003d87; }
+        .result {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Lektion 1: Akkusativ</h1>
+    <p class="subtitle">Заполните пропуски правильным артиклем</p>
+
+    <div class="rule-box">
+        <strong>💡 Шпаргалка:</strong> В Akkusativ меняется только мужской род: 
+        <br>der ➔ <b>den</b> / ein ➔ <b>einen</b>. Женский (die/eine) и средний (das/ein) остаются прежними.
+    </div>
+
+    <div id="quiz">
+        <!-- Задание 1 -->
+        <div class="exercise-item">
+            1. Ich habe <select data-answer="einen">
+                <option value="">...</option>
+                <option value="ein">ein</option>
+                <option value="eine">eine</option>
+                <option value="einen">einen</option>
+            </select> Hund (m).
+        </div>
+
+        <!-- Задание 2 -->
+        <div class="exercise-item">
+            2. Sie kauft <select data-answer="die">
+                <option value="">...</option>
+                <option value="der">der</option>
+                <option value="die">die</option>
+                <option value="das">das</option>
+            </select> Tasche (f).
+        </div>
+
+        <!-- Задание 3 -->
+        <div class="exercise-item">
+            3. Wir hören <select data-answer="das">
+                <option value="">...</option>
+                <option value="den">den</option>
+                <option value="die">die</option>
+                <option value="das">das</option>
+            </select> Lied (n).
+        </div>
+
+        <!-- Задание 4 -->
+        <div class="exercise-item">
+            4. Suchst du <select data-answer="den">
+                <option value="">...</option>
+                <option value="der">der</option>
+                <option value="die">die</option>
+                <option value="den">den</option>
+            </select> Schlüssel (m)?
+        </div>
+
+        <button onclick="checkAnswers()">Prüfen</button>
+    </div>
+
+    <div class="result" id="result-text"></div>
+</div>
+
+<script>
+    function checkAnswers() {
+        const dropdowns = document.querySelectorAll('select');
+        let score = 0;
+
+        dropdowns.forEach(select => {
+            const userAnswer = select.value;
+            const correctAnswer = select.getAttribute('data-answer');
+
+            if (userAnswer === correctAnswer) {
+                select.className = 'correct';
+                score++;
+            } else {
+                select.className = 'wrong';
+            }
+        });
+
+        const resultText = document.getElementById('result-text');
+        resultText.innerText = `Результат: ${score} из ${dropdowns.length}`;
+        
+        if (score === dropdowns.length) {
+            resultText.style.color = 'var(--success)';
+        } else {
+            resultText.style.color = 'var(--error)';
+        }
+    }
+</script>
+
+</body>
+</html>
