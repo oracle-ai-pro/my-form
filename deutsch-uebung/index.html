@@ -3,161 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deutsch Lernen: HTML Übung</title>
+    <title>Deutsch Lernen: Главная</title>
     <style>
         :root {
-            --primary: #0052b4;
-            --success: #2e7d32;
-            --error: #c62828;
-            --bg: #f5f7fa;
+            --bg-body: #f0f2f5; 
+            --bg-card: #ffffff; 
+            --text-main: #212529; 
+            --text-muted: #6c757d; 
+            --border-color: #e9ecef; 
+            --bg-option-hover: #f8f9fa; 
+            --primary: #007bff; 
+            --primary-hover: #0056b3; 
+            --gray: #6c757d;
+            --radius-max: 24px; 
+            --radius-mid: 14px;  
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: #333;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
+
+        body.dark-theme {
+            --bg-body: #050505; 
+            --bg-card: #0f0f0f; 
+            --text-main: #f0f2f5; 
+            --text-muted: #a0a0a0;
+            --border-color: #222222; 
+            --bg-option-hover: #1a1a1a; 
         }
-        .container {
-            max-width: 600px;
-            margin: 40px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: var(--bg-body); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+            transition: 0.3s; 
+            color: var(--text-main); 
         }
-        h1 { color: var(--primary); text-align: center; margin-bottom: 5px; }
-        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-style: italic; }
-        .rule-box {
-            background: #eef2f7;
-            padding: 15px;
-            border-left: 5px solid var(--primary);
-            border-radius: 4px;
-            margin-bottom: 25px;
-        }
-        .exercise-item {
-            margin-bottom: 20px;
-            font-size: 1.1rem;
-        }
-        select {
-            padding: 6px 10px;
-            font-size: 1rem;
-            border: 2px solid #ccc;
-            border-radius: 4px;
-            background: white;
-            cursor: pointer;
-            margin: 0 5px;
-            transition: all 0.3s;
-        }
-        select.correct { border-color: var(--success); background-color: #e8f5e9; }
-        select.wrong { border-color: var(--error); background-color: #ffebee; }
-        button {
-            display: block;
+
+        .header-actions {
             width: 100%;
-            padding: 12px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 25px;
-            transition: background 0.2s;
+            max-width: 660px;
+            display: flex;
+            justify-content: flex-end;
         }
-        button:hover { background: #003d87; }
-        .result {
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.2rem;
+
+        .theme-btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: var(--radius-mid);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: var(--radius-max);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
             margin-top: 20px;
         }
+
+        h1 { color: var(--text-main); text-align: center; margin-bottom: 5px; }
+        .subtitle { color: var(--text-muted); text-align: center; margin-bottom: 30px; }
+
+        .lessons-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .lesson-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-mid);
+            text-decoration: none;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+
+        .lesson-card:hover {
+            background: var(--bg-option-hover);
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .lesson-info h3 { margin: 0 0 5px 0; font-size: 1.2rem; }
+        .lesson-info p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+
+        .start-btn {
+            padding: 10px 16px;
+            background: var(--primary);
+            color: white;
+            border-radius: var(--radius-mid);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .lesson-card:hover .start-btn { background: var(--primary-hover); }
+        
+        .disabled-card {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .disabled-card .start-btn { background: var(--gray); }
+        .disabled-card:hover { transform: none; border-color: var(--border-color); background: var(--bg-card); }
     </style>
 </head>
 <body>
 
+<div class="header-actions">
+    <button class="theme-btn" onclick="toggleTheme()">🌓 Theme</button>
+</div>
+
 <div class="container">
-    <h1>Lektion 1: Akkusativ</h1>
-    <p class="subtitle">Заполните пропуски правильным артиклем</p>
+    <h1>Deutsch Übungen</h1>
+    <p class="subtitle">Выбери тему для практики немецкого языка</p>
 
-    <div class="rule-box">
-        <strong>💡 Шпаргалка:</strong> В Akkusativ меняется только мужской род: 
-        <br>der ➔ <b>den</b> / ein ➔ <b>einen</b>. Женский (die/eine) и средний (das/ein) остаются прежними.
+    <div class="lessons-list">
+        <!-- Активный урок 1 -->
+        <a href="lektion1.html" class="lesson-card">
+            <div class="lesson-info">
+                <h3>Lektion 1: Akkusativ</h3>
+                <p>Склонение артиклей в винительном падеже</p>
+            </div>
+            <div class="start-btn">Start</div>
+        </a>
+
+        <!-- Заглушка для урока 2 -->
+        <div class="lesson-card disabled-card">
+            <div class="lesson-info">
+                <h3>Lektion 2: Dativ (Скоро)</h3>
+                <p>Практика дательного падежа</p>
+            </div>
+            <div class="start-btn">🔒</div>
+        </div>
+
+        <!-- Заглушка для урока 3 -->
+        <div class="lesson-card disabled-card">
+            <div class="lesson-info">
+                <h3>Lektion 3: Wechselpräpositionen (Скоро)</h3>
+                <p>Предлоги двойного управления</p>
+            </div>
+            <div class="start-btn">🔒</div>
+        </div>
     </div>
-
-    <div id="quiz">
-        <!-- Задание 1 -->
-        <div class="exercise-item">
-            1. Ich habe <select data-answer="einen">
-                <option value="">...</option>
-                <option value="ein">ein</option>
-                <option value="eine">eine</option>
-                <option value="einen">einen</option>
-            </select> Hund (m).
-        </div>
-
-        <!-- Задание 2 -->
-        <div class="exercise-item">
-            2. Sie kauft <select data-answer="die">
-                <option value="">...</option>
-                <option value="der">der</option>
-                <option value="die">die</option>
-                <option value="das">das</option>
-            </select> Tasche (f).
-        </div>
-
-        <!-- Задание 3 -->
-        <div class="exercise-item">
-            3. Wir hören <select data-answer="das">
-                <option value="">...</option>
-                <option value="den">den</option>
-                <option value="die">die</option>
-                <option value="das">das</option>
-            </select> Lied (n).
-        </div>
-
-        <!-- Задание 4 -->
-        <div class="exercise-item">
-            4. Suchst du <select data-answer="den">
-                <option value="">...</option>
-                <option value="der">der</option>
-                <option value="die">die</option>
-                <option value="den">den</option>
-            </select> Schlüssel (m)?
-        </div>
-
-        <button onclick="checkAnswers()">Prüfen</button>
-    </div>
-
-    <div class="result" id="result-text"></div>
 </div>
 
 <script>
-    function checkAnswers() {
-        const dropdowns = document.querySelectorAll('select');
-        let score = 0;
+    // Проверяем тему при загрузке
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-theme');
+    }
 
-        dropdowns.forEach(select => {
-            const userAnswer = select.value;
-            const correctAnswer = select.getAttribute('data-answer');
-
-            if (userAnswer === correctAnswer) {
-                select.className = 'correct';
-                score++;
-            } else {
-                select.className = 'wrong';
-            }
-        });
-
-        const resultText = document.getElementById('result-text');
-        resultText.innerText = `Результат: ${score} из ${dropdowns.length}`;
-        
-        if (score === dropdowns.length) {
-            resultText.style.color = 'var(--success)';
-        } else {
-            resultText.style.color = 'var(--error)';
-        }
+    function toggleTheme() {
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
     }
 </script>
 
