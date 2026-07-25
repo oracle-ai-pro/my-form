@@ -619,3 +619,19 @@ function speakText(text) {
     
     window.speechSynthesis.speak(utterance);
 }
+function closeDeutschPopup() {
+    const popup = document.getElementById('deutsch-popup');
+    if (popup) {
+        popup.classList.add('hidden');
+        // Опционально: можно сохранить в localStorage, чтобы баннер не всплывал повторно при закрытии
+        localStorage.setItem('deutsch_popup_closed', 'true');
+    }
+}
+
+// Проверка при загрузке страницы: если пользователь уже закрывал, не показываем
+window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('deutsch_popup_closed') === 'true') {
+        const popup = document.getElementById('deutsch-popup');
+        if (popup) popup.classList.add('hidden');
+    }
+});
