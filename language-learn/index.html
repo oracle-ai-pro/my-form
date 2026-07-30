@@ -87,6 +87,13 @@
 
         .btn-secondary:hover { background: var(--bg-option-hover); }
 
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
         .add-form-btn {
             width: 40px;
             height: 40px;
@@ -170,9 +177,25 @@
             padding: 14px;
             margin-top: 10px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
             gap: 12px;
+        }
+
+        .lesson-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 4px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border-color);
         }
 
         /* Меню опций */
@@ -293,7 +316,6 @@
                 <div class="tools-item" onclick="setTheme('light')"><span class="material-symbols-rounded">light_mode</span> Светлая тема</div>
                 <div class="tools-item" onclick="setTheme('dark')"><span class="material-symbols-rounded">dark_mode</span> Темная тема</div>
                 
-                <!-- ЭТА КНОПКА ПОКАЗЫВАЕТСЯ ТОЛЬКО ДЛЯ ОРГАНИЗАЦИИ (АДМИНА) -->
                 <div id="menu-admin-settings" class="tools-item hidden" onclick="window.location.href='users_and_personalisation.html'">
                     <span class="material-symbols-rounded">group</span> Настройки участников и страницы
                 </div>
@@ -316,7 +338,7 @@
         </div>
     </div>
 
-    <!-- БАННЕР АДМИНА С КНОПКОЙ + (ТОЛЬКО ДЛЯ ТИПА ORG) -->
+    <!-- БАННЕР АДМИНА -->
     <div id="admin-org-banner" class="admin-panel-badge hidden">
         <div>
             <strong style="display: block; font-size: 15px;">Панель Управления Организацией</strong>
@@ -347,10 +369,11 @@
     </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ ТЕМЫ/УРОКА -->
+<!-- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ / РЕДАКТИРОВАНИЯ ТЕМЫ -->
 <div id="create-modal-overlay" class="modal-overlay hidden">
     <div class="modal-body">
-        <h3 style="margin-top:0;">Создать Тему / Урок</h3>
+        <h3 style="margin-top:0;" id="modal-heading">Создать Тему / Урок</h3>
+        <input type="hidden" id="editing-topic-id" value="">
         
         <label style="font-size:13px; font-weight:bold;">Тип:</label>
         <select id="modal-type" class="admin-input">
@@ -387,7 +410,7 @@
         </div>
 
         <div style="display:flex; gap:10px;">
-            <button onclick="publishTopic()" style="margin:0;">Опубликовать</button>
+            <button onclick="publishTopic()" style="margin:0;">Сохранить / Опубликовать</button>
             <button onclick="closeCreateModal()" class="btn-secondary" style="margin:0;">Отмена</button>
         </div>
     </div>
@@ -404,13 +427,13 @@
             document.getElementById('user-completed-lessons').innerText = currentUser.completedLessons || 0;
             document.getElementById('user-org-status').innerText = currentUser.orgName || 'Нет';
 
-            // 🔥 ПРОВЕРКА РОЛИ: Показываем панель админа и кнопку настроек ТОЛЬКО для типа 'org'
             if (currentUser.type === 'org') {
                 document.getElementById('admin-org-banner').classList.remove('hidden');
                 document.getElementById('menu-admin-settings').classList.remove('hidden');
             }
         }
 
+        checkAutoDeletions();
         updateDateTime();
         renderLessons();
     };
@@ -437,18 +460,35 @@
         window.location.href = 'login.html'; 
     }
 
-    function openCreateModal() {
-        // Защита: Участникам запрещено открывать окно создания
+    /* 🔥 РЕДАКТИРОВАНИЕ И СОЗДАНИЕ */
+    function openCreateModal(editId = null) {
         if (!currentUser || currentUser.type !== 'org') {
-            alert("⛔ У вас нет прав для создания тестов!");
+            alert("⛔ У вас нет прав для работы с заданиями!");
             return;
         }
 
-        currentQuestions = [];
+        document.getElementById('editing-topic-id').value = editId || '';
+        
+        if (editId) {
+            document.getElementById('modal-heading').innerText = "Изменить Задание";
+            let topics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
+            let target = topics.find(t => t.id === editId);
+            if (target) {
+                document.getElementById('modal-title').value = target.title || '';
+                document.getElementById('modal-desc').value = target.description || '';
+                document.getElementById('modal-type').value = target.type || 'test';
+                document.getElementById('modal-allow-admin').checked = !!target.allowAdmin;
+                currentQuestions = target.questions || [];
+            }
+        } else {
+            document.getElementById('modal-heading').innerText = "Создать Тему / Урок";
+            document.getElementById('modal-title').value = '';
+            document.getElementById('modal-desc').value = '';
+            document.getElementById('modal-allow-admin').checked = false;
+            currentQuestions = [];
+        }
+
         updateQuestionsCounter();
-        document.getElementById('modal-title').value = '';
-        document.getElementById('modal-desc').value = '';
-        document.getElementById('modal-allow-admin').checked = false;
         document.getElementById('create-modal-overlay').classList.remove('hidden');
     }
 
@@ -496,34 +536,96 @@
     }
 
     function publishTopic() {
-        if (!currentUser || currentUser.type !== 'org') {
-            return alert("⛔ У вас нет прав на публикацию!");
-        }
+        if (!currentUser || currentUser.type !== 'org') return alert("⛔ У вас нет прав!");
 
+        const editId = document.getElementById('editing-topic-id').value;
         const title = document.getElementById('modal-title').value.trim();
         const desc = document.getElementById('modal-desc').value.trim();
         const type = document.getElementById('modal-type').value;
         const allowAdmin = document.getElementById('modal-allow-admin').checked;
 
         if (!title) return alert("Введите название темы!");
-
-        if (currentQuestions.length === 0) {
-            return alert("❌ Нельзя опубликовать пустой тест или урок! Добавьте хотя бы один вопрос или импортируйте JSON.");
-        }
-
-        const newTopic = {
-            id: 'topic_' + Date.now(),
-            type, title, description: desc, allowAdmin, published: true,
-            questions: currentQuestions
-        };
+        if (currentQuestions.length === 0) return alert("❌ Нельзя опубликовать пустой тест или урок!");
 
         let topics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
-        topics.push(newTopic);
-        localStorage.setItem('lang_published_topics', JSON.stringify(topics));
 
-        alert(`✅ ${type === 'test' ? 'Тест' : 'Урок'} "${title}" успешно опубликован!`);
+        if (editId) {
+            // Обновляем существующий
+            topics = topics.map(t => t.id === editId ? { ...t, type, title, description: desc, allowAdmin, questions: currentQuestions } : t);
+            alert(`✅ Задание "${title}" обновлено!`);
+        } else {
+            // Создаем новый
+            const newTopic = {
+                id: 'topic_' + Date.now(),
+                type, title, description: desc, allowAdmin, published: true,
+                questions: currentQuestions
+            };
+            topics.push(newTopic);
+            alert(`✅ ${type === 'test' ? 'Тест' : 'Урок'} "${title}" создан!`);
+        }
+
+        localStorage.setItem('lang_published_topics', JSON.stringify(topics));
         closeCreateModal();
         renderLessons();
+    }
+
+    /* 🔥 УДАЛЕНИЕ И АВТО-УДАЛЕНИЕ */
+    function toggleDeleteMenu(id) {
+        const menu = document.getElementById(`delete-dropdown-${id}`);
+        if (menu) menu.classList.toggle('hidden');
+    }
+
+    function deleteTopicNow(id) {
+        if (!currentUser || currentUser.type !== 'org') return alert("⛔ Запрещено!");
+        if (confirm("Вы точно хотите удалить это задание сейчас?")) {
+            let topics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
+            topics = topics.filter(t => t.id !== id);
+            localStorage.setItem('lang_published_topics', JSON.stringify(topics));
+            renderLessons();
+        }
+    }
+
+    function setAutoDeleteDate(id) {
+        if (!currentUser || currentUser.type !== 'org') return alert("⛔ Запрещено!");
+        
+        const dateInput = prompt("Введите дату и время авто-удаления (Формат: YYYY-MM-DD HH:MM):\nПример: 2026-12-31 23:59");
+        if (!dateInput) return;
+
+        const parsedDate = Date.parse(dateInput.replace(' ', 'T'));
+        if (isNaN(parsedDate)) return alert("❌ Неверный формат даты!");
+
+        let topics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
+        topics = topics.map(t => {
+            if (t.id === id) {
+                return { ...t, deleteAt: dateInput };
+            }
+            return t;
+        });
+
+        localStorage.setItem('lang_published_topics', JSON.stringify(topics));
+        alert(`⏰ Автоматическое удаление запланировано на: ${dateInput}`);
+        renderLessons();
+    }
+
+    function checkAutoDeletions() {
+        let topics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
+        const now = new Date().getTime();
+        let changed = false;
+
+        topics = topics.filter(t => {
+            if (t.deleteAt) {
+                const targetTime = Date.parse(t.deleteAt.replace(' ', 'T'));
+                if (now >= targetTime) {
+                    changed = true;
+                    return false; // Удаляем
+                }
+            }
+            return true;
+        });
+
+        if (changed) {
+            localStorage.setItem('lang_published_topics', JSON.stringify(topics));
+        }
     }
 
     function renderLessons() {
@@ -536,11 +638,13 @@
         if (settings.autoLessons) {
             html += `
                 <div class="lesson-item" style="border-left: 4px solid var(--primary);">
-                    <div>
-                        <strong>⭐ [Рекомендуемый] Немецкий: Базовый словарь</strong><br>
-                        <small style="color: var(--text-muted);">Автоматический урок от My Form</small>
+                    <div class="lesson-header">
+                        <div>
+                            <strong>⭐ [Рекомендуемый] Немецкий: Базовый словарь</strong><br>
+                            <small style="color: var(--text-muted);">Автоматический урок от My Form</small>
+                        </div>
+                        <button onclick="window.location.href='../index.html'" style="width: auto; margin: 0; padding: 8px 16px; font-size: 13px;">Пройти</button>
                     </div>
-                    <button onclick="window.location.href='../index.html'" style="width: auto; margin: 0; padding: 8px 16px; font-size: 13px;">Пройти</button>
                 </div>
             `;
         }
@@ -548,13 +652,40 @@
         if (topics.length > 0) {
             topics.forEach(t => {
                 const typeBadge = t.type === 'test' ? '📝 Тест' : '📖 Урок';
+                const isOrg = currentUser && currentUser.type === 'org';
+                
                 html += `
                     <div class="lesson-item">
-                        <div>
-                            <strong>${t.title} <small style="color:var(--primary);">(${typeBadge})</small></strong><br>
-                            <small style="color: var(--text-muted);">${t.description || 'Без описания'}</small>
+                        <div class="lesson-header">
+                            <div>
+                                <strong>${t.title} <small style="color:var(--primary);">(${typeBadge})</small></strong><br>
+                                <small style="color: var(--text-muted);">${t.description || 'Без описания'}</small>
+                                ${t.deleteAt ? `<br><small style="color: var(--danger); font-weight: bold;">⏳ Будет удалено: ${t.deleteAt}</small>` : ''}
+                            </div>
+                            <button onclick="runCustomTopic('${t.id}')" style="width: auto; margin: 0; padding: 8px 16px; font-size: 13px;">Пройти</button>
                         </div>
-                        <button onclick="runCustomTopic('${t.id}')" style="width: auto; margin: 0; padding: 8px 16px; font-size: 13px;">Пройти</button>
+
+                        ${isOrg ? `
+                            <div class="admin-actions">
+                                <button onclick="openCreateModal('${t.id}')" class="btn-secondary" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px;">
+                                    <span class="material-symbols-rounded" style="font-size:14px;">edit</span> Изменить Задание
+                                </button>
+                                
+                                <div class="tools-dropdown" style="display:inline-block;">
+                                    <button onclick="toggleDeleteMenu('${t.id}')" class="btn-danger" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px;">
+                                        <span class="material-symbols-rounded" style="font-size:14px;">delete</span> Удалить задание ▾
+                                    </button>
+                                    <div id="delete-dropdown-${t.id}" class="tools-menu hidden" style="top: 30px; left: 0;">
+                                        <div class="tools-item" onclick="deleteTopicNow('${t.id}')" style="color: var(--danger);">
+                                            <span class="material-symbols-rounded">delete_forever</span> Удалить Сейчас
+                                        </div>
+                                        <div class="tools-item" onclick="setAutoDeleteDate('${t.id}')">
+                                            <span class="material-symbols-rounded">schedule</span> Удалить Автоматически через...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             });
