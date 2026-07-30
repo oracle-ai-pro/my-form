@@ -21,31 +21,26 @@ window.onload = async () => {
     
     if (zipData) {
         try {
-            // Восстанавливаем стандартный Base64 из URL-безопасного вида
             let base64 = zipData.replace(/-/g, "+").replace(/_/g, "/");
             while (base64.length % 4) base64 += "=";
             
-            // Переводим строку в двоичные байты
             const binaryStr = atob(base64);
             const byteArray = new Uint8Array(binaryStr.length);
             for (let i = 0; i < binaryStr.length; i++) {
                 byteArray[i] = binaryStr.charCodeAt(i);
             }
             
-            // Распаковываем данные алгоритмом Deflate обратно в текст
             const stream = new Response(byteArray).body.pipeThrough(new DecompressionStream("deflate"));
             const jsonStr = await new Response(stream).text();
             const importedForm = JSON.parse(jsonStr);
             
             if (importedForm.questions && importedForm.questions.length > 0) {
                 const sharedId = 'shared_' + Date.now();
-                
                 allForms[sharedId] = {
                     id: sharedId,
                     name: `⭐ ${importedForm.name || "Общая форма"}`,
                     questions: importedForm.questions
                 };
-                
                 currentFormId = sharedId;
                 
                 const leaveBtn = document.getElementById('leave-shared-btn');
@@ -60,7 +55,6 @@ window.onload = async () => {
         }
     }
 
-    // Загрузка темы и запуск
     const savedTheme = localStorage.getItem('quiz_theme') || 'light';
     setTheme(savedTheme);
     save(); 
@@ -267,33 +261,31 @@ function showResults() {
 }
 
 function restartQuiz() {
-    currentIndex = 0; userAnswers = [];
+    currentIndex = 0; 
+    userAnswers = [];
     document.getElementById('result-box').classList.add('hidden');
     document.getElementById('quiz-box').classList.remove('hidden');
     renderQuestion();
 }
 
 // ==========================================
-// 3. УПРАВЛЕНИЕ МИКРОФОНОМ И ТАПОМ ПО КАРТЕ
+// 3. УПРАВЛЕНИЕ МИКРОФОНОМ И ГОЛОСОМ
 // ==========================================
 function handleVoiceCardFail(reason = "Подсмотрел(-а)") {
     const status = document.getElementById('voice-status');
     const q = questions[currentIndex];
-    const firstCorrectAnswer = q.correctText ? q.correctText[0] : ''; // Берем первый синоним
+    const firstCorrectAnswer = q.correctText ? q.correctText[0] : '';
     const correctAnswersText = q.correctText ? q.correctText.join(' / ') : '';
     
     if (status) status.innerHTML = `⚠️ <strong>${reason}:</strong> За картой было слово: "${correctAnswersText}"`;
-    
-    // Автоматически проговариваем правильное слово!
     if (firstCorrectAnswer) speakText(firstCorrectAnswer);
     
     currentVoiceAnswer = { text: `[${reason}]`, status: "skipped" };
     const card = document.querySelector('.voice-card');
     if (card) card.style.borderColor = 'var(--gray)';
     
-    setTimeout(() => nextStep(), 1800); // Чуть увеличили таймер, чтобы успело договорить
+    setTimeout(() => nextStep(), 1800);
 }
-
 
 function startVoiceRecognition(event, correctAnswersStr) {
     event.stopPropagation();
@@ -331,13 +323,6 @@ function startVoiceRecognition(event, correctAnswersStr) {
     };
     
     recognition.onend = () => resetMic(btn);
-}
-function restartQuiz() {
-    currentIndex = 0; 
-    userAnswers = [];
-    document.getElementById('result-box').classList.add('hidden');
-    document.getElementById('quiz-box').classList.remove('hidden');
-    renderQuestion();
 }
 
 const resetMic = btn => { 
@@ -380,6 +365,7 @@ function tryLogin() {
 }
 
 function logout() { switchScreen('quiz'); }
+
 // ==========================================
 // 5. ПАНЕЛЬ АДМИНИСТРАТОРА И ЭКСПОРТ
 // ==========================================
@@ -484,12 +470,12 @@ function editQuestion(i) {
     
     document.querySelector('.admin-box').scrollTop = 0;
 }
+
 function deleteQuestion(i) {
     allForms[currentFormId].questions.splice(i, 1);
-    save(); // Сохраняем изменения в localStorage
-    renderAdminQuestions(); // Обновляем список на экране
+    save(); 
+    renderAdminQuestions(); 
 }
-
 
 function exportFormToJSON() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allForms[currentFormId]));
@@ -524,44 +510,12 @@ function importFormFromJSON(input) {
 }
 
 // ==========================================
-// 5.5 ОПЦИИ МЕНЮ И ФИЧА "BLACK SCREEN"
+// 6. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И ОЗВУЧКА
 // ==========================================
 function toggleToolsMenu() {
     const menu = document.getElementById('tools-menu');
     if (menu) menu.classList.toggle('hidden');
 }
-function toggleAdminFields() {
-    const type = document.getElementById('new-type').value;
-    const currentQuestions = getCurrentFormQuestions(); // массив текущих вопросов
-
-    // Если уже есть вопросы других типов и выбираем flashcard — блокируем
-    const hasOtherTypes = currentQuestions.some(q => q.type !== 'flashcard');
-    const hasFlashcards = currentQuestions.some(q => q.type === 'flashcard');
-
-    if (type === 'flashcard' && hasOtherTypes) {
-        alert("⚠️ Карточки слов нельзя смешивать с обычными тестами. Создайте новую форму!");
-        document.getElementById('new-type').value = 'radio';
-        return;
-    }
-
-    if (type !== 'flashcard' && hasFlashcards) {
-        alert("⚠️ В этой форме создаются карточки слов. Другие типы вопросов недоступны!");
-        document.getElementById('new-type').value = 'flashcard';
-        return;
-    }
-
-    // Отображение полей
-    document.getElementById('flashcard-answer-box').classList.toggle('hidden', type !== 'flashcard');
-    document.getElementById('admin-choices-fields').classList.toggle('hidden', type !== 'radio' && type !== 'checkbox' && type !== 'select');
-    document.getElementById('admin-text-fields').classList.toggle('hidden', type !== 'text');
-}
-document.addEventListener('click', (e) => {
-    const menu = document.getElementById('tools-menu');
-    const btn = document.querySelector('.tools-btn');
-    if (menu && !menu.classList.contains('hidden') && e.target !== menu && e.target !== btn && !btn?.contains(e.target)) {
-        menu.classList.add('hidden');
-    }
-});
 
 function toggleBlackScreen() {
     let overlay = document.getElementById('black-screen-overlay');
@@ -569,19 +523,12 @@ function toggleBlackScreen() {
         overlay = document.createElement('div');
         overlay.id = 'black-screen-overlay';
         overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100vw';
-        overlay.style.height = '100vh';
+        overlay.style.top = '0'; overlay.style.left = '0';
+        overlay.style.width = '100vw'; overlay.style.height = '100vh';
         overlay.style.backgroundColor = '#000000';
-        overlay.style.zIndex = '99999';
-        overlay.style.cursor = 'pointer';
-        overlay.style.display = 'flex';
-        overlay.style.alignItems = 'center';
-        overlay.style.justifyContent = 'center';
-        overlay.style.color = '#333';
-        overlay.style.fontFamily = 'monospace';
-        overlay.style.fontSize = '12px';
+        overlay.style.zIndex = '99999'; overlay.style.cursor = 'pointer';
+        overlay.style.display = 'flex'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center';
+        overlay.style.color = '#333'; overlay.style.fontFamily = 'monospace'; overlay.style.fontSize = '12px';
         overlay.innerHTML = '<span>A/V MUTE (Tap or CTRL+M to exit)</span>';
         
         overlay.onclick = () => overlay.classList.add('hidden');
@@ -626,81 +573,51 @@ async function generateShareLink() {
         alert("Ошибка сжатия. Используйте скачивание .json файла!");
     }
 }
-// Функция озвучки текста голосом
+
 function speakText(text) {
     if (!('speechSynthesis' in window)) {
         alert("Ваш браузер не поддерживает озвучку текста.");
         return;
     }
-    // Останавливаем прошлую озвучку, если она еще говорит
     window.speechSynthesis.cancel();
-
     const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Автоматически определяем язык: если есть английские буквы — читаем по-английски
     utterance.lang = /[a-zA-Z]/.test(text) ? 'en-US' : 'ru-RU';
-    utterance.rate = 1.0; // Скорость речи
-    
+    utterance.rate = 1.0;
     window.speechSynthesis.speak(utterance);
 }
+
 function closeDeutschPopup() {
     const popup = document.getElementById('deutsch-popup');
     if (popup) {
         popup.classList.add('hidden');
-        // Опционально: можно сохранить в localStorage, чтобы баннер не всплывал повторно при закрытии
         localStorage.setItem('deutsch_popup_closed', 'true');
     }
 }
-function checkAdminAccessForCurrentTopic() {
+
+// Загрузка настроек при инициализации страницы
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. Проверка доступа к ссылке админа
     const currentUser = JSON.parse(localStorage.getItem('lang_current_user'));
     const currentTopicId = localStorage.getItem('q_curr_id');
-    
-    // Находим родительский блок с ссылкой "Войти в Редактор"
     const footerLink = document.getElementById('footer-link'); 
 
-    if (!footerLink) return;
-
-    // Скрываем для обычных учеников или если не авторизован
-    if (!currentUser || currentUser.type !== 'org') {
-        footerLink.style.display = 'none';
-        return;
+    if (footerLink) {
+        if (!currentUser || currentUser.type !== 'org') {
+            footerLink.style.display = 'none';
+        } else {
+            const publishedTopics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
+            const currentTopic = publishedTopics.find(t => t.id === currentTopicId);
+            if (currentTopic && currentTopic.allowAdmin === false) {
+                footerLink.style.display = 'none';
+            } else {
+                footerLink.style.display = 'block';
+            }
+        }
     }
 
-    // Проверяем тумблер у задания
-    const publishedTopics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
-    const currentTopic = publishedTopics.find(t => t.id === currentTopicId);
-
-    if (currentTopic && currentTopic.allowAdmin === false) {
-        footerLink.style.display = 'none'; // Скрываем ссылку
-    } else {
-        footerLink.style.display = 'block'; // Показываем
-    }
-}
-
-window.addEventListener('DOMContentLoaded', checkAdminAccessForCurrentTopic);
-// Проверка при загрузке страницы: если пользователь уже закрывал, не показываем
-window.addEventListener('DOMContentLoaded', () => {
+    // 2. Проверка немецкого popup
     if (localStorage.getItem('deutsch_popup_closed') === 'true') {
         const popup = document.getElementById('deutsch-popup');
         if (popup) popup.classList.add('hidden');
     }
 });
-document.addEventListener('keydown', (e) => {
-    // Работаем только если открыта карточка слова
-    const activeCard = document.querySelector('.flashcard-container');
-    if (!activeCard) return;
-
-    if (e.code === 'Space') {
-        e.preventDefault();
-        flipCard(); // Перевернуть / открыть ответ
-    } else if (e.code === 'ArrowRight') {
-        knowWord(true); // "Я знал это"
-    } else if (e.code === 'ArrowLeft') {
-        knowWord(false); // "Записать в словарь"
-    }
-});
-function speakWord(text) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'de-DE'; // Или 'en-US' в зависимости от курса
-    window.speechSynthesis.speak(utterance);
-}
