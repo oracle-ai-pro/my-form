@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход | Language Learn (My Form)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div class="quiz-container">
+    <!-- Опции темы (Светлая / Темная) -->
+    <div class="tools-dropdown">
+        <button class="tools-btn" onclick="toggleToolsMenu()">
+            <span class="material-symbols-rounded" style="font-size:16px;">settings</span> Опции ▼
+        </button>
+        <div id="tools-menu" class="tools-menu hidden">
+            <div class="tools-item" onclick="setTheme('light')"><span class="material-symbols-rounded">light_mode</span> Светлая тема</div>
+            <div class="tools-item" onclick="setTheme('dark')"><span class="material-symbols-rounded">dark_mode</span> Темная тема</div>
+        </div>
+    </div>
+
+    <!-- 1. ФОРМА ВХОДА -->
+    <div id="auth-box">
+        <h2 style="margin-top: 0; display: flex; align-items: center; gap: 8px;">
+            <span class="material-symbols-rounded" style="font-size: 28px; color: var(--primary);">school</span> Language Learn
+        </h2>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Авторизуйтесь для доступа к урокам и организации</p>
+
+        <form onsubmit="handleLogin(event)">
+            <label style="font-size: 14px; font-weight: bold;">Логин:</label>
+            <input type="text" id="login-input" class="admin-input" placeholder="Введите ваш логин" required>
+
+            <label style="font-size: 14px; font-weight: bold;">Пин / Пароль:</label>
+            <input type="password" id="password-input" class="admin-input" placeholder="••••••••" required>
+
+            <button type="submit">
+                <span class="material-symbols-rounded">login</span> Войти в аккаунт
+            </button>
+        </form>
+
+        <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+            <button type="button" class="btn-secondary" onclick="forgotPassword()" style="margin: 0; font-size: 13px; padding: 10px;">
+                <span class="material-symbols-rounded" style="font-size: 16px;">help_outline</span> Забыл Пин/Пароль
+            </button>
+            <button type="button" class="btn-secondary" onclick="openCreateModal()" style="margin: 0; font-size: 13px; padding: 10px; background: var(--success) !important;">
+                <span class="material-symbols-rounded" style="font-size: 16px;">add_circle</span> Создать...
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. МОДАЛЬНОЕ ОКНО СОЗДАНИЯ (АККАУНТ / ОРГАНИЗАЦИЯ / АССИСТЕНТ) -->
+    <div id="create-modal" class="hidden" style="margin-top: 25px; border-top: 2px solid var(--border-color); padding-top: 20px;">
+        <h3 style="margin-top: 0;">Что вы хотите создать?</h3>
+        
+        <label style="font-size: 14px; font-weight: bold;">Выберите тип:</label>
+        <select id="create-type" onchange="switchCreateType()">
+            <option value="user">👤 Обычный аккаунт</option>
+            <option value="org">🏢 Организацию</option>
+            <option value="assistant">🤖 Ассистента (AI / Бот)</option>
+        </select>
+
+        <!-- Поля создания аккаунта -->
+        <div id="form-user-fields">
+            <input type="text" id="reg-user-name" class="admin-input" placeholder="Имя и Фамилия">
+            <input type="text" id="reg-user-login" class="admin-input" placeholder="Желаемый Логин">
+            <input type="password" id="reg-user-pin" class="admin-input" placeholder="Пин / Пароль">
+        </div>
+
+        <!-- Поля создания организации -->
+        <div id="form-org-fields" class="hidden">
+            <input type="text" id="reg-org-name" class="admin-input" placeholder="Название Организации">
+            <input type="text" id="reg-org-admin" class="admin-input" placeholder="Логин Администратора Орг.">
+            <input type="password" id="reg-org-pin" class="admin-input" placeholder="Пин / Пароль Орг.">
+        </div>
+
+        <!-- Поля создания ассистента -->
+        <div id="form-assistant-fields" class="hidden">
+            <input type="text" id="reg-ast-name" class="admin-input" placeholder="Имя Ассистента (напр. LangBot)">
+            <select id="reg-ast-role" class="admin-input">
+                <option value="teacher">👨‍🏫 Преподаватель немецкого</option>
+                <option value="examiner">📝 Проверяющий тестов</option>
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button type="button" onclick="submitCreate()" style="margin: 0;">Создать</button>
+            <button type="button" class="btn-secondary" onclick="closeCreateModal()" style="margin: 0;">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Инициализация темы при загрузке
+    window.onload = () => {
+        const savedTheme = localStorage.getItem('quiz_theme') || 'light';
+        setTheme(savedTheme);
+
+        // Если пользователь уже вошел, сразу перенаправляем на index.html
+        const currentUser = JSON.parse(localStorage.getItem('lang_current_user'));
+        if (currentUser) {
+            window.location.href = 'index.html';
+        }
+    };
+
+    function setTheme(theme) {
+        if (theme === 'dark') document.body.classList.add('dark-theme'); 
+        else document.body.classList.remove('dark-theme');
+        localStorage.setItem('quiz_theme', theme);
+    }
+
+    function toggleToolsMenu() {
+        document.getElementById('tools-menu').classList.toggle('hidden');
+    }
+
+    // Обработка Входа
+    function handleLogin(e) {
+        e.preventDefault();
+        const login = document.getElementById('login-input').value.trim();
+        const pin = document.getElementById('password-input').value.trim();
+
+        const users = JSON.parse(localStorage.getItem('lang_users')) || [];
+        const foundUser = users.find(u => u.login === login && u.pin === pin);
+
+        if (foundUser || (login === 'admin' && pin === '1234')) {
+            const sessionUser = foundUser || {
+                name: 'Администратор',
+                login: 'admin',
+                type: 'org',
+                orgName: 'Главный Штаб',
+                completedLessons: 12
+            };
+            localStorage.setItem('lang_current_user', JSON.stringify(sessionUser));
+            window.location.href = 'index.html';
+        } else {
+            alert('❌ Неверный логин или Пин/Пароль!');
+        }
+    }
+
+    // Забавная фича "Забыл Пин/Пароль"
+    function forgotPassword() {
+        const jokes = [
+            "Вспомни! Он же где-то записюкан в блокнотике 📝",
+            "Попробуй ввести '1234' или 'pass' — а вдруг? 🤫",
+            "Штаб ЛМСХ рекомендует активировать интуицию 🔮",
+            "Спроси у ассистента, возможно, он за тобой подглядывал 🤖"
+        ];
+        const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
+        alert(`💡 Забыли Пин/Пароль?\n\n${randomJoke}`);
+    }
+
+    // Управление модальным окном создания
+    function openCreateModal() {
+        document.getElementById('create-modal').classList.remove('hidden');
+    }
+
+    function closeCreateModal() {
+        document.getElementById('create-modal').classList.add('hidden');
+    }
+
+    function switchCreateType() {
+        const type = document.getElementById('create-type').value;
+        document.getElementById('form-user-fields').classList.toggle('hidden', type !== 'user');
+        document.getElementById('form-org-fields').classList.toggle('hidden', type !== 'org');
+        document.getElementById('form-assistant-fields').classList.toggle('hidden', type !== 'assistant');
+    }
+
+    // Создание новой сущности
+    function submitCreate() {
+        const type = document.getElementById('create-type').value;
+        let users = JSON.parse(localStorage.getItem('lang_users')) || [];
+
+        if (type === 'user') {
+            const name = document.getElementById('reg-user-name').value.trim();
+            const login = document.getElementById('reg-user-login').value.trim();
+            const pin = document.getElementById('reg-user-pin').value.trim();
+
+            if (!name || !login || !pin) return alert('Заполните все поля!');
+
+            users.push({ type: 'user', name, login, pin, completedLessons: 0, orgName: 'Нет' });
+            localStorage.setItem('lang_users', JSON.stringify(users));
+            alert(`✅ Аккаунт "${name}" успешно создан! Теперь вы можете войти.`);
+
+        } else if (type === 'org') {
+            const orgName = document.getElementById('reg-org-name').value.trim();
+            const login = document.getElementById('reg-org-admin').value.trim();
+            const pin = document.getElementById('reg-org-pin').value.trim();
+
+            if (!orgName || !login || !pin) return alert('Заполните все поля!');
+
+            users.push({ type: 'org', name: `Админ (${orgName})`, login, pin, orgName: orgName, completedLessons: 0 });
+            localStorage.setItem('lang_users', JSON.stringify(users));
+            alert(`🏢 Организация "${orgName}" зарегистрирована!`);
+
+        } else if (type === 'assistant') {
+            const name = document.getElementById('reg-ast-name').value.trim();
+            const role = document.getElementById('reg-ast-role').value;
+
+            if (!name) return alert('Введите имя ассистента!');
+
+            let assistants = JSON.parse(localStorage.getItem('lang_assistants')) || [];
+            assistants.push({ name, role });
+            localStorage.setItem('lang_assistants', JSON.stringify(assistants));
+            alert(`🤖 Ассистент "${name}" успешно создан и готов к работе!`);
+        }
+
+        closeCreateModal();
+    }
+</script>
+
+</body>
+</html>
