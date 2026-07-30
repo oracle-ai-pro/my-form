@@ -191,6 +191,26 @@ function nextStep(isTimeout = false) {
             rawValue = currentVoiceAnswer.text;
             voiceStatus = currentVoiceAnswer.status;
         }
+        } else if (q.type === 'flashcard') {
+        html += `
+            <div class="flashcard-container" onclick="flipCard()">
+                <div class="flashcard" id="main-flashcard">
+                    <div class="flashcard-front">
+                        <h3>${q.title}</h3>
+                        <button class="speak-btn" onclick="event.stopPropagation(); speakText('${q.title.replace(/'/g, "\\'")}')">
+                            <span class="material-symbols-rounded">volume_up</span> Озвучить
+                        </button>
+                    </div>
+                    <div class="flashcard-back">
+                        <h3>${q.correctText ? q.correctText.join(' / ') : (q.answer || '')}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="flashcard-controls" style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                <button class="btn-secondary" onclick="knowWord(false)">❌ Записать в словарь</button>
+                <button class="btn-primary" onclick="knowWord(true)">✅ Я знал это</button>
+            </div>`;
+    }
         if (q.required && answers.length === 0 && rawValue === "" && q.type !== 'voice_card') { alert("Этот вопрос обязателен!"); return; }
     } else { rawValue = "[Время истекло]"; }
 
