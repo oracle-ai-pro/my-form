@@ -627,7 +627,33 @@ function closeDeutschPopup() {
         localStorage.setItem('deutsch_popup_closed', 'true');
     }
 }
+function checkAdminAccessForCurrentTopic() {
+    const currentUser = JSON.parse(localStorage.getItem('lang_current_user'));
+    const currentTopicId = localStorage.getItem('q_curr_id');
+    
+    // Находим родительский блок с ссылкой "Войти в Редактор"
+    const footerLink = document.getElementById('footer-link'); 
 
+    if (!footerLink) return;
+
+    // Скрываем для обычных учеников или если не авторизован
+    if (!currentUser || currentUser.type !== 'org') {
+        footerLink.style.display = 'none';
+        return;
+    }
+
+    // Проверяем тумблер у задания
+    const publishedTopics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
+    const currentTopic = publishedTopics.find(t => t.id === currentTopicId);
+
+    if (currentTopic && currentTopic.allowAdmin === false) {
+        footerLink.style.display = 'none'; // Скрываем ссылку
+    } else {
+        footerLink.style.display = 'block'; // Показываем
+    }
+}
+
+window.addEventListener('DOMContentLoaded', checkAdminAccessForCurrentTopic);
 // Проверка при загрузке страницы: если пользователь уже закрывал, не показываем
 window.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('deutsch_popup_closed') === 'true') {
