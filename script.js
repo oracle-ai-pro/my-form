@@ -661,3 +661,22 @@ window.addEventListener('DOMContentLoaded', () => {
         if (popup) popup.classList.add('hidden');
     }
 });
+document.addEventListener('keydown', (e) => {
+    // Работаем только если открыта карточка слова
+    const activeCard = document.querySelector('.flashcard-container');
+    if (!activeCard) return;
+
+    if (e.code === 'Space') {
+        e.preventDefault();
+        flipCard(); // Перевернуть / открыть ответ
+    } else if (e.code === 'ArrowRight') {
+        knowWord(true); // "Я знал это"
+    } else if (e.code === 'ArrowLeft') {
+        knowWord(false); // "Записать в словарь"
+    }
+});
+function speakWord(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'de-DE'; // Или 'en-US' в зависимости от курса
+    window.speechSynthesis.speak(utterance);
+}
