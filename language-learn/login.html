@@ -115,28 +115,45 @@
     }
 
     // Обработка Входа
-    function handleLogin(e) {
-        e.preventDefault();
-        const login = document.getElementById('login-input').value.trim();
-        const pin = document.getElementById('password-input').value.trim();
+    function handleLogin() {
+    const loginInput = document.getElementById('login').value.trim();
+    const pinInput = document.getElementById('pin').value.trim();
 
-        const users = JSON.parse(localStorage.getItem('lang_users')) || [];
-        const foundUser = users.find(u => u.login === login && u.pin === pin);
-
-        if (foundUser || (login === 'admin' && pin === '1234')) {
-            const sessionUser = foundUser || {
-                name: 'Администратор',
-                login: 'admin',
-                type: 'org',
-                orgName: 'Главный Штаб',
-                completedLessons: 12
-            };
-            localStorage.setItem('lang_current_user', JSON.stringify(sessionUser));
-            window.location.href = 'index.html';
-        } else {
-            alert('❌ Неверный логин или Пин/Пароль!');
+    // 1. Вшитые учетные записи (работают ВЕЗДЕ, даже в инкогнито)
+    const defaultUsers = [
+        {
+            type: 'org',
+            name: 'Главный Администратор',
+            login: 'admin',
+            pin: '1234',
+            orgName: 'ЛМСХ'
+        },
+        {
+            type: 'user',
+            name: 'Демо Участник',
+            login: 'user',
+            pin: '0000',
+            completedLessons: 0,
+            orgName: 'Главный Штаб'
         }
+    ];
+
+    // 2. Достаем пользователей из localStorage (если создавали через форму)
+    const localUsers = JSON.parse(localStorage.getItem('lang_users')) || [];
+
+    // Объединяем оба списка
+    const allUsers = [...defaultUsers, ...localUsers];
+
+    // Ищем совпадение
+    const user = allUsers.find(u => u.login === loginInput && u.pin === pinInput);
+
+    if (user) {
+        localStorage.setItem('lang_current_user', JSON.stringify(user));
+        window.location.href = 'index.html';
+    } else {
+        alert("❌ Неверный логин или Пин/Пароль!");
     }
+}
 
     // Забавная фича "Забыл Пин/Пароль"
     function forgotPassword() {
@@ -207,6 +224,7 @@
 
         closeCreateModal();
     }
+    
 </script>
 
 </body>
