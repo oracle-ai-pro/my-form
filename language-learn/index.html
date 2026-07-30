@@ -5,8 +5,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Главная | Language Learn (My Form)</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
-    <link rel="stylesheet" href="../style.css">
     <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-card: #ffffff;
+            --bg-body: #f3f4f6;
+            --bg-option-hover: #f9fafb;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --radius-mid: 12px;
+            --radius-max: 20px;
+        }
+
+        body.dark-theme {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-card: #1f2937;
+            --bg-body: #111827;
+            --bg-option-hover: #374151;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --border-color: #374151;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--bg-card);
+            border-radius: var(--radius-max);
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .hidden { display: none !important; }
+
+        /* Кнопки */
+        button {
+            width: 100%;
+            padding: 12px 18px;
+            border: none;
+            border-radius: var(--radius-mid);
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        button:hover { background: var(--primary-hover); }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover { background: var(--bg-option-hover); }
+
+        .add-form-btn {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Инпуты и Селекты */
+        .admin-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius-mid);
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-size: 14px;
+            margin-top: 4px;
+            margin-bottom: 12px;
+            outline: none;
+        }
+
+        .admin-input:focus { border-color: var(--primary); }
+
+        /* Дашборд и Карточки */
         .dashboard-card {
             background: var(--bg-option-hover);
             border: 1px solid var(--border-color);
@@ -14,23 +124,26 @@
             padding: 18px;
             margin-bottom: 20px;
         }
+
         .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(40, 167, 69, 0.15);
+            background: rgba(16, 185, 129, 0.15);
             color: var(--success);
             padding: 4px 10px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: bold;
         }
+
         .status-dot {
             width: 8px;
             height: 8px;
             background: var(--success);
             border-radius: 50%;
         }
+
         .info-row {
             display: flex;
             justify-content: space-between;
@@ -38,6 +151,7 @@
             margin-top: 10px;
             font-size: 14px;
         }
+
         .admin-panel-badge {
             background: var(--primary);
             color: white;
@@ -48,6 +162,7 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .lesson-item {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -57,142 +172,240 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
         }
+
+        /* Меню опций */
+        .tools-dropdown { position: relative; }
+        .tools-btn { padding: 6px 12px; font-size: 12px; border-radius: 20px; width: auto; margin: 0; }
+        .tools-menu {
+            position: absolute;
+            right: 0;
+            top: 35px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-mid);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            width: 220px;
+            z-index: 100;
+            overflow: hidden;
+        }
+        .tools-item {
+            padding: 10px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tools-item:hover { background: var(--bg-option-hover); }
+
+        /* Модалка */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-body {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: var(--radius-max);
+            width: 90%;
+            max-width: 520px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Тумблеры (Switch) */
+        .switch-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 22px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(18px); }
     </style>
 </head>
 <body>
 
 <script>
-    // Проверка авторизации: если не залогинен — отправляем на login.html
+    // Проверка авторизации
     const currentUser = JSON.parse(localStorage.getItem('lang_current_user'));
-    if (!currentUser) {
-        window.location.href = 'login.html';
-    }
+    if (!currentUser) window.location.href = 'login.html';
 </script>
 
 <div class="quiz-container">
-    
-    <!-- Шапка и Меню опций -->
+    <!-- ХЕДЕР -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <h2 style="margin: 0; display: flex; align-items: center; gap: 8px;">
             <span class="material-symbols-rounded" style="color: var(--primary);">school</span> Language Learn
         </h2>
-        <div class="tools-dropdown" style="position: static;">
-            <button class="tools-btn" onclick="toggleToolsMenu()">
+        <div class="tools-dropdown">
+            <button class="tools-btn btn-secondary" onclick="toggleToolsMenu()">
                 <span class="material-symbols-rounded" style="font-size:16px;">settings</span> Опции ▼
             </button>
             <div id="tools-menu" class="tools-menu hidden">
                 <div class="tools-item" onclick="setTheme('light')"><span class="material-symbols-rounded">light_mode</span> Светлая тема</div>
                 <div class="tools-item" onclick="setTheme('dark')"><span class="material-symbols-rounded">dark_mode</span> Темная тема</div>
+                <div class="tools-item" onclick="window.location.href='users_and_personalisation.html'"><span class="material-symbols-rounded">group</span> Настройки участников и страницы</div>
                 <div class="tools-item" onclick="logout()" style="color: var(--danger);"><span class="material-symbols-rounded">logout</span> Выйти из аккаунта</div>
             </div>
         </div>
     </div>
 
-    <!-- 1. ДАШБОРД ПОЛЬЗОВАТЕЛЯ -->
+    <!-- ДАШБОРД -->
     <div class="dashboard-card">
-        <h3 style="margin-top: 0; margin-bottom: 8px;" id="user-display-name">Здравствуйте, Пользователь</h3>
-        
+        <h3 style="margin-top: 0; margin-bottom: 8px;" id="user-display-name">Здравствуйте</h3>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
             <span class="status-badge"><span class="status-dot"></span> Онлайн</span>
-            <span style="font-size: 13px; color: var(--text-muted);" id="current-datetime">Сегодня: 30.07.2026 12:40</span>
+            <span style="font-size: 13px; color: var(--text-muted);" id="current-datetime">Сегодня: --.--.---- --:--</span>
         </div>
-
         <div style="border-top: 1px solid var(--border-color); padding-top: 10px;">
-            <div class="info-row">
-                <span>Пройдено уроков:</span>
-                <strong id="user-completed-lessons">0</strong>
-            </div>
-            <div class="info-row">
-                <span>Управление Организацией:</span>
-                <strong id="user-org-status" style="color: var(--primary);">Нет</strong>
-            </div>
+            <div class="info-row"><span>Пройдено уроков:</span><strong id="user-completed-lessons">0</strong></div>
+            <div class="info-row"><span>Управление Организацией:</span><strong id="user-org-status" style="color: var(--primary);">Нет</strong></div>
         </div>
     </div>
 
-    <!-- 2. БЛОК АДМИНИСТРАТОРА ОРГАНИЗАЦИИ (отображается, если Управление Организацией != Нет) -->
+    <!-- БАННЕР АДМИНА С КНОПКОЙ + -->
     <div id="admin-org-banner" class="admin-panel-badge hidden">
         <div>
             <strong style="display: block; font-size: 15px;">Панель Управления Организацией</strong>
-            <small style="opacity: 0.9;">Создавайте тесты и формы для ваших участников</small>
+            <small style="opacity: 0.9;">Создавайте тесты и формы для участников</small>
         </div>
-        <button onclick="openCreateTestModal()" class="add-form-btn" style="background: white; color: var(--primary);" title="Создать тест или форму">
+        <button onclick="openCreateModal()" class="add-form-btn" style="background: white; color: var(--primary);" title="Создать тест или урок">
             <span class="material-symbols-rounded">add</span>
         </button>
     </div>
 
-    <!-- 3. ОСНОВНЫЕ ДЕЙСТВИЯ -->
+    <!-- ДЕЙСТВИЯ -->
     <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-        <button onclick="connectTeacher()" style="margin: 0; flex: 1; font-size: 14px; padding: 12px;">
-            <span class="material-symbols-rounded">person_add</span> Подключится к Преподавателю
+        <button onclick="alert('Подключение к преподавателю...')" style="margin: 0; flex: 1; font-size: 13px; padding: 12px;">
+            <span class="material-symbols-rounded">person_add</span> Подключиться к Преподавателю
         </button>
-        <button onclick="openMonthlyTests()" class="btn-secondary" style="margin: 0; flex: 1; font-size: 14px; padding: 12px;">
+        <button onclick="alert('Тесты проводятся 01 числа!')" class="btn-secondary" style="margin: 0; flex: 1; font-size: 13px; padding: 12px;">
             <span class="material-symbols-rounded">assignment</span> Тесты (обычно 01 числа)
         </button>
     </div>
 
-    <!-- 4. УРОКИ НА СЕГОДНЯ -->
+    <!-- СПИСОК УРОКОВ -->
     <div>
         <h3 style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
             <span>Уроки на сегодня</span>
-            <small style="font-size: 12px; color: var(--text-muted); font-weight: normal;">(тема выбрана организацией)</small>
+            <small style="font-size: 12px; color: var(--text-muted); font-weight: normal;">(авто-создание и рекомендации)</small>
         </h3>
-
-        <div id="lessons-list">
-            <div class="lesson-item">
-                <div>
-                    <strong>Урок 1: Вводный разговорный курс</strong><br>
-                    <small style="color: var(--text-muted);">Тема: Знакомство и базовые фразы</small>
-                </div>
-                <button onclick="startLesson(1)" style="width: auto; margin: 0; padding: 8px 16px; font-size: 13px;">Пройти</button>
-            </div>
-            
-            <div class="lesson-item">
-                <div>
-                    <strong>Урок 2: Голосовая практика (Карточки)</strong><br>
-                    <small style="color: var(--text-muted);">Тема: Произношение слов</small>
-                </div>
-                <button onclick="startLesson(2)" style="width: auto; margin: 0; padding: 8px 16px; font-size: 13px;">Пройти</button>
-            </div>
-        </div>
+        <div id="lessons-list"></div>
     </div>
+</div>
 
-    <!-- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ ТЕСТОВ (ДЛЯ АДМИНА ОРГАНИЗАЦИИ) -->
-    <div id="create-test-modal" class="hidden" style="margin-top: 20px; border-top: 2px solid var(--border-color); padding-top: 20px;">
-        <h3>Создать новый Тест или Форму</h3>
-        <input type="text" id="new-test-title" class="admin-input" placeholder="Название теста / урока">
-        <textarea id="new-test-desc" class="admin-input" placeholder="Описание и тема для участников..." style="height: 60px;"></textarea>
+<!-- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ ТЕМЫ/УРОКА -->
+<div id="create-modal-overlay" class="modal-overlay hidden">
+    <div class="modal-body">
+        <h3 style="margin-top:0;">Создать Тему / Урок</h3>
         
-        <div style="display: flex; gap: 10px;">
-            <button onclick="saveNewTest()" style="margin: 0;">Сохранить и Назначить</button>
-            <button onclick="closeCreateTestModal()" class="btn-secondary" style="margin: 0;">Отмена</button>
+        <label style="font-size:13px; font-weight:bold;">Тип:</label>
+        <select id="modal-type" class="admin-input">
+            <option value="test">📝 Тест</option>
+            <option value="lesson">📖 Обычный Урок</option>
+        </select>
+
+        <label style="font-size:13px; font-weight:bold;">Название:</label>
+        <input type="text" id="modal-title" class="admin-input" placeholder="Введите название...">
+
+        <label style="font-size:13px; font-weight:bold;">Описание:</label>
+        <textarea id="modal-desc" class="admin-input" style="height:60px; resize:none;" placeholder="Краткое описание..."></textarea>
+
+        <label class="switch-label">
+            <span class="switch"><input type="checkbox" id="modal-allow-admin"><span class="slider"></span></span>
+            Разрешить Админку (по умолчанию запрещено)
+        </label>
+
+        <!-- НАПОЛНЕНИЕ ВОПРОСАМИ -->
+        <div style="border:1px dashed var(--border-color); padding:12px; border-radius:10px; margin-bottom:15px;">
+            <strong style="font-size:14px; display:block; margin-bottom:8px;">Вопросы и Задания:</strong>
+            <p id="questions-counter" style="font-size:12px; color:var(--text-muted); margin:0 0 10px 0;">Вопросов добавлено: 0</p>
+            
+            <div style="display:flex; gap:8px;">
+                <button type="button" class="btn-secondary" onclick="document.getElementById('import-json-file').click()" style="margin:0; font-size:12px; padding:8px;">
+                    <span class="material-symbols-rounded">upload</span> Импортировать JSON
+                </button>
+                <input type="file" id="import-json-file" class="hidden" accept=".json" onchange="handleImportJSON(this)">
+
+                <button type="button" onclick="addQuickQuestion()" style="margin:0; font-size:12px; padding:8px;">
+                    <span class="material-symbols-rounded">add</span> Быстрый вопрос
+                </button>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button onclick="publishTopic()" style="margin:0;">Опубликовать</button>
+            <button onclick="closeCreateModal()" class="btn-secondary" style="margin:0;">Отмена</button>
         </div>
     </div>
-
 </div>
 
 <script>
-    window.onload = () => {
-        // Настройка темы
-        const savedTheme = localStorage.getItem('quiz_theme') || 'light';
-        setTheme(savedTheme);
+    let currentQuestions = [];
 
-        // Заполнение данных пользователя из localStorage
+    window.onload = () => {
+        setTheme(localStorage.getItem('quiz_theme') || 'light');
+        
         if (currentUser) {
             document.getElementById('user-display-name').innerText = `Здравствуйте, ${currentUser.name || 'Пользователь'}`;
             document.getElementById('user-completed-lessons').innerText = currentUser.completedLessons || 0;
-            
-            const orgStatusText = currentUser.orgName && currentUser.orgName !== 'Нет' ? currentUser.orgName : 'Нет';
-            document.getElementById('user-org-status').innerText = orgStatusText;
+            document.getElementById('user-org-status').innerText = currentUser.orgName || 'Нет';
 
-            // Если у пользователя есть организация или он админ, показываем блок с кнопкой "+"
-            if (currentUser.type === 'org' || currentUser.orgName !== 'Нет') {
+            if (currentUser.type === 'org' || (currentUser.orgName && currentUser.orgName !== 'Нет')) {
                 document.getElementById('admin-org-banner').classList.remove('hidden');
             }
         }
 
-        // Автоматическое обновление даты и времени
         updateDateTime();
+        renderLessons();
     };
 
     function updateDateTime() {
@@ -208,59 +421,144 @@
         localStorage.setItem('quiz_theme', theme);
     }
 
-    function toggleToolsMenu() {
-        document.getElementById('tools-menu').classList.toggle('hidden');
+    function toggleToolsMenu() { 
+        document.getElementById('tools-menu').classList.toggle('hidden'); 
     }
 
-    function logout() {
-        localStorage.removeItem('lang_current_user');
-        window.location.href = 'login.html';
+    function logout() { 
+        localStorage.removeItem('lang_current_user'); 
+        window.location.href = 'login.html'; 
     }
 
-    function connectTeacher() {
-        alert("🔌 Поиск доступных преподавателей организации...\n\nПодключение к онлайн-сессии преподавателя создано!");
+    function openCreateModal() {
+        currentQuestions = [];
+        updateQuestionsCounter();
+        document.getElementById('modal-title').value = '';
+        document.getElementById('modal-desc').value = '';
+        document.getElementById('modal-allow-admin').checked = false;
+        document.getElementById('create-modal-overlay').classList.remove('hidden');
     }
 
-    function openMonthlyTests() {
-        alert("📅 Раздел ежемесячного тестирования.\n\nСледующее плановое тестирование состоится 01 числа!");
+    function closeCreateModal() {
+        document.getElementById('create-modal-overlay').classList.add('hidden');
     }
 
-    function startLesson(num) {
-        alert(`🚀 Запуск Урока №${num}.\n\nПереход к интерактивным тестам My Form...`);
-        window.location.href = '../index.html';
+    function addQuickQuestion() {
+        const qTitle = prompt("Введите текст вопроса:");
+        if (!qTitle) return;
+        const qAns = prompt("Введите правильный ответ:");
+        
+        currentQuestions.push({
+            type: "text",
+            title: qTitle,
+            required: true,
+            correctText: [qAns || ""]
+        });
+        updateQuestionsCounter();
     }
 
-    // Управление модальным окном админа организации
-    function openCreateTestModal() {
-        document.getElementById('create-test-modal').classList.remove('hidden');
+    function handleImportJSON(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.questions && Array.isArray(data.questions)) {
+                    currentQuestions = data.questions;
+                    if (data.title) document.getElementById('modal-title').value = data.title;
+                    if (data.description) document.getElementById('modal-desc').value = data.description;
+                    updateQuestionsCounter();
+                    alert("JSON успешно импортирован!");
+                } else {
+                    alert("В JSON нет массива questions!");
+                }
+            } catch(err) { alert("Ошибка при чтении JSON файла!"); }
+        };
+        reader.readAsText(file);
     }
 
-    function closeCreateTestModal() {
-        document.getElementById('create-test-modal').classList.add('hidden');
+    function updateQuestionsCounter() {
+        document.getElementById('questions-counter').innerText = `Вопросов добавлено: ${currentQuestions.length}`;
     }
 
-    function saveNewTest() {
-        const title = document.getElementById('new-test-title').value.trim();
-        const desc = document.getElementById('new-test-desc').value.trim();
+    function publishTopic() {
+        const title = document.getElementById('modal-title').value.trim();
+        const desc = document.getElementById('modal-desc').value.trim();
+        const type = document.getElementById('modal-type').value;
+        const allowAdmin = document.getElementById('modal-allow-admin').checked;
 
-        if (!title) return alert("Введите название теста!");
+        if (!title) return alert("Введите название темы!");
 
-        const lessonsBox = document.getElementById('lessons-list');
-        const newLessonHtml = `
-            <div class="lesson-item">
-                <div>
-                    <strong>${title}</strong><br>
-                    <small style="color: var(--text-muted);">${desc || 'Назначено организацией'}</small>
+        if (currentQuestions.length === 0) {
+            return alert("❌ Нельзя опубликовать пустой тест или урок! Добавьте хотя бы один вопрос или импортируйте JSON.");
+        }
+
+        const newTopic = {
+            id: 'topic_' + Date.now(),
+            type, title, description: desc, allowAdmin, published: true,
+            questions: currentQuestions
+        };
+
+        let topics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
+        topics.push(newTopic);
+        localStorage.setItem('lang_published_topics', JSON.stringify(topics));
+
+        alert(`✅ ${type === 'test' ? 'Тест' : 'Урок'} "${title}" успешно опубликован!`);
+        closeCreateModal();
+        renderLessons();
+    }
+
+    function renderLessons() {
+        const container = document.getElementById('lessons-list');
+        let topics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
+        const settings = JSON.parse(localStorage.getItem('lang_settings')) || { autoLessons: true };
+
+        let html = '';
+
+        if (settings.autoLessons) {
+            html += `
+                <div class="lesson-item" style="border-left: 4px solid var(--primary);">
+                    <div>
+                        <strong>⭐ [Рекомендуемый] Немецкий: Базовый словарь</strong><br>
+                        <small style="color: var(--text-muted);">Автоматический урок от My Form</small>
+                    </div>
+                    <button onclick="window.location.href='../index.html'" style="width: auto; margin: 0; padding: 8px 16px; font-size: 13px;">Пройти</button>
                 </div>
-                <button onclick="startLesson('custom')" style="width: auto; margin: 0; padding: 8px 16px; font-size: 13px;">Пройти</button>
-            </div>
-        `;
-        lessonsBox.insertAdjacentHTML('beforeend', newLessonHtml);
+            `;
+        }
 
-        alert(`✅ Тест "${title}" успешно создан и опубликован для участников организации!`);
-        closeCreateTestModal();
+        if (topics.length > 0) {
+            topics.forEach(t => {
+                const typeBadge = t.type === 'test' ? '📝 Тест' : '📖 Урок';
+                html += `
+                    <div class="lesson-item">
+                        <div>
+                            <strong>${t.title} <small style="color:var(--primary);">(${typeBadge})</small></strong><br>
+                            <small style="color: var(--text-muted);">${t.description || 'Без описания'}</small>
+                        </div>
+                        <button onclick="runCustomTopic('${t.id}')" style="width: auto; margin: 0; padding: 8px 16px; font-size: 13px;">Пройти</button>
+                    </div>
+                `;
+            });
+        } else if (!settings.autoLessons) {
+            html = `<p style="text-align:center; color:var(--text-muted);">Пока нет доступных уроков.</p>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    function runCustomTopic(topicId) {
+        let topics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
+        let found = topics.find(t => t.id === topicId);
+        if (found) {
+            let allForms = JSON.parse(localStorage.getItem('q_forms')) || {};
+            allForms[found.id] = { id: found.id, name: found.title, questions: found.questions };
+            localStorage.setItem('q_forms', JSON.stringify(allForms));
+            localStorage.setItem('q_curr_id', found.id);
+            window.location.href = '../index.html';
+        }
     }
 </script>
-
 </body>
 </html>
