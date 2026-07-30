@@ -149,23 +149,24 @@ function renderQuestion() {
                 <div class="voice-status" id="voice-status">Скажите ответ или нажмите на карточку, чтобы посмотреть его.</div>
             </div>`;
     } else if (q.type === 'flashcard') {
-        html += `
+        // Очищаем заголовок сверху, так как слово будет внутри самой карточки
+        html = `
             <div class="flashcard-container" onclick="flipCard()">
                 <div class="flashcard" id="main-flashcard">
                     <div class="flashcard-front">
-                        <h3>${q.title}</h3>
+                        <span class="flashcard-word">${q.title}</span>
                         <button class="speak-btn" onclick="event.stopPropagation(); speakText('${q.title.replace(/'/g, "\\'")}')">
                             <span class="material-symbols-rounded">volume_up</span> Озвучить
                         </button>
                     </div>
                     <div class="flashcard-back">
-                        <h3>${q.correctText ? q.correctText.join(' / ') : (q.answer || '')}</h3>
+                        <span class="flashcard-word">${q.correctText ? q.correctText.join(' / ') : (q.answer || '')}</span>
                     </div>
                 </div>
             </div>
-            <div class="flashcard-controls" style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
-                <button class="btn-secondary" onclick="knowWord(false)">❌ Записать в словарь</button>
-                <button class="btn-primary" onclick="knowWord(true)">✅ Я знал это</button>
+            <div class="flashcard-controls">
+                <button class="btn-secondary" onclick="knowWord(false)"><span class="material-symbols-rounded">close</span> Записать в словарь</button>
+                <button class="btn-primary" onclick="knowWord(true)"><span class="material-symbols-rounded">check</span> Я знал/знала это</button>
             </div>`;
     }
 
