@@ -156,7 +156,7 @@ function renderQuestion() {
                     <div class="flashcard-front">
                         <span class="flashcard-word">${q.title}</span>
                         <button class="speak-btn" onclick="event.stopPropagation(); speakText('${q.title.replace(/'/g, "\\'")}')">
-                            <span class="material-symbols-rounded">volume_up</span> Озвучить
+                            <span class="material-symbols-rounded">volume_up</span>
                         </button>
                     </div>
                     <div class="flashcard-back">
