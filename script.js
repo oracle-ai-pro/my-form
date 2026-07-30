@@ -420,21 +420,28 @@ function logout() { switchScreen('quiz'); }
 // 5. ПАНЕЛЬ АДМИНИСТРАТОРА И ЭКСПОРТ
 // ==========================================
 function toggleAdminFields() {
-    const type = document.getElementById('new-type').value;
-    document.getElementById('admin-choices-fields').classList.toggle('hidden', type === 'text' || type === 'voice_card' || type === 'flashcard');
-    document.getElementById('admin-text-fields').classList.toggle('hidden', type !== 'text' && type !== 'voice_card' && type !== 'flashcard');
+    const typeSelect = document.getElementById('new-type');
+    const type = typeSelect.value;
     
+    // Показываем/скрываем необходимые поля
+    const isTextBased = (type === 'text' || type === 'voice_card' || type === 'flashcard');
+    document.getElementById('admin-choices-fields')?.classList.toggle('hidden', isTextBased);
+    document.getElementById('admin-text-fields')?.classList.toggle('hidden', !isTextBased);
+    
+    // Настраиваем подпись для поля ввода ответа
     const textLabel = document.getElementById('admin-text-fields')?.querySelector('label');
-    if (textLabel) {
-        if (type === 'voice_card') {
+    const inputField = document.getElementById('new-correct-text');
+    
+    if (textLabel && inputField) {
+        if (type === 'flashcard') {
+            textLabel.innerHTML = '🎴 Правильный ответ (будет отображаться на обороте после нажатия на пробел или карточку):';
+            inputField.placeholder = 'Введите перевод или ответ...';
+        } else if (type === 'voice_card') {
             textLabel.innerHTML = '🎤 Произносимое слово (можно через запятую для синонимов):';
-            document.getElementById('new-correct-text').placeholder = 'привет, hello, хай';
-        } else if (type === 'flashcard') {
-            textLabel.innerHTML = '🎴 Ответ / Перевод на обороте карточки:';
-            document.getElementById('new-correct-text').placeholder = 'Перевод слова';
+            inputField.placeholder = 'привет, hello, хай';
         } else {
             textLabel.innerHTML = 'Правильный текст (через запятую для синонимов):';
-            document.getElementById('new-correct-text').placeholder = 'ответ1, ответ2';
+            inputField.placeholder = 'ответ1, ответ2';
         }
     }
 }
@@ -529,7 +536,35 @@ function deleteQuestion(i) {
     save(); 
     renderAdminQuestions(); 
 }
+function checkFlashcardRestriction() {
+    const typeSelect = document.getElementById('new-type');
+    if (!typeSelect) return;
 
+    // Проверяем, есть ли уже вопросы в текущей форме
+    const currentQuestions = allForms[currentFormId]?.questions || [];
+    const hasFlashcards = currentQuestions.some(q => q.type === 'flashcard');
+    const hasOtherTypes = currentQuestions.some(q => q.type !== 'flashcard');
+
+    // Блокируем опции в зависимости от того, что уже добавлено
+    Array.from(typeSelect.options).forEach(opt => {
+        if (hasFlashcards) {
+            // Если в форме уже есть флэш-карточки, разрешаем только flashcard
+            opt.disabled = (opt.value !== 'flashcard');
+        } else if (hasOtherTypes) {
+            // Если в форме есть обычные вопросы, запрещаем выберать flashcard
+            opt.disabled = (opt.value === 'flashcard');
+        } else {
+            // Если форма пустая — разрешено всё
+            opt.disabled = false;
+        }
+    });
+
+    // Если текущий выбранный вариант заблокирован, переключаем на первый доступный
+    if (typeSelect.selectedOptions[0]?.disabled) {
+        const firstEnabled = Array.from(typeSelect.options).find(opt => !opt.disabled);
+        if (firstEnabled) typeSelect.value = firstEnabled.value;
+    }
+}
 function exportFormToJSON() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allForms[currentFormId]));
     const dlAnchorElem = document.createElement('a');
@@ -603,6 +638,16 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+document.addEventListener('keydown', (e) => {
+    // Переворот карточки по нажатию на ПРОБЕЛ
+    if (e.code === 'Space') {
+        const card = document.getElementById('main-flashcard');
+        // Переворачиваем только если карточка есть на экране и пользователь не пишет в input
+        if (card && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault(); // чтобы страница не скроллилась вниз
+            flipCard();
+        }
+    }
 
 async function generateShareLink() {
     try {
