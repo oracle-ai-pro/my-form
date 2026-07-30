@@ -1,0 +1,17 @@
+[
+  {
+    "type": "org",
+    "name": "Главный Администратор",
+    "login": "admin",
+    "pin": "1234",
+    "orgName": "ЛМСХ"
+  },
+  {
+    "type": "user",
+    "name": "Иван Иванов",
+    "login": "user123",
+    "pin": "8899",
+    "completedLessons": 0,
+    "orgName": "Главный Штаб"
+  }
+]
