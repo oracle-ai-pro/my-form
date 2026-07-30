@@ -14,9 +14,7 @@
     
     <!-- Вкладки для переключения и создания разных форм -->
     <div class="forms-tabs-container">
-        <div id="forms-tabs-list" class="forms-tabs-list">
-            <!-- Сюда JS будет добавлять вкладки динамически -->
-        </div>
+        <div id="forms-tabs-list" class="forms-tabs-list"></div>
         <button class="add-form-btn" onclick="createNewFormPrompt()">
             <span class="material-symbols-rounded">add</span>
         </button>
@@ -26,17 +24,31 @@
         <button class="tools-btn" onclick="toggleToolsMenu()">
             <span class="material-symbols-rounded" style="font-size:16px;">settings</span> Опции ▼
         </button>
-<div id="tools-menu" class="tools-menu hidden">
+        <div id="tools-menu" class="tools-menu hidden">
             <div class="tools-item" onclick="setTheme('light')"><span class="material-symbols-rounded">light_mode</span> Светлая тема</div>
             <div class="tools-item" onclick="setTheme('dark')"><span class="material-symbols-rounded">dark_mode</span> Темная тема</div>
             <div class="tools-item" onclick="generateShareLink()"><span class="material-symbols-rounded">share</span> Поделиться формой</div>
+        </div>
     </div>
-    </div>
+
     <div id="quiz-box">
         <div class="quiz-header">
-            <div class="step-info">Вопрос <span id="current-number">1</span> из <span id="total-number">0</span></div>
+            <div class="step-info">
+                Вопрос <span id="current-number">1</span> из <span id="total-number">0</span>
+                <!-- 💡 Иконка Подсказки -->
+                <button id="hint-btn" class="hint-btn hidden" onclick="toggleHintModal()" title="Показать подсказку">
+                    <span class="material-symbols-rounded">info</span>
+                </button>
+            </div>
             <div id="timer-display" class="timer-box hidden"><span class="material-symbols-rounded">timer</span> <span id="timer-seconds">0</span>с</div>
         </div>
+        
+        <!-- Всплывающий блок подсказки -->
+        <div id="hint-box" class="hint-box hidden">
+            <span class="material-symbols-rounded" style="color:#f59e0b;">lightbulb</span>
+            <span id="hint-text"></span>
+        </div>
+
         <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
         <div id="question-body"></div>
         <button id="next-btn" onclick="nextStep()">Далее</button>
@@ -44,7 +56,7 @@
     
     <!-- Финал -->
     <div id="result-box" class="result-card hidden">
-        <h2>Тест завершен! 🎉</h2>
+        <h2 id="result-title">Тест завершен! 🎉</h2>
         <div class="score" id="final-score">0 / 0</div>
         <p id="feedback-text"></p>
         <button onclick="restartQuiz()">Пройти еще раз</button>
@@ -74,29 +86,50 @@
             <option value="select">Выпадающий список (Select)</option>
             <option value="text">Ввод текста / слова (Text)</option>
             <option value="voice_card">Продвинутые карточки (Голос)</option>
+            <option value="flashcard">🎴 Карточка слова (Flashcard)</option>
         </select>
         
-        <label style="margin-top: 10px; display: block;">Текст вопроса:</label>
-        <input type="text" id="new-title" class="admin-input" placeholder="Введите текст...">
+        <label style="margin-top: 10px; display: block;" id="title-label">Текст вопроса / Слово:</label>
+        <input type="text" id="new-title" class="admin-input" placeholder="Введите текст или слово...">
         
-        <label class="switch-label"><span class="switch"><input type="checkbox" id="new-required" checked><span class="slider"></span></span> Обязательный вопрос</label>
-        <label class="switch-label"><span class="switch"><input type="checkbox" id="new-editable" checked><span class="slider"></span></span> Разрешать изменять (бета)</label>
-        <label class="switch-label"><span class="switch"><input type="checkbox" id="toggle-timer-input" onchange="document.getElementById('timer-val-box').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span> Включить таймер вопроса</label>
+        <!-- Поле ответа для карточки слова -->
+        <div id="flashcard-answer-box" class="hidden">
+            <label>Перевод / Ответ на обороте карточки:</label>
+            <input type="text" id="new-flashcard-answer" class="admin-input" placeholder="Например: Яблоко">
+        </div>
+
+        <div id="standard-switches">
+            <label class="switch-label"><span class="switch"><input type="checkbox" id="new-required" checked><span class="slider"></span></span> Обязательный вопрос</label>
+            <label class="switch-label"><span class="switch"><input type="checkbox" id="new-editable" checked><span class="slider"></span></span> Разрешать изменять (бета)</label>
+            <label class="switch-label"><span class="switch"><input type="checkbox" id="toggle-timer-input" onchange="document.getElementById('timer-val-box').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span> Включить таймер вопроса</label>
+        </div>
         
+        <!-- 💡 ТУМБЛЕР И ПОЛЕ ДЛЯ ПОДСКАЗКИ -->
+        <label class="switch-label">
+            <span class="switch"><input type="checkbox" id="toggle-hint-input" onchange="document.getElementById('hint-field-box').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span> 
+            Добавить Подсказку (ⓘ)
+        </label>
+        <div id="hint-field-box" class="hidden">
+            <label>Текст подсказки:</label>
+            <input type="text" id="new-hint-text" class="admin-input" placeholder="Подсказка для ученика...">
+        </div>
+
         <div id="timer-val-box" class="hidden">
             <label>Время на ответ (сек):</label>
             <input type="number" id="new-timer" class="admin-input" value="20" min="5">
         </div>
 
         <!-- ТУМБЛЕР И ПОЛЯ ДЛЯ ОБЪЯСНЕНИЯ -->
-        <label class="switch-label"><span class="switch"><input type="checkbox" id="toggle-exp-input" onchange="document.getElementById('exp-fields-box').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span> Добавить блок Объяснения после ответа</label>
-        <div id="exp-fields-box" class="hidden" style="background:var(--bg-option-hover); padding:15px; border-radius:8px; margin-bottom:15px;">
-            <label>Заголовок объяснения (необязательно):</label>
-            <input type="text" id="new-exp-title" class="admin-input" placeholder="Например: А вы знали?">
-            <label>Текст объяснения / Описание:</label>
-            <textarea id="new-exp-desc" class="text-input" style="height:80px;" placeholder="Подробный разбор правильного ответа..."></textarea>
-            <label>Удерживать кнопку 'Продолжить' (таймер в сек, 0 — без удержания):</label>
-            <input type="number" id="new-exp-timer" class="admin-input" value="0" min="0">
+        <div id="exp-container">
+            <label class="switch-label"><span class="switch"><input type="checkbox" id="toggle-exp-input" onchange="document.getElementById('exp-fields-box').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span> Добавить блок Объяснения после ответа</label>
+            <div id="exp-fields-box" class="hidden" style="background:var(--bg-option-hover); padding:15px; border-radius:8px; margin-bottom:15px;">
+                <label>Заголовок объяснения (необязательно):</label>
+                <input type="text" id="new-exp-title" class="admin-input" placeholder="Например: А вы знали?">
+                <label>Текст объяснения / Описание:</label>
+                <textarea id="new-exp-desc" class="text-input" style="height:80px;" placeholder="Подробный разбор правильного ответа..."></textarea>
+                <label>Удерживать кнопку 'Продолжить' (таймер в сек, 0 — без удержания):</label>
+                <input type="number" id="new-exp-timer" class="admin-input" value="0" min="0">
+            </div>
         </div>
 
         <div id="admin-choices-fields">
@@ -105,6 +138,7 @@
             <label>Индексы правильных ответов (через запятую, с 0):</label>
             <input type="text" id="new-correct-choices" class="admin-input" placeholder="0">
         </div>
+        
         <div id="admin-text-fields" class="hidden">
             <label>Правильный текст (через запятую для синонимов):</label>
             <input type="text" id="new-correct-text" class="admin-input" placeholder="ответ1, ответ2">
@@ -113,7 +147,7 @@
         <button onclick="addQuestion()">Сохранить вопрос</button>
     </div>
 
-    <!-- Раздел экспорта / импорта форм -->
+    <!-- Экспорт / Импорт -->
     <div style="border-bottom:2px solid var(--border-color); padding-bottom:20px; margin-bottom:20px; display: flex; gap: 10px;">
         <button class="btn-secondary" onclick="exportFormToJSON()" style="margin:0;"><span class="material-symbols-rounded">download</span> Скачать форму (.json)</button>
         <button class="btn-secondary" onclick="document.getElementById('import-file').click()" style="margin:0;"><span class="material-symbols-rounded">upload</span> Загрузить форму</button>
@@ -126,25 +160,13 @@
 </div>
 
 <div class="footer-nav" id="footer-link">
-    <a onclick="switchScreen('login')"><span class="material-symbols-rounded">lock</span> Войти в Редактор</a>
+    <a id="admin-btn" onclick="switchScreen('login')"><span class="material-symbols-rounded">lock</span> Войти в Редактор</a>
 </div>
+
 <div style="margin-top: 15px; text-align: center;">
-    <a id="leave-shared-btn" href="#" class="hidden" style="color: #6c757d; text-decoration: none; font-size: 14px; font-weight: bold;">↩ Закрыть Ссылку</a>
+    <a id="leave-shared-btn" href="#" class="hidden" style="color: #6c757d; text-decoration: none; font-size: 14px; font-weight: bold;"><span class="material-symbols-rounded">back_to_tab</span> Закрыть Ссылку</a>
 </div>
-<!-- Всплывающее предложение для немецкого языка -->
-<div id="deutsch-popup" class="deutsch-popup">
-    <div class="deutsch-popup-content">
-        <span class="material-symbols-rounded deutsch-icon">school</span>
-        <div class="deutsch-text">
-            <span>Хотите подтянуть иностранный язык?</span>
-            <small>Попробуйте уже в нашем сайте!</small></small>
-        </div>
-        <div class="deutsch-actions">
-            <a href="https://oracle-ai-pro.github.io/my-form/language-learn/index.html" class="deutsch-btn deutsch-btn-secondary">Перейти</a>
-            <button class="deutsch-btn deutsch-btn-secondary" onclick="closeDeutschPopup()">Отказаться</button>
-        </div>
-    </div>
-</div>
+
 <script src="script.js"></script>
 </body>
 </html>
