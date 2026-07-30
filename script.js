@@ -149,14 +149,13 @@ function renderQuestion() {
                 <div class="voice-status" id="voice-status">Скажите ответ или нажмите на карточку, чтобы посмотреть его.</div>
             </div>`;
     } else if (q.type === 'flashcard') {
-        // Очищаем заголовок сверху, так как слово будет внутри самой карточки
         html = `
             <div class="flashcard-container" onclick="flipCard()">
                 <div class="flashcard" id="main-flashcard">
                     <div class="flashcard-front">
                         <span class="flashcard-word">${q.title}</span>
                         <button class="speak-btn" onclick="event.stopPropagation(); speakText('${q.title.replace(/'/g, "\\'")}')">
-                            <span class="material-symbols-rounded">volume_up</span>
+                            <span class="material-symbols-rounded">volume_up</span> Озвучить
                         </button>
                     </div>
                     <div class="flashcard-back">
@@ -165,8 +164,8 @@ function renderQuestion() {
                 </div>
             </div>
             <div class="flashcard-controls">
-                <button class="btn-secondary" onclick="knowWord(false)"><span class="material-symbols-rounded">close</span> Записать в словарь</button>
-                <button class="btn-primary" onclick="knowWord(true)"><span class="material-symbols-rounded">check</span> Я знал/знала это</button>
+                <button class="btn-secondary" onclick="knowWord(false)">❌ Записать в словарь</button>
+                <button class="btn-primary" onclick="knowWord(true)">✅ Я знал это</button>
             </div>`;
     }
 
@@ -403,7 +402,10 @@ function switchScreen(screen) {
     document.getElementById('quiz-screen').classList.toggle('hidden', screen !== 'quiz');
     document.getElementById('login-screen').classList.toggle('hidden', screen !== 'login');
     document.getElementById('admin-screen').classList.toggle('hidden', screen !== 'admin');
-    if (screen === 'admin') renderAdminQuestions();
+    if (screen === 'admin') {
+        renderAdminQuestions();
+        checkFlashcardRestriction();
+    }
 }
 
 function tryLogin() {
@@ -423,12 +425,10 @@ function toggleAdminFields() {
     const typeSelect = document.getElementById('new-type');
     const type = typeSelect.value;
     
-    // Показываем/скрываем необходимые поля
     const isTextBased = (type === 'text' || type === 'voice_card' || type === 'flashcard');
     document.getElementById('admin-choices-fields')?.classList.toggle('hidden', isTextBased);
     document.getElementById('admin-text-fields')?.classList.toggle('hidden', !isTextBased);
     
-    // Настраиваем подпись для поля ввода ответа
     const textLabel = document.getElementById('admin-text-fields')?.querySelector('label');
     const inputField = document.getElementById('new-correct-text');
     
@@ -444,6 +444,31 @@ function toggleAdminFields() {
             inputField.placeholder = 'ответ1, ответ2';
         }
     }
+}
+
+function checkFlashcardRestriction() {
+    const typeSelect = document.getElementById('new-type');
+    if (!typeSelect) return;
+
+    const currentQuestions = allForms[currentFormId]?.questions || [];
+    const hasFlashcards = currentQuestions.some(q => q.type === 'flashcard');
+    const hasOtherTypes = currentQuestions.some(q => q.type !== 'flashcard');
+
+    Array.from(typeSelect.options).forEach(opt => {
+        if (hasFlashcards) {
+            opt.disabled = (opt.value !== 'flashcard');
+        } else if (hasOtherTypes) {
+            opt.disabled = (opt.value === 'flashcard');
+        } else {
+            opt.disabled = false;
+        }
+    });
+
+    if (typeSelect.selectedOptions[0]?.disabled) {
+        const firstEnabled = Array.from(typeSelect.options).find(opt => !opt.disabled);
+        if (firstEnabled) typeSelect.value = firstEnabled.value;
+    }
+    toggleAdminFields();
 }
 
 function addQuestion() {
@@ -492,6 +517,8 @@ function renderAdminQuestions() {
             </div>
         </div>
     `).join('');
+
+    checkFlashcardRestriction();
 }
 
 function editQuestion(i) {
@@ -536,35 +563,7 @@ function deleteQuestion(i) {
     save(); 
     renderAdminQuestions(); 
 }
-function checkFlashcardRestriction() {
-    const typeSelect = document.getElementById('new-type');
-    if (!typeSelect) return;
 
-    // Проверяем, есть ли уже вопросы в текущей форме
-    const currentQuestions = allForms[currentFormId]?.questions || [];
-    const hasFlashcards = currentQuestions.some(q => q.type === 'flashcard');
-    const hasOtherTypes = currentQuestions.some(q => q.type !== 'flashcard');
-
-    // Блокируем опции в зависимости от того, что уже добавлено
-    Array.from(typeSelect.options).forEach(opt => {
-        if (hasFlashcards) {
-            // Если в форме уже есть флэш-карточки, разрешаем только flashcard
-            opt.disabled = (opt.value !== 'flashcard');
-        } else if (hasOtherTypes) {
-            // Если в форме есть обычные вопросы, запрещаем выберать flashcard
-            opt.disabled = (opt.value === 'flashcard');
-        } else {
-            // Если форма пустая — разрешено всё
-            opt.disabled = false;
-        }
-    });
-
-    // Если текущий выбранный вариант заблокирован, переключаем на первый доступный
-    if (typeSelect.selectedOptions[0]?.disabled) {
-        const firstEnabled = Array.from(typeSelect.options).find(opt => !opt.disabled);
-        if (firstEnabled) typeSelect.value = firstEnabled.value;
-    }
-}
 function exportFormToJSON() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allForms[currentFormId]));
     const dlAnchorElem = document.createElement('a');
@@ -627,7 +626,18 @@ function toggleBlackScreen() {
     if (menu) menu.classList.add('hidden');
 }
 
+// ОБРАБОТЧИК КЛАВИШ (ПРОБЕЛ и CTRL+M)
 document.addEventListener('keydown', (e) => {
+    // Переворот карточки по нажатию на ПРОБЕЛ
+    if (e.code === 'Space') {
+        const card = document.getElementById('main-flashcard');
+        if (card && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault(); 
+            flipCard();
+        }
+    }
+
+    // A/V MUTE (Ctrl+M)
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
         e.preventDefault();
         const overlay = document.getElementById('black-screen-overlay');
@@ -638,16 +648,6 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
-document.addEventListener('keydown', (e) => {
-    // Переворот карточки по нажатию на ПРОБЕЛ
-    if (e.code === 'Space') {
-        const card = document.getElementById('main-flashcard');
-        // Переворачиваем только если карточка есть на экране и пользователь не пишет в input
-        if (card && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-            e.preventDefault(); // чтобы страница не скроллилась вниз
-            flipCard();
-        }
-    }
 
 async function generateShareLink() {
     try {
@@ -694,7 +694,6 @@ function closeDeutschPopup() {
 
 // Загрузка настроек при инициализации страницы
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. Проверка доступа к ссылке админа
     const currentUser = JSON.parse(localStorage.getItem('lang_current_user'));
     const currentTopicId = localStorage.getItem('q_curr_id');
     const footerLink = document.getElementById('footer-link'); 
@@ -713,7 +712,6 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 2. Проверка немецкого popup
     if (localStorage.getItem('deutsch_popup_closed') === 'true') {
         const popup = document.getElementById('deutsch-popup');
         if (popup) popup.classList.add('hidden');
