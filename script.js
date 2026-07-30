@@ -127,6 +127,7 @@ function renderQuestion() {
                 <span class="material-symbols-rounded" style="font-size: 16px;">volume_up</span>
             </button>
         </h3>`;
+
     if (q.type === 'radio' || q.type === 'checkbox') {
         q.options.forEach((opt, i) => html += `<label class="option"><input type="${q.type}" name="quiz_ans" value="${i}"> ${opt}</label>`);
     } else if (q.type === 'select') {
@@ -147,7 +148,27 @@ function renderQuestion() {
                 </div>
                 <div class="voice-status" id="voice-status">Скажите ответ или нажмите на карточку, чтобы посмотреть его.</div>
             </div>`;
+    } else if (q.type === 'flashcard') {
+        html += `
+            <div class="flashcard-container" onclick="flipCard()">
+                <div class="flashcard" id="main-flashcard">
+                    <div class="flashcard-front">
+                        <h3>${q.title}</h3>
+                        <button class="speak-btn" onclick="event.stopPropagation(); speakText('${q.title.replace(/'/g, "\\'")}')">
+                            <span class="material-symbols-rounded">volume_up</span> Озвучить
+                        </button>
+                    </div>
+                    <div class="flashcard-back">
+                        <h3>${q.correctText ? q.correctText.join(' / ') : (q.answer || '')}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="flashcard-controls" style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                <button class="btn-secondary" onclick="knowWord(false)">❌ Записать в словарь</button>
+                <button class="btn-primary" onclick="knowWord(true)">✅ Я знал это</button>
+            </div>`;
     }
+
     document.getElementById('question-body').innerHTML = html + `<div id="explanation-container" class="hidden" style="margin-top:15px; padding:15px; border-radius:12px; background:#fff3cd; color:#333;"></div>`;
 
     const tDisplay = document.getElementById('timer-display');
@@ -159,6 +180,28 @@ function renderQuestion() {
             if (timeLeft <= 0) { clearInterval(currentTimerInterval); nextStep(true); }
         }, 1000);
     } else { if(tDisplay) tDisplay.classList.add('hidden'); }
+}
+
+function flipCard() {
+    const card = document.getElementById('main-flashcard');
+    if (card) card.classList.toggle('flipped');
+}
+
+function knowWord(isKnown) {
+    const q = questions[currentIndex];
+    userAnswers.push({
+        title: q.title,
+        userAns: isKnown ? "Знаю" : "Не знаю",
+        finalStatus: isKnown ? "correct" : "incorrect",
+        correctInfo: q.correctText ? q.correctText.join(' / ') : (q.answer || '')
+    });
+    
+    currentIndex++;
+    if (currentIndex < questions.length) {
+        renderQuestion();
+    } else {
+        showResults();
+    }
 }
 
 function nextStep(isTimeout = false) {
@@ -191,28 +234,14 @@ function nextStep(isTimeout = false) {
             rawValue = currentVoiceAnswer.text;
             voiceStatus = currentVoiceAnswer.status;
         }
-        } else if (q.type === 'flashcard') {
-        html += `
-            <div class="flashcard-container" onclick="flipCard()">
-                <div class="flashcard" id="main-flashcard">
-                    <div class="flashcard-front">
-                        <h3>${q.title}</h3>
-                        <button class="speak-btn" onclick="event.stopPropagation(); speakText('${q.title.replace(/'/g, "\\'")}')">
-                            <span class="material-symbols-rounded">volume_up</span> Озвучить
-                        </button>
-                    </div>
-                    <div class="flashcard-back">
-                        <h3>${q.correctText ? q.correctText.join(' / ') : (q.answer || '')}</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="flashcard-controls" style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
-                <button class="btn-secondary" onclick="knowWord(false)">❌ Записать в словарь</button>
-                <button class="btn-primary" onclick="knowWord(true)">✅ Я знал это</button>
-            </div>`;
+
+        if (q.required && answers.length === 0 && rawValue === "" && q.type !== 'voice_card') { 
+            alert("Этот вопрос обязателен!"); 
+            return; 
+        }
+    } else { 
+        rawValue = "[Время истекло]"; 
     }
-        if (q.required && answers.length === 0 && rawValue === "" && q.type !== 'voice_card') { alert("Этот вопрос обязателен!"); return; }
-    } else { rawValue = "[Время истекло]"; }
 
     clearInterval(currentTimerInterval);
     let finalStatus = "incorrect"; 
@@ -391,14 +420,17 @@ function logout() { switchScreen('quiz'); }
 // ==========================================
 function toggleAdminFields() {
     const type = document.getElementById('new-type').value;
-    document.getElementById('admin-choices-fields').classList.toggle('hidden', type === 'text' || type === 'voice_card');
-    document.getElementById('admin-text-fields').classList.toggle('hidden', type !== 'text' && type !== 'voice_card');
+    document.getElementById('admin-choices-fields').classList.toggle('hidden', type === 'text' || type === 'voice_card' || type === 'flashcard');
+    document.getElementById('admin-text-fields').classList.toggle('hidden', type !== 'text' && type !== 'voice_card' && type !== 'flashcard');
     
     const textLabel = document.getElementById('admin-text-fields')?.querySelector('label');
     if (textLabel) {
         if (type === 'voice_card') {
             textLabel.innerHTML = '🎤 Произносимое слово (можно через запятую для синонимов):';
             document.getElementById('new-correct-text').placeholder = 'привет, hello, хай';
+        } else if (type === 'flashcard') {
+            textLabel.innerHTML = '🎴 Ответ / Перевод на обороте карточки:';
+            document.getElementById('new-correct-text').placeholder = 'Перевод слова';
         } else {
             textLabel.innerHTML = 'Правильный текст (через запятую для синонимов):';
             document.getElementById('new-correct-text').placeholder = 'ответ1, ответ2';
@@ -421,7 +453,7 @@ function addQuestion() {
     let q = { type, title, required, useTimer, timer };
     if (useExp && expDesc) q.exp = { title: expTitle, desc: expDesc, hold: expHold };
 
-    if (type === 'text' || type === 'voice_card') {
+    if (type === 'text' || type === 'voice_card' || type === 'flashcard') {
         const txt = document.getElementById('new-correct-text').value;
         if (!txt) { alert("Укажите правильный ответ!"); return; }
         q.correctText = txt.split(',').map(s => s.trim());
@@ -476,7 +508,7 @@ function editQuestion(i) {
         document.getElementById('exp-fields-box').classList.add('hidden');
     }
 
-    if (q.type === 'text' || q.type === 'voice_card') {
+    if (q.type === 'text' || q.type === 'voice_card' || q.type === 'flashcard') {
         document.getElementById('new-correct-text').value = q.correctText ? q.correctText.join(', ') : '';
     } else {
         document.getElementById('new-options').value = q.options ? q.options.join(', ') : '';
