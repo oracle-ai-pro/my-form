@@ -186,7 +186,7 @@
             border: 1px solid var(--border-color);
             border-radius: var(--radius-mid);
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            width: 220px;
+            width: 240px;
             z-index: 100;
             overflow: hidden;
         }
@@ -292,7 +292,12 @@
             <div id="tools-menu" class="tools-menu hidden">
                 <div class="tools-item" onclick="setTheme('light')"><span class="material-symbols-rounded">light_mode</span> Светлая тема</div>
                 <div class="tools-item" onclick="setTheme('dark')"><span class="material-symbols-rounded">dark_mode</span> Темная тема</div>
-                <div class="tools-item" onclick="window.location.href='users_and_personalisation.html'"><span class="material-symbols-rounded">group</span> Настройки участников и страницы</div>
+                
+                <!-- ЭТА КНОПКА ПОКАЗЫВАЕТСЯ ТОЛЬКО ДЛЯ ОРГАНИЗАЦИИ (АДМИНА) -->
+                <div id="menu-admin-settings" class="tools-item hidden" onclick="window.location.href='users_and_personalisation.html'">
+                    <span class="material-symbols-rounded">group</span> Настройки участников и страницы
+                </div>
+                
                 <div class="tools-item" onclick="logout()" style="color: var(--danger);"><span class="material-symbols-rounded">logout</span> Выйти из аккаунта</div>
             </div>
         </div>
@@ -311,7 +316,7 @@
         </div>
     </div>
 
-    <!-- БАННЕР АДМИНА С КНОПКОЙ + -->
+    <!-- БАННЕР АДМИНА С КНОПКОЙ + (ТОЛЬКО ДЛЯ ТИПА ORG) -->
     <div id="admin-org-banner" class="admin-panel-badge hidden">
         <div>
             <strong style="display: block; font-size: 15px;">Панель Управления Организацией</strong>
@@ -399,8 +404,10 @@
             document.getElementById('user-completed-lessons').innerText = currentUser.completedLessons || 0;
             document.getElementById('user-org-status').innerText = currentUser.orgName || 'Нет';
 
-            if (currentUser.type === 'org' || (currentUser.orgName && currentUser.orgName !== 'Нет')) {
+            // 🔥 ПРОВЕРКА РОЛИ: Показываем панель админа и кнопку настроек ТОЛЬКО для типа 'org'
+            if (currentUser.type === 'org') {
                 document.getElementById('admin-org-banner').classList.remove('hidden');
+                document.getElementById('menu-admin-settings').classList.remove('hidden');
             }
         }
 
@@ -431,6 +438,12 @@
     }
 
     function openCreateModal() {
+        // Защита: Участникам запрещено открывать окно создания
+        if (!currentUser || currentUser.type !== 'org') {
+            alert("⛔ У вас нет прав для создания тестов!");
+            return;
+        }
+
         currentQuestions = [];
         updateQuestionsCounter();
         document.getElementById('modal-title').value = '';
@@ -483,6 +496,10 @@
     }
 
     function publishTopic() {
+        if (!currentUser || currentUser.type !== 'org') {
+            return alert("⛔ У вас нет прав на публикацию!");
+        }
+
         const title = document.getElementById('modal-title').value.trim();
         const desc = document.getElementById('modal-desc').value.trim();
         const type = document.getElementById('modal-type').value;
