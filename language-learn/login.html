@@ -92,7 +92,7 @@
 </div>
 
 <script>
-    // Инициализация темы при загрузке
+    // Инициализация темы и проверка текущего пользователя при загрузке
     window.onload = () => {
         const savedTheme = localStorage.getItem('quiz_theme') || 'light';
         setTheme(savedTheme);
@@ -114,48 +114,50 @@
         document.getElementById('tools-menu').classList.toggle('hidden');
     }
 
-    // Обработка Входа
-    function handleLogin() {
-    const loginInput = document.getElementById('login').value.trim();
-    const pinInput = document.getElementById('pin').value.trim();
+    // Исправленная функция авторизации
+    function handleLogin(event) {
+        if (event) event.preventDefault(); // Предотвращаем перезагрузку формы
 
-    // 1. Вшитые учетные записи (работают ВЕЗДЕ, даже в инкогнито)
-    const defaultUsers = [
-        {
-            type: 'org',
-            name: 'Главный Администратор',
-            login: 'admin',
-            pin: '1234',
-            orgName: 'ЛМСХ'
-        },
-        {
-            type: 'user',
-            name: 'Демо Участник',
-            login: 'user',
-            pin: '0000',
-            completedLessons: 0,
-            orgName: 'Главный Штаб'
+        // Правильное считывание id из HTML
+        const loginInput = document.getElementById('login-input').value.trim();
+        const pinInput = document.getElementById('password-input').value.trim();
+
+        // 1. Вшитые учетные записи (работают везде, включая режим Инкогнито)
+        const defaultUsers = [
+            {
+                type: 'org',
+                name: 'Главный Администратор',
+                login: 'admin',
+                pin: '1234',
+                orgName: 'ЛМСХ'
+            },
+            {
+                type: 'user',
+                name: 'Демо Участник',
+                login: 'user',
+                pin: '0000',
+                completedLessons: 0,
+                orgName: 'Главный Штаб'
+            }
+        ];
+
+        // 2. Пользователи из localStorage
+        const localUsers = JSON.parse(localStorage.getItem('lang_users')) || [];
+
+        // Объединяем оба списка
+        const allUsers = [...defaultUsers, ...localUsers];
+
+        // Ищем совпадение
+        const user = allUsers.find(u => u.login === loginInput && u.pin === pinInput);
+
+        if (user) {
+            localStorage.setItem('lang_current_user', JSON.stringify(user));
+            window.location.href = 'index.html';
+        } else {
+            alert("❌ Неверный логин или Пин/Пароль!");
         }
-    ];
-
-    // 2. Достаем пользователей из localStorage (если создавали через форму)
-    const localUsers = JSON.parse(localStorage.getItem('lang_users')) || [];
-
-    // Объединяем оба списка
-    const allUsers = [...defaultUsers, ...localUsers];
-
-    // Ищем совпадение
-    const user = allUsers.find(u => u.login === loginInput && u.pin === pinInput);
-
-    if (user) {
-        localStorage.setItem('lang_current_user', JSON.stringify(user));
-        window.location.href = 'index.html';
-    } else {
-        alert("❌ Неверный логин или Пин/Пароль!");
     }
-}
 
-    // Забавная фича "Забыл Пин/Пароль"
     function forgotPassword() {
         const jokes = [
             "Вспомни! Он же где-то записюкан в блокнотике 📝",
@@ -167,7 +169,6 @@
         alert(`💡 Забыли Пин/Пароль?\n\n${randomJoke}`);
     }
 
-    // Управление модальным окном создания
     function openCreateModal() {
         document.getElementById('create-modal').classList.remove('hidden');
     }
@@ -183,7 +184,6 @@
         document.getElementById('form-assistant-fields').classList.toggle('hidden', type !== 'assistant');
     }
 
-    // Создание новой сущности
     function submitCreate() {
         const type = document.getElementById('create-type').value;
         let users = JSON.parse(localStorage.getItem('lang_users')) || [];
@@ -224,7 +224,6 @@
 
         closeCreateModal();
     }
-    
 </script>
 
 </body>
