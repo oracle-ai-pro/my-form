@@ -530,7 +530,31 @@ function toggleToolsMenu() {
     const menu = document.getElementById('tools-menu');
     if (menu) menu.classList.toggle('hidden');
 }
+function toggleAdminFields() {
+    const type = document.getElementById('new-type').value;
+    const currentQuestions = getCurrentFormQuestions(); // массив текущих вопросов
 
+    // Если уже есть вопросы других типов и выбираем flashcard — блокируем
+    const hasOtherTypes = currentQuestions.some(q => q.type !== 'flashcard');
+    const hasFlashcards = currentQuestions.some(q => q.type === 'flashcard');
+
+    if (type === 'flashcard' && hasOtherTypes) {
+        alert("⚠️ Карточки слов нельзя смешивать с обычными тестами. Создайте новую форму!");
+        document.getElementById('new-type').value = 'radio';
+        return;
+    }
+
+    if (type !== 'flashcard' && hasFlashcards) {
+        alert("⚠️ В этой форме создаются карточки слов. Другие типы вопросов недоступны!");
+        document.getElementById('new-type').value = 'flashcard';
+        return;
+    }
+
+    // Отображение полей
+    document.getElementById('flashcard-answer-box').classList.toggle('hidden', type !== 'flashcard');
+    document.getElementById('admin-choices-fields').classList.toggle('hidden', type !== 'radio' && type !== 'checkbox' && type !== 'select');
+    document.getElementById('admin-text-fields').classList.toggle('hidden', type !== 'text');
+}
 document.addEventListener('click', (e) => {
     const menu = document.getElementById('tools-menu');
     const btn = document.querySelector('.tools-btn');
