@@ -4,7 +4,7 @@
 :root {
     --primary: #007bff;
     --primary-hover: #0056b3;
-    --bg-main: #050505; /* Изменили фон на #050505 */
+    --bg-main: #f3f3f3; /* Изменили фон на #050505 */
     --bg-card: #121212;
     --bg-option-hover: #1e1e1e;
     --text-main: #e0e0e0;
