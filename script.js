@@ -7,6 +7,7 @@ if (!allForms[currentFormId]) currentFormId = Object.keys(allForms)[0] || "def";
 
 let questions = allForms[currentFormId].questions;
 let currentIndex = 0, userAnswers = [], currentTimerInterval = null, timeLeft = 0, isExplanationState = false, currentVoiceAnswer = null;
+let previewTimer = null; // Таймер для iframe
 
 const save = () => {
     localStorage.setItem('q_forms', JSON.stringify(allForms));
@@ -17,41 +18,65 @@ const save = () => {
 
 window.onload = async () => { 
     const urlParams = new URLSearchParams(window.location.search);
-    const zipData = urlParams.get('zip');
     
-    if (zipData) {
+    // ПРЕДПРОСМОРТ ОДНОГО ВОПРОСА В IFRAME
+    const previewData = urlParams.get('preview_q');
+    const expiresAt = parseInt(urlParams.get('expires') || "0");
+
+    if (previewData) {
+        if (Date.now() > expiresAt) {
+            document.body.innerHTML = `
+                <div style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; background:#121212; color:#ff4d4d; font-family:sans-serif; text-align:center; padding:20px;">
+                    <span class="material-symbols-rounded" style="font-size:64px; margin-bottom:10px;">timer_off</span>
+                    <h2>Ссылка недействительна</h2>
+                    <p style="color:#aaa;">Срок действия предпросмотра (5 минут) истёк.</p>
+                </div>`;
+            return;
+        }
+
         try {
-            let base64 = zipData.replace(/-/g, "+").replace(/_/g, "/");
+            let base64 = previewData.replace(/-/g, "+").replace(/_/g, "/");
             while (base64.length % 4) base64 += "=";
-            
             const binaryStr = atob(base64);
             const byteArray = new Uint8Array(binaryStr.length);
-            for (let i = 0; i < binaryStr.length; i++) {
-                byteArray[i] = binaryStr.charCodeAt(i);
-            }
+            for (let i = 0; i < binaryStr.length; i++) byteArray[i] = binaryStr.charCodeAt(i);
             
             const stream = new Response(byteArray).body.pipeThrough(new DecompressionStream("deflate"));
             const jsonStr = await new Response(stream).text();
-            const importedForm = JSON.parse(jsonStr);
+            const singleQuestion = JSON.parse(jsonStr);
+
+            // Инициализируем демо-режим для 1 вопроса
+            allForms = { "preview": { id: "preview", name: "Предпросмотр", questions: [singleQuestion] } };
+            currentFormId = "preview";
+            questions = [singleQuestion];
             
-            if (importedForm.questions && importedForm.questions.length > 0) {
-                const sharedId = 'shared_' + Date.now();
-                allForms[sharedId] = {
-                    id: sharedId,
-                    name: `⭐ ${importedForm.name || "Общая форма"}`,
-                    questions: importedForm.questions
-                };
-                currentFormId = sharedId;
+            // Автоматическое уничтожение через оставшееся время
+            setTimeout(() => { window.location.reload(); }, expiresAt - Date.now());
+        } catch (e) {
+            document.body.innerHTML = `<h3 style="color:red; text-align:center; padding-top:50px;">Ошибка загрузки предпросмотра</h3>`;
+            return;
+        }
+    } else {
+        // Обычный импорт по ZIP-ссылке
+        const zipData = urlParams.get('zip');
+        if (zipData) {
+            try {
+                let base64 = zipData.replace(/-/g, "+").replace(/_/g, "/");
+                while (base64.length % 4) base64 += "=";
+                const binaryStr = atob(base64);
+                const byteArray = new Uint8Array(binaryStr.length);
+                for (let i = 0; i < binaryStr.length; i++) byteArray[i] = binaryStr.charCodeAt(i);
                 
-                const leaveBtn = document.getElementById('leave-shared-btn');
-                if (leaveBtn) {
-                    leaveBtn.classList.remove('hidden');
-                    leaveBtn.href = window.location.origin + window.location.pathname;
+                const stream = new Response(byteArray).body.pipeThrough(new DecompressionStream("deflate"));
+                const jsonStr = await new Response(stream).text();
+                const importedForm = JSON.parse(jsonStr);
+                
+                if (importedForm.questions && importedForm.questions.length > 0) {
+                    const sharedId = 'shared_' + Date.now();
+                    allForms[sharedId] = { id: sharedId, name: `⭐ ${importedForm.name || "Общая форма"}`, questions: importedForm.questions };
+                    currentFormId = sharedId;
                 }
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Не удалось открыть форму. Ссылка повреждена или некорректна.");
+            } catch (err) { console.error(err); }
         }
     }
 
@@ -88,7 +113,7 @@ function createNewFormPrompt() {
 
 function deleteForm(e, id) {
     e.stopPropagation();
-    if (!confirm(`Удалить форму "${allForms[id].name}" и все её вопросы?`)) return;
+    if (!confirm(`Удалить форму "${allForms[id].name}"?`)) return;
     delete allForms[id];
     if (currentFormId === id) currentFormId = Object.keys(allForms)[0] || "def";
     if (!allForms[currentFormId]) allForms[currentFormId] = { id: currentFormId, name: "Главная форма", questions: [] };
@@ -107,7 +132,7 @@ function renderQuestion() {
     if (!questions?.length) {
         document.getElementById('question-body').innerHTML = `
             <div style="text-align:center; padding:20px;">
-                <h3>У вас нет форм 🤷‍♂️</h3><p style="color:var(--text-muted);">Создайте их через админку.</p>
+                <h3>В этой форме нет вопросов 🤷‍♂️</h3><p style="color:var(--text-muted);">Создайте их через админку.</p>
                 <button onclick="switchScreen('login')" style="width:auto; display:inline-block; padding:10px 20px;">Перейти в админку</button>
             </div>`;
         if (nextBtn) nextBtn.classList.add('hidden');
@@ -190,18 +215,12 @@ function flipCard() {
 function knowWord(isKnown) {
     const q = questions[currentIndex];
     userAnswers.push({
-        title: q.title,
-        userAns: isKnown ? "Знаю" : "Не знаю",
+        title: q.title, userAns: isKnown ? "Знаю" : "Не знаю",
         finalStatus: isKnown ? "correct" : "incorrect",
         correctInfo: q.correctText ? q.correctText.join(' / ') : (q.answer || '')
     });
-    
     currentIndex++;
-    if (currentIndex < questions.length) {
-        renderQuestion();
-    } else {
-        showResults();
-    }
+    if (currentIndex < questions.length) renderQuestion(); else showResults();
 }
 
 function nextStep(isTimeout = false) {
@@ -236,12 +255,9 @@ function nextStep(isTimeout = false) {
         }
 
         if (q.required && answers.length === 0 && rawValue === "" && q.type !== 'voice_card') { 
-            alert("Этот вопрос обязателен!"); 
-            return; 
+            alert("Этот вопрос обязателен!"); return; 
         }
-    } else { 
-        rawValue = "[Время истекло]"; 
-    }
+    } else { rawValue = "[Время истекло]"; }
 
     clearInterval(currentTimerInterval);
     let finalStatus = "incorrect"; 
@@ -261,9 +277,7 @@ function nextStep(isTimeout = false) {
     }
 
     userAnswers.push({ 
-        title: q.title, 
-        userAns: rawValue, 
-        finalStatus: finalStatus, 
+        title: q.title, userAns: rawValue, finalStatus: finalStatus, 
         correctInfo: (q.type === 'text' || q.type === 'voice_card') ? q.correctText?.join(' / ') : q.correct?.map(i => q.options[i]).join(', ') 
     });
 
@@ -292,26 +306,22 @@ function nextStep(isTimeout = false) {
 function showResults() {
     document.getElementById('quiz-box').classList.add('hidden');
     document.getElementById('result-box').classList.remove('hidden');
-    
     let correctCount = userAnswers.filter(a => a.finalStatus === "correct").length;
     document.getElementById('final-score').innerText = `${correctCount} / ${userAnswers.length}`;
     
     document.getElementById('review-box').innerHTML = userAnswers.map(a => {
-        let itemClass = "incorrect-item", textClass = "text-danger", displayAns = a.userAns || '[Пусто]';
-        if (a.finalStatus === "correct") { itemClass = "correct-item"; textClass = "text-success"; }
-        else if (a.finalStatus === "skipped") { itemClass = "skipped-item"; textClass = "text-skipped"; }
+        let itemClass = a.finalStatus === "correct" ? "correct-item" : "incorrect-item";
         return `
             <div class="review-item ${itemClass}">
                 <strong>${a.title}</strong><br>
-                Ваш ответ: <span class="${textClass}">${displayAns}</span><br>
+                Ваш ответ: <span>${a.userAns || '[Пусто]'}</span><br>
                 Правильный: <span class="text-success">${a.correctInfo || '[Нет данных]'}</span>
             </div>`;
     }).join('');
 }
 
 function restartQuiz() {
-    currentIndex = 0; 
-    userAnswers = [];
+    currentIndex = 0; userAnswers = [];
     document.getElementById('result-box').classList.add('hidden');
     document.getElementById('quiz-box').classList.remove('hidden');
     renderQuestion();
@@ -324,74 +334,41 @@ function handleVoiceCardFail(reason = "Подсмотрел(-а)") {
     const status = document.getElementById('voice-status');
     const q = questions[currentIndex];
     const firstCorrectAnswer = q.correctText ? q.correctText[0] : '';
-    const correctAnswersText = q.correctText ? q.correctText.join(' / ') : '';
-    
-    if (status) status.innerHTML = `⚠️ <strong>${reason}:</strong> За картой было слово: "${correctAnswersText}"`;
+    if (status) status.innerHTML = `⚠️ <strong>${reason}:</strong> Ответ был: "${q.correctText?.join(' / ')}"`;
     if (firstCorrectAnswer) speakText(firstCorrectAnswer);
-    
     currentVoiceAnswer = { text: `[${reason}]`, status: "skipped" };
-    const card = document.querySelector('.voice-card');
-    if (card) card.style.borderColor = 'var(--gray)';
-    
     setTimeout(() => nextStep(), 1800);
 }
 
 function startVoiceRecognition(event, correctAnswersStr) {
     event.stopPropagation();
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) { alert("Ваш браузер не поддерживает распознавание речи. Используйте Google Chrome."); return; }
+    if (!SpeechRecognition) { alert("Ваш браузер не поддерживает распознавание речи."); return; }
 
     const recognition = new SpeechRecognition();
     recognition.lang = 'ru-RU'; recognition.interimResults = false;
-    const btn = document.getElementById('mic-btn'), status = document.getElementById('voice-status'), card = document.querySelector('.voice-card');
+    const btn = document.getElementById('mic-btn'), status = document.getElementById('voice-status');
     
-    if (btn) { btn.classList.add('recording'); btn.innerText = "Слушаю..."; }
-    if (status) status.innerText = "Говорите слово...";
+    if (btn) btn.innerText = "Слушаю...";
     recognition.start();
 
     recognition.onresult = function(e) {
         const userSpeech = e.results[0][0].transcript.trim();
-        if (status) status.innerText = `Вы сказали: "${userSpeech}"`;
-        
         const allowed = correctAnswersStr.split(',').map(item => item.trim().toLowerCase());
         
         if (allowed.includes(userSpeech.toLowerCase())) {
-            if (status) status.innerHTML = `🎉 <strong>Правильно!</strong> Вы сказали: "${userSpeech}"`;
-            if (card) card.style.borderColor = 'var(--success)';
+            if (status) status.innerHTML = `🎉 <strong>Правильно!</strong> (${userSpeech})`;
             currentVoiceAnswer = { text: userSpeech, status: "correct" };
         } else {
-            if (status) status.innerHTML = `❌ <strong>Неверно.</strong> Вы сказали: "${userSpeech}".<br><small>Ожидалось: ${correctAnswersStr}</small>`;
-            if (card) card.style.borderColor = 'var(--danger)';
+            if (status) status.innerHTML = `❌ <strong>Неверно:</strong> "${userSpeech}"`;
             currentVoiceAnswer = { text: userSpeech, status: "incorrect" };
         }
     };
-
-    recognition.onerror = () => { 
-        if (status) status.innerText = "Ошибка работы микрофона."; 
-        resetMic(btn); 
-    };
-    
-    recognition.onend = () => resetMic(btn);
 }
 
-const resetMic = btn => { 
-    if (btn) { 
-        btn.classList.remove('recording'); 
-        btn.innerHTML = '<span class="material-symbols-rounded">mic</span> Нажать и сказать'; 
-    } 
-};
-
 // ==========================================
-// 4. ОПЦИИ И ИНТЕРФЕЙС (ТЕМЫ И МЕНЮ)
+// 4. ОПЦИИ И ИНТЕРФЕЙС
 // ==========================================
-document.addEventListener('click', e => {
-    const m = document.getElementById('tools-menu');
-    const b = document.querySelector('.tools-btn');
-    if (m && !m.classList.contains('hidden') && e.target !== m && e.target !== b && !b?.contains(e.target)) {
-        m.classList.add('hidden');
-    }
-});
-
 function setTheme(theme) {
     if (theme === 'dark') document.body.classList.add('dark-theme'); 
     else document.body.classList.remove('dark-theme');
@@ -404,316 +381,169 @@ function switchScreen(screen) {
     document.getElementById('admin-screen').classList.toggle('hidden', screen !== 'admin');
     if (screen === 'admin') {
         renderAdminQuestions();
-        checkFlashcardRestriction();
     }
 }
 
 function tryLogin() {
     if (document.getElementById('login-user').value === 'admin' && document.getElementById('login-pass').value === '1234') {
         switchScreen('admin');
-    } else { 
-        alert("Неверный логин или пароль!"); 
-    }
+    } else { alert("Неверный логин или пароль!"); }
 }
 
 function logout() { switchScreen('quiz'); }
 
 // ==========================================
-// 5. ПАНЕЛЬ АДМИНИСТРАТОРА И ЭКСПОРТ
+// 5. ЛЁГКАЯ АДМИНКА (GOOGLE FORMS STYLE) + IFRAME
 // ==========================================
-function toggleAdminFields() {
-    const typeSelect = document.getElementById('new-type');
-    const type = typeSelect.value;
-    
-    const isTextBased = (type === 'text' || type === 'voice_card' || type === 'flashcard');
-    document.getElementById('admin-choices-fields')?.classList.toggle('hidden', isTextBased);
-    document.getElementById('admin-text-fields')?.classList.toggle('hidden', !isTextBased);
-    
-    const textLabel = document.getElementById('admin-text-fields')?.querySelector('label');
-    const inputField = document.getElementById('new-correct-text');
-    
-    if (textLabel && inputField) {
-        if (type === 'flashcard') {
-            textLabel.innerHTML = '🎴 Правильный ответ (будет отображаться на обороте после нажатия на пробел или карточку):';
-            inputField.placeholder = 'Введите перевод или ответ...';
-        } else if (type === 'voice_card') {
-            textLabel.innerHTML = '🎤 Произносимое слово (можно через запятую для синонимов):';
-            inputField.placeholder = 'привет, hello, хай';
-        } else {
-            textLabel.innerHTML = 'Правильный текст (через запятую для синонимов):';
-            inputField.placeholder = 'ответ1, ответ2';
-        }
-    }
+function closePreviewIframe() {
+    if (previewTimer) clearTimeout(previewTimer);
+    const box = document.getElementById('iframe-preview-modal');
+    if (box) box.classList.add('hidden');
+    const frame = document.getElementById('preview-iframe');
+    if (frame) frame.src = '';
 }
 
-function checkFlashcardRestriction() {
-    const typeSelect = document.getElementById('new-type');
-    if (!typeSelect) return;
+async function previewSingleQuestion(index) {
+    // Закрываем предыдущий предпросмотр, если открыт
+    closePreviewIframe();
 
-    const currentQuestions = allForms[currentFormId]?.questions || [];
-    const hasFlashcards = currentQuestions.some(q => q.type === 'flashcard');
-    const hasOtherTypes = currentQuestions.some(q => q.type !== 'flashcard');
+    const q = allForms[currentFormId].questions[index];
+    if (!q) return;
 
-    Array.from(typeSelect.options).forEach(opt => {
-        if (hasFlashcards) {
-            opt.disabled = (opt.value !== 'flashcard');
-        } else if (hasOtherTypes) {
-            opt.disabled = (opt.value === 'flashcard');
-        } else {
-            opt.disabled = false;
-        }
-    });
+    // 1. Создаем сжатую временную ссылку (живет 5 минут)
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+    const jsonStr = JSON.stringify(q);
+    const byteArray = new TextEncoder().encode(jsonStr);
+    const stream = new Response(byteArray).body.pipeThrough(new CompressionStream("deflate"));
+    const compressedBuffer = await new Response(stream).arrayBuffer();
+    const base64Str = btoa(String.fromCharCode(...new Uint8Array(compressedBuffer)))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
-    if (typeSelect.selectedOptions[0]?.disabled) {
-        const firstEnabled = Array.from(typeSelect.options).find(opt => !opt.disabled);
-        if (firstEnabled) typeSelect.value = firstEnabled.value;
+    const tempUrl = `${window.location.origin}${window.location.pathname}?preview_q=${base64Str}&expires=${expiresAt}`;
+
+    // 2. Показываем Modal с iframe
+    const modal = document.getElementById('iframe-preview-modal');
+    const frame = document.getElementById('preview-iframe');
+    
+    if (modal && frame) {
+        frame.src = tempUrl;
+        modal.classList.remove('hidden');
+
+        // 3. Авто-закрытие и сгорание ссылки ровно через 5 минут
+        previewTimer = setTimeout(() => {
+            alert("⏰ 5 минут истекло! Временная ссылка предпросмотра сгорела.");
+            closePreviewIframe();
+        }, 5 * 60 * 1000);
     }
-    toggleAdminFields();
-}
-
-function addQuestion() {
-    const type = document.getElementById('new-type').value;
-    const title = document.getElementById('new-title').value.trim();
-    const required = document.getElementById('new-required').checked;
-    const useTimer = document.getElementById('toggle-timer-input').checked;
-    const timer = parseInt(document.getElementById('new-timer').value) || 20;
-    const useExp = document.getElementById('toggle-exp-input').checked;
-    const expTitle = document.getElementById('new-exp-title').value.trim();
-    const expDesc = document.getElementById('new-exp-desc').value.trim();
-    const expHold = parseInt(document.getElementById('new-exp-timer').value) || 0;
-
-    if (!title) { alert("Введите текст вопроса!"); return; }
-    let q = { type, title, required, useTimer, timer };
-    if (useExp && expDesc) q.exp = { title: expTitle, desc: expDesc, hold: expHold };
-
-    if (type === 'text' || type === 'voice_card' || type === 'flashcard') {
-        const txt = document.getElementById('new-correct-text').value;
-        if (!txt) { alert("Укажите правильный ответ!"); return; }
-        q.correctText = txt.split(',').map(s => s.trim());
-    } else {
-        const opts = document.getElementById('new-options').value;
-        const codes = document.getElementById('new-correct-choices').value;
-        if (!opts || !codes) { alert("Заполните варианты и индексы!"); return; }
-        q.options = opts.split(',').map(s => s.trim()); 
-        q.correct = codes.split(',').map(s => parseInt(s.trim()));
-    }
-
-    allForms[currentFormId].questions.push(q);
-    save(); 
-    renderAdminQuestions(); 
-    alert("Вопрос сохранен в текущую форму!");
 }
 
 function renderAdminQuestions() {
     const list = document.getElementById('admin-questions-list');
     if (!list) return;
-    
-    list.innerHTML = (allForms[currentFormId].questions || []).map((q, i) => `
-        <div class="question-list-item" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-            <span style="flex-grow:1;">${i + 1}. ${q.title} <strong>(${q.type})</strong></span>
-            <div style="display:flex; gap:5px;">
-                <button class="btn-secondary" onclick="editQuestion(${i})" style="margin:0; padding:6px 10px; font-size:12px; width:auto;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Изменить</button>
-                <button class="btn-danger" onclick="deleteQuestion(${i})" style="margin:0; padding:6px 10px; font-size:12px; width:auto;"><span class="material-symbols-rounded" style="font-size:14px;">delete</span></button>
+
+    // При переключении или клике на любой вопрос — уничтожаем активный iframe предпросмотра!
+    closePreviewIframe();
+
+    const currentQuestions = allForms[currentFormId].questions || [];
+
+    if (currentQuestions.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted);">В этой форме пока нет вопросов. Нажмите кнопку ниже, чтобы создать!</div>`;
+        return;
+    }
+
+    // Легкие карточки как в Google Формах
+    list.innerHTML = currentQuestions.map((q, i) => `
+        <div class="gcard" onclick="closePreviewIframe()">
+            <div class="gcard-header">
+                <span class="gcard-num">Вопрос ${i + 1}</span>
+                <span class="gcard-badge">${q.type}</span>
+            </div>
+            <div class="gcard-title">${q.title}</div>
+            <div class="gcard-actions">
+                <button class="btn-secondary" onclick="previewSingleQuestion(${i})">
+                    <span class="material-symbols-rounded">visibility</span> Просмотреть вопрос
+                </button>
+                <button class="btn-secondary" onclick="editQuestion(${i})">
+                    <span class="material-symbols-rounded">edit</span>
+                </button>
+                <button class="btn-danger" onclick="deleteQuestion(${i})">
+                    <span class="material-symbols-rounded">delete</span>
+                </button>
             </div>
         </div>
     `).join('');
+}
 
-    checkFlashcardRestriction();
+function addNewQuestionQuick() {
+    const title = prompt("Введите текст вопроса:");
+    if (!title?.trim()) return;
+
+    const type = prompt("Выберите тип (radio, checkbox, text, flashcard, voice_card):", "radio");
+    if (!type) return;
+
+    let q = { type, title: title.trim(), required: false };
+
+    if (type === 'text' || type === 'voice_card' || type === 'flashcard') {
+        let ans = prompt("Введите правильный ответ (или варианты через запятую):");
+        q.correctText = ans ? ans.split(',').map(s => s.trim()) : [""];
+    } else {
+        let opts = prompt("Введите варианты ответов через запятую:", "Вариант 1, Вариант 2");
+        let correctIdx = prompt("Индекс правильного ответа (начиная с 0):", "0");
+        q.options = opts ? opts.split(',').map(s => s.trim()) : ["Да", "Нет"];
+        q.correct = [parseInt(correctIdx) || 0];
+    }
+
+    allForms[currentFormId].questions.push(q);
+    save();
+    renderAdminQuestions();
 }
 
 function editQuestion(i) {
+    closePreviewIframe();
     const q = allForms[currentFormId].questions[i];
-    
-    document.getElementById('new-type').value = q.type;
-    document.getElementById('new-title').value = q.title;
-    document.getElementById('new-required').checked = q.required || false;
-    document.getElementById('toggle-timer-input').checked = q.useTimer || false;
-    document.getElementById('new-timer').value = q.timer || 20;
-    
-    document.getElementById('timer-val-box').classList.toggle('hidden', !q.useTimer);
-
-    if (q.exp) {
-        document.getElementById('toggle-exp-input').checked = true;
-        document.getElementById('exp-fields-box').classList.remove('hidden');
-        document.getElementById('new-exp-title').value = q.exp.title || '';
-        document.getElementById('new-exp-desc').value = q.exp.desc || '';
-        document.getElementById('new-exp-timer').value = q.exp.hold || 0;
-    } else {
-        document.getElementById('toggle-exp-input').checked = false;
-        document.getElementById('exp-fields-box').classList.add('hidden');
+    let newTitle = prompt("Изменить текст вопроса:", q.title);
+    if (newTitle !== null) {
+        q.title = newTitle.trim();
+        save();
+        renderAdminQuestions();
     }
-
-    if (q.type === 'text' || q.type === 'voice_card' || q.type === 'flashcard') {
-        document.getElementById('new-correct-text').value = q.correctText ? q.correctText.join(', ') : '';
-    } else {
-        document.getElementById('new-options').value = q.options ? q.options.join(', ') : '';
-        document.getElementById('new-correct-choices').value = q.correct ? q.correct.join(', ') : '';
-    }
-
-    toggleAdminFields();
-    allForms[currentFormId].questions.splice(i, 1);
-    save();
-    renderAdminQuestions();
-    
-    document.querySelector('.admin-box').scrollTop = 0;
 }
 
 function deleteQuestion(i) {
+    closePreviewIframe();
+    if (!confirm("Удалить этот вопрос?")) return;
     allForms[currentFormId].questions.splice(i, 1);
     save(); 
     renderAdminQuestions(); 
 }
 
-function exportFormToJSON() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allForms[currentFormId]));
-    const dlAnchorElem = document.createElement('a');
-    dlAnchorElem.setAttribute("href", dataStr);
-    dlAnchorElem.setAttribute("download", `${allForms[currentFormId].name}.json`);
-    dlAnchorElem.click();
-}
-
-function importFormFromJSON(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const imported = JSON.parse(e.target.result);
-            if (!imported.id || !imported.questions) { alert("Неверный формат файла формы!"); return; }
-            const newId = 'f_' + Date.now();
-            allForms[newId] = { id: newId, name: imported.name || "Импортированная форма", questions: imported.questions };
-            currentFormId = newId; 
-            currentIndex = 0; 
-            userAnswers = []; 
-            save(); 
-            renderQuestion();
-            alert("Форма успешно загружена!");
-            switchScreen('quiz');
-        } catch (err) { 
-            alert("Ошибка при чтении файла!"); 
-        }
-    };
-    reader.readAsText(file);
-}
-
 // ==========================================
 // 6. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И ОЗВУЧКА
 // ==========================================
-function toggleToolsMenu() {
-    const menu = document.getElementById('tools-menu');
-    if (menu) menu.classList.toggle('hidden');
-}
-
-function toggleBlackScreen() {
-    let overlay = document.getElementById('black-screen-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'black-screen-overlay';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0'; overlay.style.left = '0';
-        overlay.style.width = '100vw'; overlay.style.height = '100vh';
-        overlay.style.backgroundColor = '#000000';
-        overlay.style.zIndex = '99999'; overlay.style.cursor = 'pointer';
-        overlay.style.display = 'flex'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center';
-        overlay.style.color = '#333'; overlay.style.fontFamily = 'monospace'; overlay.style.fontSize = '12px';
-        overlay.innerHTML = '<span>A/V MUTE (Tap or CTRL+M to exit)</span>';
-        
-        overlay.onclick = () => overlay.classList.add('hidden');
-        document.body.appendChild(overlay);
-    }
-    overlay.classList.remove('hidden');
-    const menu = document.getElementById('tools-menu');
-    if (menu) menu.classList.add('hidden');
-}
-
-// ОБРАБОТЧИК КЛАВИШ (ПРОБЕЛ и CTRL+M)
 document.addEventListener('keydown', (e) => {
-    // Переворот карточки по нажатию на ПРОБЕЛ
     if (e.code === 'Space') {
         const card = document.getElementById('main-flashcard');
         if (card && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-            e.preventDefault(); 
-            flipCard();
+            e.preventDefault(); flipCard();
         }
     }
-
-    // A/V MUTE (Ctrl+M)
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
         e.preventDefault();
         const overlay = document.getElementById('black-screen-overlay');
-        if (overlay && !overlay.classList.contains('hidden')) {
-            overlay.classList.add('hidden');
-        } else {
-            toggleBlackScreen();
-        }
+        if (overlay && !overlay.classList.contains('hidden')) overlay.classList.add('hidden');
+        else toggleBlackScreen();
     }
 });
 
-async function generateShareLink() {
-    try {
-        const currentForm = allForms[currentFormId];
-        if (!currentForm || !currentForm.questions || currentForm.questions.length === 0) {
-            alert("Нельзя поделиться пустой формой! Сначала добавьте вопросы.");
-            return;
-        }
-        const jsonStr = JSON.stringify(currentForm);
-        const byteArray = new TextEncoder().encode(jsonStr);
-        const stream = new Response(byteArray).body.pipeThrough(new CompressionStream("deflate"));
-        const compressedBuffer = await new Response(stream).arrayBuffer();
-        const base64Str = btoa(String.fromCharCode(...new Uint8Array(compressedBuffer)))
-            .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-            
-        const shareUrl = `${window.location.origin}${window.location.pathname}?zip=${base64Str}`;
-        await navigator.clipboard.writeText(shareUrl);
-        alert(`Форма "${currentForm.name}" сжата и скопирована в буфер обмена! Ссылка теперь короткая и откроется везде.`);
-    } catch (e) {
-        console.error(e);
-        alert("Ошибка сжатия. Используйте скачивание .json файла!");
-    }
-}
-
 function speakText(text) {
-    if (!('speechSynthesis' in window)) {
-        alert("Ваш браузер не поддерживает озвучку текста.");
-        return;
-    }
+    if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = /[a-zA-Z]/.test(text) ? 'en-US' : 'ru-RU';
-    utterance.rate = 1.0;
     window.speechSynthesis.speak(utterance);
 }
 
-function closeDeutschPopup() {
-    const popup = document.getElementById('deutsch-popup');
-    if (popup) {
-        popup.classList.add('hidden');
-        localStorage.setItem('deutsch_popup_closed', 'true');
-    }
-}
-
-// Загрузка настроек при инициализации страницы
 window.addEventListener('DOMContentLoaded', () => {
-    const currentUser = JSON.parse(localStorage.getItem('lang_current_user'));
-    const currentTopicId = localStorage.getItem('q_curr_id');
     const footerLink = document.getElementById('footer-link'); 
-
-    if (footerLink) {
-        if (!currentUser || currentUser.type !== 'org') {
-            footerLink.style.display = 'none';
-        } else {
-            const publishedTopics = JSON.parse(localStorage.getItem('lang_published_topics')) || [];
-            const currentTopic = publishedTopics.find(t => t.id === currentTopicId);
-            if (currentTopic && currentTopic.allowAdmin === false) {
-                footerLink.style.display = 'none';
-            } else {
-                footerLink.style.display = 'block';
-            }
-        }
-    }
-
-    if (localStorage.getItem('deutsch_popup_closed') === 'true') {
-        const popup = document.getElementById('deutsch-popup');
-        if (popup) popup.classList.add('hidden');
-    }
+    if (footerLink) footerLink.style.display = 'block';
 });
