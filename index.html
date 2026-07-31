@@ -35,7 +35,7 @@
         <div class="quiz-header">
             <div class="step-info">
                 Вопрос <span id="current-number">1</span> из <span id="total-number">0</span>
-                <!-- 💡 Иконка Подсказки -->
+                <!-- Иконка Подсказки -->
                 <button id="hint-btn" class="hint-btn hidden" onclick="toggleHintModal()" title="Показать подсказку">
                     <span class="material-symbols-rounded">info</span>
                 </button>
@@ -56,10 +56,10 @@
     
     <!-- Финал -->
     <div id="result-box" class="result-card hidden">
-        <h2 id="result-title">Тест завершен! 🎉</h2>
+        <h2 id="result-title">Тест завершен! <span class="material-symbols-rounded" style="color: #f59e0b; vertical-align: middle;">celebration</span></h2>
         <div class="score" id="final-score">0 / 0</div>
         <p id="feedback-text"></p>
-        <button onclick="restartQuiz()">Пройти еще раз</button>
+        <button onclick="restartQuiz()"><span class="material-symbols-rounded">replay</span> Пройти еще раз</button>
         <div id="review-box" class="review-container"></div>
     </div>
 </div>
@@ -75,7 +75,14 @@
 
 <!-- Окно админки -->
 <div id="admin-screen" class="admin-box hidden">
-    <h2>Панель администратора 😎 <button class="btn-secondary" onclick="logout()" style="float:right; font-size:14px; width:auto; padding:6px 12px; margin:0;">Выйти</button></h2>
+    <h2>
+        <span style="display: flex; align-items: center; gap: 8px;">
+            Панель администратора <span class="material-symbols-rounded" style="color: var(--primary);">admin_panel_settings</span>
+        </span>
+        <button class="btn-secondary" onclick="logout()" style="float:right; font-size:14px; width:auto; padding:6px 12px; margin:0;">
+            <span class="material-symbols-rounded" style="font-size: 16px;">logout</span> Выйти
+        </button>
+    </h2>
     
     <div style="border-bottom:2px solid var(--border-color); padding-bottom:20px; margin-bottom:20px;">
         <h3>Добавить новый вопрос:</h3>
@@ -86,7 +93,7 @@
             <option value="select">Выпадающий список (Select)</option>
             <option value="text">Ввод текста / слова (Text)</option>
             <option value="voice_card">Продвинутые карточки (Голос)</option>
-            <option value="flashcard">🎴 Карточка слова (Flashcard)</option>
+            <option value="flashcard">Карточка слова (Flashcard)</option>
         </select>
         
         <label style="margin-top: 10px; display: block;" id="title-label">Текст вопроса / Слово:</label>
@@ -104,10 +111,10 @@
             <label class="switch-label"><span class="switch"><input type="checkbox" id="toggle-timer-input" onchange="document.getElementById('timer-val-box').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span> Включить таймер вопроса</label>
         </div>
         
-        <!-- 💡 ТУМБЛЕР И ПОЛЕ ДЛЯ ПОДСКАЗКИ -->
+        <!-- ТУМБЛЕР И ПОЛЕ ДЛЯ ПОДСКАЗКИ -->
         <label class="switch-label">
             <span class="switch"><input type="checkbox" id="toggle-hint-input" onchange="document.getElementById('hint-field-box').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span> 
-            Добавить Подсказку (ⓘ)
+            Добавить Подсказку
         </label>
         <div id="hint-field-box" class="hidden">
             <label>Текст подсказки:</label>
@@ -144,7 +151,7 @@
             <input type="text" id="new-correct-text" class="admin-input" placeholder="ответ1, ответ2">
         </div>
 
-        <button onclick="addQuestion()">Сохранить вопрос</button>
+        <button onclick="addQuestion()"><span class="material-symbols-rounded">save</span> Сохранить вопрос</button>
     </div>
 
     <!-- Экспорт / Импорт -->
@@ -156,7 +163,23 @@
 
     <h3>Текущие вопросы в базе:</h3>
     <div id="admin-questions-list"></div>
-    <button class="btn-secondary" onclick="switchScreen('quiz')">Вернуться к тесту</button>
+    <button class="btn-secondary" onclick="switchScreen('quiz')"><span class="material-symbols-rounded">arrow_back</span> Вернуться к тесту</button>
+</div>
+
+<!-- Модальное окно предпросмотра вопроса (Iframe с 5-минутным доступом) -->
+<div id="preview-iframe-modal" class="iframe-modal hidden">
+    <div class="iframe-container">
+        <div class="iframe-bar">
+            <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-rounded">eye_tracking</span>
+                Предпросмотр вопроса (Временная ссылка: 5 мин)
+            </span>
+            <button onclick="closePreviewIframe()">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+        </div>
+        <iframe id="preview-iframe" src=""></iframe>
+    </div>
 </div>
 
 <div class="footer-nav" id="footer-link">
