@@ -43,11 +43,11 @@ body {
 /* Финальные карточки отчета */
 .review-item.correct-item { border-left-color: var(--success); background: var(--bg-review-correct); }
 .review-item.incorrect-item { border-left-color: var(--danger); background: var(--bg-review-incorrect); }
-.review-item.skipped-item { border-left-color: var(--gray); background: var(--bg-review-skipped); } /* Серый статус */
+.review-item.skipped-item { border-left-color: var(--gray); background: var(--bg-review-skipped); }
 
 .text-success { color: var(--success); font-weight: bold; }
 .text-danger { color: var(--danger); font-weight: bold; }
-.text-skipped { color: var(--gray); font-weight: bold; } /* Серый текст */
+.text-skipped { color: var(--gray); font-weight: bold; }
 
 /* Вспомогательный класс для кнопок пропуска внутри карточки */
 .skip-voice-btn {
@@ -178,8 +178,7 @@ body {
 /* ==========================================
    КНОПКИ ОБЩИЕ (ГЛАВНЫЕ ДЕЙСТВИЯ)
    ========================================== */
-/* Применяем стили только к кнопкам действий, чтобы не ломать мелкие кнопочки */
-button:not(.tools-btn):not(.close-tab-btn):not(.add-form-btn) { 
+button:not(.tools-btn):not(.close-tab-btn):not(.add-form-btn):not(.gcard-actions button):not(.iframe-bar button) { 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -197,7 +196,7 @@ button:not(.tools-btn):not(.close-tab-btn):not(.add-form-btn) {
     transition: 0.2s;
 }
 
-button:not(.tools-btn):not(.close-tab-btn):not(.add-form-btn):hover { 
+button:not(.tools-btn):not(.close-tab-btn):not(.add-form-btn):not(.gcard-actions button):not(.iframe-bar button):hover { 
     background: var(--primary-hover); 
 }
 
@@ -276,8 +275,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 .score { font-size: 48px; color: var(--success); font-weight: bold; margin: 15px 0; }
 .review-container { text-align: left; margin-top: 30px; border-top: 2px solid var(--border-color); padding-top: 20px; }
 .review-item { padding: 15px; border-radius: var(--radius-mid); margin-bottom: 12px; border-left: 5px solid #ccc; background: var(--bg-card); border: 1px solid var(--border-color); border-left-width: 5px; }
-.review-item.correct-item { border-left-color: var(--success); background: var(--bg-review-correct); }
-.review-item.incorrect-item { border-left-color: var(--danger); background: var(--bg-review-incorrect); }
 
 .question-list-item { background: var(--bg-option-hover); padding: 12px; border-radius: var(--radius-mid); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid var(--border-color); }
 .footer-nav { margin-top: 20px; font-size: 14px; }
@@ -342,6 +339,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     color: white !important;
     border-color: var(--primary) !important;
 }
+
 /* Всплывающий баннер для немецкого */
 .deutsch-popup {
     position: fixed;
@@ -360,95 +358,26 @@ input:checked + .slider:before { transform: translateX(20px); }
     animation: slideUp 0.4s ease-out;
 }
 
-.deutsch-popup.hidden {
-    display: none;
-}
-
-.deutsch-popup-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.deutsch-icon {
-    font-size: 28px;
-    color: var(--primary);
-    background: var(--bg-option-hover);
-    padding: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.deutsch-text {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-main);
-    line-height: 1.2;
-}
-
-.deutsch-text small {
-    font-size: 12px;
-    font-weight: 400;
-    color: var(--text-muted);
-    margin-top: 3px;
-}
-
-.deutsch-actions {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-}
-
-.deutsch-btn {
-    padding: 6px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    border-radius: 8px;
-    cursor: pointer;
-    text-decoration: none;
-    border: none;
-    transition: 0.2s;
-    white-space: nowrap;
-}
-
-.deutsch-btn-primary {
-    background: var(--primary);
-    color: #ffffff;
-}
-
-.deutsch-btn-primary:hover {
-    background: var(--primary-hover);
-}
-
-.deutsch-btn-secondary {
-    background: var(--bg-option-hover);
-    color: var(--text-muted);
-    border: 1px solid var(--border-color);
-}
-
-.deutsch-btn-secondary:hover {
-    color: var(--text-main);
-    background: var(--border-color);
-}
+.deutsch-popup.hidden { display: none; }
+.deutsch-popup-content { display: flex; align-items: center; gap: 12px; }
+.deutsch-icon { font-size: 28px; color: var(--primary); background: var(--bg-option-hover); padding: 8px; border-radius: 50%; flex-shrink: 0; }
+.deutsch-text { display: flex; flex-direction: column; flex-grow: 1; font-size: 14px; font-weight: 600; color: var(--text-main); line-height: 1.2; }
+.deutsch-text small { font-size: 12px; font-weight: 400; color: var(--text-muted); margin-top: 3px; }
+.deutsch-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.deutsch-btn { padding: 6px 12px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; text-decoration: none; border: none; transition: 0.2s; white-space: nowrap; }
+.deutsch-btn-primary { background: var(--primary); color: #ffffff; }
+.deutsch-btn-primary:hover { background: var(--primary-hover); }
+.deutsch-btn-secondary { background: var(--bg-option-hover); color: var(--text-muted); border: 1px solid var(--border-color); }
+.deutsch-btn-secondary:hover { color: var(--text-main); background: var(--border-color); }
 
 @keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translate(-50%, 20px);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%, 0);
-    }
+    from { opacity: 0; transform: translate(-50%, 20px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
 }
+
 /* ==========================================
    ФЛЭШ-КАРТОЧКИ (FLASHCARDS)
    ========================================== */
-
-/* Контейнер задаёт 3D-пространство */
 .flashcard-container {
     perspective: 1000px;
     width: 100%;
@@ -458,7 +387,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     cursor: pointer;
 }
 
-/* Сама карточка */
 .flashcard {
     width: 100%;
     height: 100%;
@@ -469,106 +397,150 @@ input:checked + .slider:before { transform: translateX(20px); }
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
-/* Эффект переворота при добавлении класса .flipped */
-.flashcard.flipped {
-    transform: rotateY(180deg);
+.flashcard.flipped { transform: rotateY(180deg); }
+
+.flashcard-front, .flashcard-back {
+    position: absolute;
+    width: 100%; height: 100%;
+    top: 0; left: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px; box-sizing: border-box;
+    border-radius: 16px;
+    border: 2px solid var(--border-color);
+    background: var(--bg-card);
+    text-align: center;
 }
 
-/* Общие стили для передней и задней стороны */
-.flashcard-front, 
-.flashcard-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    backface-visibility: hidden; /* Скрывает изнанку при повороте */
-    -webkit-backface-visibility: hidden;
+.flashcard-front h3 { font-size: 1.5rem; margin-bottom: 15px; color: var(--text-main); }
+.flashcard-back { transform: rotateY(180deg); background: var(--bg-option-hover); border-color: var(--primary); }
+.flashcard-back h3 { font-size: 1.4rem; color: var(--primary); }
+
+.flashcard-controls { display: flex; gap: 12px; justify-content: center; margin-top: 20px; }
+.flashcard-controls button { flex: 1; max-width: 180px; padding: 12px 16px; font-weight: 600; border-radius: 12px; cursor: pointer; }
+
+/* ==========================================
+   НОВОЕ: GOOGLE FORMS STYLE CARD & IFRAME MODAL
+   ========================================== */
+.gcard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-mid);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
+}
+
+.gcard:hover {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.gcard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.gcard-num {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-muted);
+}
+
+.gcard-badge {
+    background: var(--bg-option-hover);
+    color: var(--primary);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+}
+
+.gcard-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-main);
+}
+
+.gcard-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.gcard-actions button {
+    width: auto !important;
+    margin-top: 0 !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+}
+
+/* Modal с Iframe для предпросмотра */
+.iframe-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 99999;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 20px;
     box-sizing: border-box;
-    border-radius: 16px;
-    border: 2px solid var(--border-color, #e2e8f0);
-    background: var(--card-bg, #ffffff);
-    text-align: center;
 }
 
-/* Передняя сторона */
-.flashcard-front h3 {
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-    color: var(--text-color, #1e293b);
-}
-
-/* Задняя сторона (повёрнута на 180 градусов) */
-.flashcard-back {
-    transform: rotateY(180deg);
-    background: var(--card-back-bg, #f8fafc);
-    border-color: var(--primary-color, #3b82f6);
-}
-
-.flashcard-back h3 {
-    font-size: 1.4rem;
-    color: var(--primary-color, #3b82f6);
-}
-
-/* Кнопка озвучки внутри карточки */
-.flashcard .speak-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    background: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
-    border: none;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-}
-
-.flashcard .speak-btn:hover {
-    background: rgba(59, 130, 246, 0.2);
-}
-
-.flashcard .speak-btn:active {
-    transform: scale(0.95);
-}
-
-/* Кнопки управления под карточкой */
-.flashcard-controls {
+.iframe-container {
+    width: 100%;
+    max-width: 650px;
+    height: 85vh;
+    background: var(--bg-body);
+    border-radius: var(--radius-max);
+    overflow: hidden;
     display: flex;
-    gap: 12px;
-    justify-content: center;
-    margin-top: 20px;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-color);
 }
 
-.flashcard-controls button {
-    flex: 1;
-    max-width: 180px;
-    padding: 12px 16px;
+.iframe-bar {
+    background: var(--bg-card);
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-main);
+    font-size: 14px;
     font-weight: 600;
-    border-radius: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.iframe-bar button {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-muted) !important;
     cursor: pointer;
-    transition: transform 0.1s, opacity 0.2s;
+    padding: 4px !important;
+    margin: 0 !important;
+    width: auto !important;
+    display: inline-flex !important;
 }
 
-.flashcard-controls button:active {
-    transform: scale(0.97);
+.iframe-bar button:hover {
+    color: var(--danger) !important;
 }
 
-/* Адаптив для тёмной темы, если она включена */
-body.dark-theme .flashcard-front {
-    background: #1e293b;
-    border-color: #334155;
-    color: #f8fafc;
-}
-
-body.dark-theme .flashcard-back {
-    background: #0f172a;
-    border-color: #3b82f6;
+iframe#preview-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: var(--bg-body);
 }
