@@ -15,7 +15,7 @@
     <!-- Вкладки для переключения и создания разных форм -->
     <div class="forms-tabs-container">
         <div id="forms-tabs-list" class="forms-tabs-list"></div>
-        <button class="add-form-btn" onclick="createNewFormPrompt()">
+        <button class="add-form-btn" onclick="createNewFormPrompt()" title="Создать новую форму">
             <span class="material-symbols-rounded">add</span>
         </button>
     </div>
@@ -27,6 +27,7 @@
         <div id="tools-menu" class="tools-menu hidden">
             <div class="tools-item" onclick="setTheme('light')"><span class="material-symbols-rounded">light_mode</span> Светлая тема</div>
             <div class="tools-item" onclick="setTheme('dark')"><span class="material-symbols-rounded">dark_mode</span> Темная тема</div>
+            <div class="tools-item" onclick="printCurrentForm()"><span class="material-symbols-rounded">print</span> Распечатать тест</div>
             <div class="tools-item" onclick="generateShareLink()"><span class="material-symbols-rounded">share</span> Поделиться формой</div>
         </div>
     </div>
@@ -84,8 +85,26 @@
         </button>
     </h2>
     
-    <div style="border-bottom:2px solid var(--border-color); padding-bottom:20px; margin-bottom:20px;">
-        <h3>Добавить новый вопрос:</h3>
+    <!-- Верхняя панель управления формой (чистый вид) -->
+    <div class="admin-top-toolbar" style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 2px solid var(--border-color); padding-bottom: 15px;">
+        <button onclick="toggleAddQuestionForm()" style="margin: 0; width: auto; flex-grow: 1;">
+            <span class="material-symbols-rounded">add_circle</span> Создать вопрос
+        </button>
+        <button class="btn-secondary" onclick="printCurrentForm()" style="margin: 0; width: auto;" title="Распечатать">
+            <span class="material-symbols-rounded">print</span>
+        </button>
+        <button class="btn-secondary" onclick="exportFormToJSON()" style="margin: 0; width: auto;" title="Скачать (Экспорт)">
+            <span class="material-symbols-rounded">download</span>
+        </button>
+        <button class="btn-secondary" onclick="document.getElementById('import-file').click()" style="margin: 0; width: auto;" title="Загрузить (Импорт)">
+            <span class="material-symbols-rounded">upload</span>
+        </button>
+        <input type="file" id="import-file" class="hidden" accept=".json" onchange="importFormFromJSON(this)">
+    </div>
+
+    <!-- Скрываемый блок создания вопроса -->
+    <div id="admin-add-form" class="hidden" style="background: var(--bg-option-hover); padding: 20px; border-radius: var(--radius-mid); border: 1px solid var(--border-color); margin-bottom: 20px;">
+        <h3 style="margin-top: 0;">Параметры нового вопроса:</h3>
         <label>Тип поля ввода:</label>
         <select id="new-type" onchange="toggleAdminFields()">
             <option value="radio">Одиночный выбор (Radio)</option>
@@ -107,7 +126,6 @@
 
         <div id="standard-switches">
             <label class="switch-label"><span class="switch"><input type="checkbox" id="new-required" checked><span class="slider"></span></span> Обязательный вопрос</label>
-            <label class="switch-label"><span class="switch"><input type="checkbox" id="new-editable" checked><span class="slider"></span></span> Разрешать изменять (бета)</label>
             <label class="switch-label"><span class="switch"><input type="checkbox" id="toggle-timer-input" onchange="document.getElementById('timer-val-box').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span> Включить таймер вопроса</label>
         </div>
         
@@ -129,7 +147,7 @@
         <!-- ТУМБЛЕР И ПОЛЯ ДЛЯ ОБЪЯСНЕНИЯ -->
         <div id="exp-container">
             <label class="switch-label"><span class="switch"><input type="checkbox" id="toggle-exp-input" onchange="document.getElementById('exp-fields-box').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span> Добавить блок Объяснения после ответа</label>
-            <div id="exp-fields-box" class="hidden" style="background:var(--bg-option-hover); padding:15px; border-radius:8px; margin-bottom:15px;">
+            <div id="exp-fields-box" class="hidden" style="background:var(--bg-card); padding:15px; border-radius:8px; border: 1px solid var(--border-color); margin-bottom:15px;">
                 <label>Заголовок объяснения (необязательно):</label>
                 <input type="text" id="new-exp-title" class="admin-input" placeholder="Например: А вы знали?">
                 <label>Текст объяснения / Описание:</label>
@@ -151,19 +169,16 @@
             <input type="text" id="new-correct-text" class="admin-input" placeholder="ответ1, ответ2">
         </div>
 
-        <button onclick="addQuestion()"><span class="material-symbols-rounded">save</span> Сохранить вопрос</button>
-    </div>
-
-    <!-- Экспорт / Импорт -->
-    <div style="border-bottom:2px solid var(--border-color); padding-bottom:20px; margin-bottom:20px; display: flex; gap: 10px;">
-        <button class="btn-secondary" onclick="exportFormToJSON()" style="margin:0;"><span class="material-symbols-rounded">download</span> Скачать форму (.json)</button>
-        <button class="btn-secondary" onclick="document.getElementById('import-file').click()" style="margin:0;"><span class="material-symbols-rounded">upload</span> Загрузить форму</button>
-        <input type="file" id="import-file" class="hidden" accept=".json" onchange="importFormFromJSON(this)">
+        <div style="display: flex; gap: 10px;">
+            <button onclick="addQuestion()"><span class="material-symbols-rounded">save</span> Сохранить</button>
+            <button class="btn-secondary" onclick="toggleAddQuestionForm()"><span class="material-symbols-rounded">close</span> Отмена</button>
+        </div>
     </div>
 
     <h3>Текущие вопросы в базе:</h3>
     <div id="admin-questions-list"></div>
-    <button class="btn-secondary" onclick="switchScreen('quiz')"><span class="material-symbols-rounded">arrow_back</span> Вернуться к тесту</button>
+    
+    <button class="btn-secondary" style="margin-top: 30px;" onclick="switchScreen('quiz')"><span class="material-symbols-rounded">arrow_back</span> Вернуться к тесту</button>
 </div>
 
 <!-- Модальное окно предпросмотра вопроса (Iframe с 5-минутным доступом) -->
@@ -186,8 +201,13 @@
     <a id="admin-btn" onclick="switchScreen('login')"><span class="material-symbols-rounded">lock</span> Войти в Редактор</a>
 </div>
 
-<div style="margin-top: 15px; text-align: center;">
-    <a id="leave-shared-btn" href="#" class="hidden" style="color: #6c757d; text-decoration: none; font-size: 14px; font-weight: bold;"><span class="material-symbols-rounded">back_to_tab</span> Закрыть Ссылку</a>
+<!-- Промо-блок языков -->
+<div style="margin-top: 25px; text-align: center;">
+    <a href="language-learn/" class="promo-banner">
+        <span class="material-symbols-rounded">language</span>
+        <span>Иностранные языки теперь на нашем сайте!</span>
+        <span class="material-symbols-rounded" style="font-size: 18px; margin-left: auto;">arrow_forward_ios</span>
+    </a>
 </div>
 
 <script src="script.js"></script>
