@@ -74,9 +74,26 @@ function renderTabs() {
     box.innerHTML = Object.keys(allForms).map(id => `
         <div class="form-tab ${id === currentFormId ? 'active-tab' : ''}" onclick="switchForm('${id}')">
             <span>${allForms[id].name}</span>
-            <button class="close-tab-btn" onclick="deleteForm(event, '${id}')"><span class="material-symbols-rounded">close</span></button>
+            <div class="tab-actions">
+                <button class="tab-action-btn" onclick="renameForm(event, '${id}')" title="Переименовать форму">
+                    <span class="material-symbols-rounded">edit</span>
+                </button>
+                <button class="tab-action-btn" onclick="deleteForm(event, '${id}')" title="Удалить форму">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
         </div>
     `).join('');
+}
+
+function renameForm(e, id) {
+    e.stopPropagation();
+    const currentName = allForms[id].name;
+    let newName = prompt("Новое название формы:", currentName);
+    if (!newName || !newName.trim()) return;
+    allForms[id].name = newName.trim();
+    save();
+    renderTabs();
 }
 
 const switchForm = id => { 
