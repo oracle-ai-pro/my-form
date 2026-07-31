@@ -4,31 +4,33 @@
 :root {
     --primary: #007bff;
     --primary-hover: #0056b3;
-    --bg-main: #f4f6f9;
-    --bg-card: #ffffff;
-    --bg-option-hover: #f1f3f5;
-    --text-main: #212529;
-    --text-muted: #6c757d;
-    --border-color: #dee2e6;
-    --success: #28a745;
-    --danger: #dc3545;
-    --radius: 12px;
-    --radius-mid: 8px;
-    --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    --bg-main: #050505; /* Изменили фон на #050505 */
+    --bg-card: #121212;
+    --bg-option-hover: #1e1e1e;
+    --text-main: #e0e0e0;
+    --text-muted: #a0a0a0;
+    --border-color: #262626;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --radius: 24px;     /* Сделали сильные скругления для карточек */
+    --radius-mid: 14px; /* Сильные скругления для элементов внутри */
+    --shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
 }
 
 .dark-theme {
     --primary: #3b82f6;
     --primary-hover: #2563eb;
-    --bg-main: #121212;
-    --bg-card: #1e1e1e;
-    --bg-option-hover: #2a2a2a;
+    --bg-main: #050505; /* И здесь тоже #050505 */
+    --bg-card: #121212;
+    --bg-option-hover: #1e1e1e;
     --text-main: #e0e0e0;
     --text-muted: #a0a0a0;
-    --border-color: #333333;
+    --border-color: #262626;
     --success: #22c55e;
     --danger: #ef4444;
-    --shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    --radius: 24px;     /* Сильные скругления */
+    --radius-mid: 14px; 
+    --shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
 }
 
 body {
