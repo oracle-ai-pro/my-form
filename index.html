@@ -12,26 +12,26 @@
 <!-- Экран тестирования -->
 <div id="quiz-screen" class="quiz-container">
     
-    <!-- Вкладки для переключения и создания разных форм -->
-    <div class="forms-tabs-container">
+    <!-- Вкладки форм и кнопка Опций на одной линии -->
+    <div class="forms-toolbar-container">
         <div id="forms-tabs-list" class="forms-tabs-list"></div>
         <button class="add-form-btn" onclick="createNewFormPrompt()" title="Создать новую форму">
             <span class="material-symbols-rounded">add</span>
         </button>
-    </div>
-
-    <div class="tools-dropdown">
-        <button class="tools-btn" onclick="toggleToolsMenu()">
-            <span class="material-symbols-rounded" style="font-size:16px;">settings</span> Опции ▼
-        </button>
-        <div id="tools-menu" class="tools-menu hidden">
-            <div class="tools-item" onclick="setTheme('light')"><span class="material-symbols-rounded">light_mode</span> Светлая тема</div>
-            <div class="tools-item" onclick="setTheme('dark')"><span class="material-symbols-rounded">dark_mode</span> Темная тема</div>
-            <div class="tools-item" onclick="printCurrentForm()"><span class="material-symbols-rounded">print</span> Распечатать тест</div>
-            <div class="tools-item" onclick="generateShareLink()"><span class="material-symbols-rounded">share</span> Поделиться формой</div>
+        
+        <div class="tools-dropdown">
+            <button class="tools-btn" onclick="toggleToolsMenu()" title="Опции">
+                <span class="material-symbols-rounded">settings</span>
+            </button>
+            <div id="tools-menu" class="tools-menu hidden">
+                <div class="tools-item" onclick="setTheme('light')"><span class="material-symbols-rounded">light_mode</span> Светлая тема</div>
+                <div class="tools-item" onclick="setTheme('dark')"><span class="material-symbols-rounded">dark_mode</span> Темная тема</div>
+                <div class="tools-item" onclick="printCurrentForm()"><span class="material-symbols-rounded">print</span> Распечатать тест</div>
+                <div class="tools-item" onclick="generateShareLink()"><span class="material-symbols-rounded">share</span> Поделиться формой</div>
+            </div>
         </div>
     </div>
-
+    
     <div id="quiz-box">
         <div class="quiz-header">
             <div class="step-info">
