@@ -6,8 +6,9 @@ let currentFormId = localStorage.getItem('q_curr_id') || "def";
 if (!allForms[currentFormId]) currentFormId = Object.keys(allForms)[0] || "def";
 
 let questions = allForms[currentFormId].questions;
-let currentIndex = 0, userAnswers = [], currentTimerInterval = null, timeLeft = 0, isExplanationState = false, currentVoiceAnswer = null;
-let previewTimer = null; // Таймер для iframe
+let currentIndex = 0, userAnswers = [], currentTimerInterval = null, timeLeft = 0;
+let isExplanationState = false, currentVoiceAnswer = null;
+let previewTimer = null; 
 
 const save = () => {
     localStorage.setItem('q_forms', JSON.stringify(allForms));
@@ -19,7 +20,6 @@ const save = () => {
 window.onload = async () => { 
     const urlParams = new URLSearchParams(window.location.search);
     
-    // ПРЕДПРОСМОРТ ОДНОГО ВОПРОСА В IFRAME
     const previewData = urlParams.get('preview_q');
     const expiresAt = parseInt(urlParams.get('expires') || "0");
 
@@ -45,40 +45,22 @@ window.onload = async () => {
             const jsonStr = await new Response(stream).text();
             const singleQuestion = JSON.parse(jsonStr);
 
-            // Инициализируем демо-режим для 1 вопроса
             allForms = { "preview": { id: "preview", name: "Предпросмотр", questions: [singleQuestion] } };
             currentFormId = "preview";
             questions = [singleQuestion];
             
-            // Автоматическое уничтожение через оставшееся время
+            // Скрываем лишние элементы UI при предпросмотре
+            document.querySelector('.forms-tabs-container').style.display = 'none';
+            document.querySelector('.tools-dropdown').style.display = 'none';
+            document.getElementById('footer-link').style.display = 'none';
+            const promo = document.querySelector('.promo-banner'); if (promo) promo.style.display = 'none';
+
             setTimeout(() => { window.location.reload(); }, expiresAt - Date.now());
         } catch (e) {
             document.body.innerHTML = `<h3 style="color:red; text-align:center; padding-top:50px;">Ошибка загрузки предпросмотра</h3>`;
             return;
         }
-    } else {
-        // Обычный импорт по ZIP-ссылке
-        const zipData = urlParams.get('zip');
-        if (zipData) {
-            try {
-                let base64 = zipData.replace(/-/g, "+").replace(/_/g, "/");
-                while (base64.length % 4) base64 += "=";
-                const binaryStr = atob(base64);
-                const byteArray = new Uint8Array(binaryStr.length);
-                for (let i = 0; i < binaryStr.length; i++) byteArray[i] = binaryStr.charCodeAt(i);
-                
-                const stream = new Response(byteArray).body.pipeThrough(new DecompressionStream("deflate"));
-                const jsonStr = await new Response(stream).text();
-                const importedForm = JSON.parse(jsonStr);
-                
-                if (importedForm.questions && importedForm.questions.length > 0) {
-                    const sharedId = 'shared_' + Date.now();
-                    allForms[sharedId] = { id: sharedId, name: `⭐ ${importedForm.name || "Общая форма"}`, questions: importedForm.questions };
-                    currentFormId = sharedId;
-                }
-            } catch (err) { console.error(err); }
-        }
-    }
+    } 
 
     const savedTheme = localStorage.getItem('quiz_theme') || 'light';
     setTheme(savedTheme);
@@ -125,15 +107,19 @@ function deleteForm(e, id) {
 // ==========================================
 function renderQuestion() {
     clearInterval(currentTimerInterval);
-    isExplanationState = currentVoiceAnswer = null;
+    isExplanationState = false; currentVoiceAnswer = null;
+    
     const nextBtn = document.getElementById('next-btn');
     if (nextBtn) { nextBtn.innerText = "Далее"; nextBtn.disabled = false; nextBtn.classList.remove('hidden'); }
+    
+    document.getElementById('hint-box').classList.add('hidden');
+    document.getElementById('hint-btn').classList.add('hidden');
 
     if (!questions?.length) {
         document.getElementById('question-body').innerHTML = `
             <div style="text-align:center; padding:20px;">
-                <h3>В этой форме нет вопросов 🤷‍♂️</h3><p style="color:var(--text-muted);">Создайте их через админку.</p>
-                <button onclick="switchScreen('login')" style="width:auto; display:inline-block; padding:10px 20px;">Перейти в админку</button>
+                <h3>В этой форме нет вопросов 🤷‍♂️</h3><p style="color:var(--text-muted);">Создайте их через панель администратора.</p>
+                <button onclick="switchScreen('login')" style="width:auto; display:inline-block; padding:10px 20px;">Перейти в редактор</button>
             </div>`;
         if (nextBtn) nextBtn.classList.add('hidden');
         document.getElementById('current-number').innerText = document.getElementById('total-number').innerText = "0";
@@ -144,6 +130,12 @@ function renderQuestion() {
     document.getElementById('current-number').innerText = currentIndex + 1;
     document.getElementById('total-number').innerText = questions.length;
     document.getElementById('progress').style.width = `${(currentIndex / questions.length) * 100}%`;
+
+    // Подсказка
+    if (q.hint && q.hint.trim() !== '') {
+        document.getElementById('hint-btn').classList.remove('hidden');
+        document.getElementById('hint-text').innerText = q.hint;
+    }
 
     let html = `
         <h3 style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -156,7 +148,7 @@ function renderQuestion() {
     if (q.type === 'radio' || q.type === 'checkbox') {
         q.options.forEach((opt, i) => html += `<label class="option"><input type="${q.type}" name="quiz_ans" value="${i}"> ${opt}</label>`);
     } else if (q.type === 'select') {
-        html += `<select id="quiz_select"><option value="">-- Выберите ответ --</option>` + q.options.map((opt, i) => `<option value="${i}">${opt}</option>`).join('') + `</select>`;
+        html += `<select id="quiz_select" class="admin-input"><option value="">-- Выберите ответ --</option>` + q.options.map((opt, i) => `<option value="${i}">${opt}</option>`).join('') + `</select>`;
     } else if (q.type === 'text') {
         html += `<input type="text" id="quiz_text" class="admin-input" placeholder="Введите ваш ответ...">`;
     } else if (q.type === 'voice_card') {
@@ -194,7 +186,7 @@ function renderQuestion() {
             </div>`;
     }
 
-    document.getElementById('question-body').innerHTML = html + `<div id="explanation-container" class="hidden" style="margin-top:15px; padding:15px; border-radius:12px; background:#fff3cd; color:#333;"></div>`;
+    document.getElementById('question-body').innerHTML = html + `<div id="explanation-container" class="hidden" style="margin-top:15px; padding:15px; border-radius:12px; background:var(--bg-option-hover); border: 1px solid var(--border-color); color:var(--text-main);"></div>`;
 
     const tDisplay = document.getElementById('timer-display');
     if (q.useTimer && q.timer > 0) {
@@ -254,7 +246,7 @@ function nextStep(isTimeout = false) {
             voiceStatus = currentVoiceAnswer.status;
         }
 
-        if (q.required && answers.length === 0 && rawValue === "" && q.type !== 'voice_card') { 
+        if (q.required && answers.length === 0 && rawValue === "" && q.type !== 'voice_card' && q.type !== 'flashcard') { 
             alert("Этот вопрос обязателен!"); return; 
         }
     } else { rawValue = "[Время истекло]"; }
@@ -269,7 +261,7 @@ function nextStep(isTimeout = false) {
             let ok = q.correctText.some(t => t.toLowerCase().trim() === rawValue.toLowerCase().trim());
             finalStatus = ok ? "correct" : "incorrect";
         }
-    } else {
+    } else if (q.type !== 'flashcard') {
         if (q.correct && q.correct.length === answers.length) {
             let ok = q.correct.every(v => answers.includes(v));
             finalStatus = ok ? "correct" : "incorrect";
@@ -328,8 +320,24 @@ function restartQuiz() {
 }
 
 // ==========================================
-// 3. УПРАВЛЕНИЕ МИКРОФОНОМ И ГОЛОСОМ
+// 3. ДОПОЛНИТЕЛЬНЫЕ ИНТЕРФЕЙСНЫЕ ФУНКЦИИ
 // ==========================================
+function toggleHintModal() {
+    document.getElementById('hint-box').classList.toggle('hidden');
+}
+
+function toggleToolsMenu() {
+    document.getElementById('tools-menu').classList.toggle('hidden');
+}
+// Закрытие меню опций при клике вне
+document.addEventListener('click', function(e) {
+    const btn = document.querySelector('.tools-btn');
+    const menu = document.getElementById('tools-menu');
+    if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.add('hidden');
+    }
+});
+
 function handleVoiceCardFail(reason = "Подсмотрел(-а)") {
     const status = document.getElementById('voice-status');
     const q = questions[currentIndex];
@@ -366,9 +374,14 @@ function startVoiceRecognition(event, correctAnswersStr) {
     };
 }
 
-// ==========================================
-// 4. ОПЦИИ И ИНТЕРФЕЙС
-// ==========================================
+function speakText(text) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = /[a-zA-Z]/.test(text) ? 'en-US' : 'ru-RU';
+    window.speechSynthesis.speak(utterance);
+}
+
 function setTheme(theme) {
     if (theme === 'dark') document.body.classList.add('dark-theme'); 
     else document.body.classList.remove('dark-theme');
@@ -380,6 +393,7 @@ function switchScreen(screen) {
     document.getElementById('login-screen').classList.toggle('hidden', screen !== 'login');
     document.getElementById('admin-screen').classList.toggle('hidden', screen !== 'admin');
     if (screen === 'admin') {
+        document.getElementById('admin-add-form').classList.add('hidden'); // Скрываем редактор по умолчанию
         renderAdminQuestions();
     }
 }
@@ -387,86 +401,157 @@ function switchScreen(screen) {
 function tryLogin() {
     if (document.getElementById('login-user').value === 'admin' && document.getElementById('login-pass').value === '1234') {
         switchScreen('admin');
+        document.getElementById('login-pass').value = '';
     } else { alert("Неверный логин или пароль!"); }
 }
 
 function logout() { switchScreen('quiz'); }
 
-// ==========================================
-// 5. ЛЁГКАЯ АДМИНКА (GOOGLE FORMS STYLE) + IFRAME
-// ==========================================
-function closePreviewIframe() {
-    if (previewTimer) clearTimeout(previewTimer);
-    const box = document.getElementById('iframe-preview-modal');
-    if (box) box.classList.add('hidden');
-    const frame = document.getElementById('preview-iframe');
-    if (frame) frame.src = '';
+// ПЕЧАТЬ ФОРМЫ (ТЕСТА)
+function printCurrentForm() {
+    document.getElementById('tools-menu').classList.add('hidden');
+    const form = allForms[currentFormId];
+    if (!form || !form.questions || form.questions.length === 0) {
+        alert("В этой форме нет вопросов для печати!");
+        return;
+    }
+
+    let printWindow = window.open('', '_blank');
+    let html = `
+    <html><head><title>Печать: ${form.name}</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #000; line-height: 1.5; }
+        h1 { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; }
+        .q-box { margin-bottom: 25px; page-break-inside: avoid; }
+        .q-title { font-weight: bold; font-size: 16px; margin-bottom: 10px; }
+        .q-opts { margin-left: 20px; font-size: 14px; margin-bottom: 5px; }
+        .q-line { margin-top: 10px; border-bottom: 1px solid #000; width: 100%; height: 20px; }
+    </style></head><body>`;
+    
+    html += `<h1>${form.name}</h1>`;
+    
+    form.questions.forEach((q, i) => {
+        html += `<div class="q-box"><div class="q-title">${i + 1}. ${q.title}</div>`;
+        if (q.type === 'radio' || q.type === 'checkbox') {
+            q.options.forEach(opt => { html += `<div class="q-opts">○ ${opt}</div>`; });
+        } else {
+            html += `<div class="q-line"></div>`;
+        }
+        html += `</div>`;
+    });
+
+    html += `</body></html>`;
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    
+    // Небольшая задержка для рендера браузером
+    setTimeout(() => { printWindow.print(); }, 250);
 }
 
-async function previewSingleQuestion(index) {
-    // Закрываем предыдущий предпросмотр, если открыт
-    closePreviewIframe();
+// ==========================================
+// 4. ПАНЕЛЬ АДМИНИСТРАТОРА (СОЗДАНИЕ / РЕДАКТИРОВАНИЕ)
+// ==========================================
 
-    const q = allForms[currentFormId].questions[index];
-    if (!q) return;
+function toggleAddQuestionForm() {
+    const form = document.getElementById('admin-add-form');
+    if (form) form.classList.toggle('hidden');
+}
 
-    // 1. Создаем сжатую временную ссылку (живет 5 минут)
-    const expiresAt = Date.now() + 5 * 60 * 1000;
-    const jsonStr = JSON.stringify(q);
-    const byteArray = new TextEncoder().encode(jsonStr);
-    const stream = new Response(byteArray).body.pipeThrough(new CompressionStream("deflate"));
-    const compressedBuffer = await new Response(stream).arrayBuffer();
-    const base64Str = btoa(String.fromCharCode(...new Uint8Array(compressedBuffer)))
-        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-
-    const tempUrl = `${window.location.origin}${window.location.pathname}?preview_q=${base64Str}&expires=${expiresAt}`;
-
-    // 2. Показываем Modal с iframe
-    const modal = document.getElementById('iframe-preview-modal');
-    const frame = document.getElementById('preview-iframe');
+function toggleAdminFields() {
+    const type = document.getElementById('new-type').value;
+    document.getElementById('admin-choices-fields').classList.toggle('hidden', (type === 'text' || type === 'voice_card' || type === 'flashcard'));
+    document.getElementById('admin-text-fields').classList.toggle('hidden', (type === 'radio' || type === 'checkbox' || type === 'select' || type === 'flashcard'));
     
-    if (modal && frame) {
-        frame.src = tempUrl;
-        modal.classList.remove('hidden');
+    document.getElementById('flashcard-answer-box').classList.toggle('hidden', type !== 'flashcard');
+    document.getElementById('title-label').innerText = type === 'flashcard' ? "Слово на лицевой стороне:" : "Текст вопроса:";
+}
 
-        // 3. Авто-закрытие и сгорание ссылки ровно через 5 минут
-        previewTimer = setTimeout(() => {
-            alert("⏰ 5 минут истекло! Временная ссылка предпросмотра сгорела.");
-            closePreviewIframe();
-        }, 5 * 60 * 1000);
+function addQuestion() {
+    const type = document.getElementById('new-type').value;
+    const title = document.getElementById('new-title').value.trim();
+    if (!title) { alert("Введите текст вопроса!"); return; }
+
+    let q = {
+        type: type,
+        title: title,
+        required: document.getElementById('new-required').checked
+    };
+
+    if (document.getElementById('toggle-timer-input').checked) {
+        q.useTimer = true;
+        q.timer = parseInt(document.getElementById('new-timer').value) || 20;
     }
+
+    if (document.getElementById('toggle-hint-input').checked) {
+        q.hint = document.getElementById('new-hint-text').value.trim();
+    }
+
+    if (document.getElementById('toggle-exp-input').checked) {
+        q.exp = {
+            title: document.getElementById('new-exp-title').value.trim(),
+            desc: document.getElementById('new-exp-desc').value.trim(),
+            hold: parseInt(document.getElementById('new-exp-timer').value) || 0
+        };
+    }
+
+    if (type === 'radio' || type === 'checkbox' || type === 'select') {
+        let opts = document.getElementById('new-options').value.split(',').map(s => s.trim()).filter(s => s);
+        let correctIdx = document.getElementById('new-correct-choices').value.split(',').map(s => parseInt(s.trim()));
+        if (opts.length === 0) { alert("Добавьте варианты ответов!"); return; }
+        q.options = opts;
+        q.correct = correctIdx;
+    } else if (type === 'text' || type === 'voice_card') {
+        let textAns = document.getElementById('new-correct-text').value.split(',').map(s => s.trim()).filter(s => s);
+        if (textAns.length === 0) { alert("Добавьте правильный ответ!"); return; }
+        q.correctText = textAns;
+    } else if (type === 'flashcard') {
+        let flashAns = document.getElementById('new-flashcard-answer').value.trim();
+        if (!flashAns) { alert("Добавьте перевод / оборотную сторону!"); return; }
+        q.correctText = [flashAns];
+    }
+
+    allForms[currentFormId].questions.push(q);
+    
+    // Очистка полей
+    document.getElementById('new-title').value = '';
+    document.getElementById('new-options').value = '';
+    document.getElementById('new-correct-text').value = '';
+    document.getElementById('new-flashcard-answer').value = '';
+    document.getElementById('new-hint-text').value = '';
+    toggleAddQuestionForm(); // Скрываем форму после добавления
+
+    save();
+    renderAdminQuestions();
 }
 
 function renderAdminQuestions() {
     const list = document.getElementById('admin-questions-list');
     if (!list) return;
 
-    // При переключении или клике на любой вопрос — уничтожаем активный iframe предпросмотра!
     closePreviewIframe();
 
     const currentQuestions = allForms[currentFormId].questions || [];
-
     if (currentQuestions.length === 0) {
-        list.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted);">В этой форме пока нет вопросов. Нажмите кнопку ниже, чтобы создать!</div>`;
+        list.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted);">В этой форме пока нет вопросов. Нажмите «Создать вопрос»!</div>`;
         return;
     }
 
-    // Легкие карточки как в Google Формах
     list.innerHTML = currentQuestions.map((q, i) => `
-        <div class="gcard" onclick="closePreviewIframe()">
+        <div class="gcard">
             <div class="gcard-header">
                 <span class="gcard-num">Вопрос ${i + 1}</span>
                 <span class="gcard-badge">${q.type}</span>
             </div>
             <div class="gcard-title">${q.title}</div>
             <div class="gcard-actions">
-                <button class="btn-secondary" onclick="previewSingleQuestion(${i})">
-                    <span class="material-symbols-rounded">visibility</span> Просмотреть вопрос
+                <button onclick="previewSingleQuestion(${i})" title="Посмотреть">
+                    <span class="material-symbols-rounded">eye_tracking</span>
                 </button>
-                <button class="btn-secondary" onclick="editQuestion(${i})">
+                <button onclick="editQuestion(${i})" title="Изменить заголовок">
                     <span class="material-symbols-rounded">edit</span>
                 </button>
-                <button class="btn-danger" onclick="deleteQuestion(${i})">
+                <button class="btn-delete" onclick="deleteQuestion(${i})" title="Удалить">
                     <span class="material-symbols-rounded">delete</span>
                 </button>
             </div>
@@ -474,35 +559,11 @@ function renderAdminQuestions() {
     `).join('');
 }
 
-function addNewQuestionQuick() {
-    const title = prompt("Введите текст вопроса:");
-    if (!title?.trim()) return;
-
-    const type = prompt("Выберите тип (radio, checkbox, text, flashcard, voice_card):", "radio");
-    if (!type) return;
-
-    let q = { type, title: title.trim(), required: false };
-
-    if (type === 'text' || type === 'voice_card' || type === 'flashcard') {
-        let ans = prompt("Введите правильный ответ (или варианты через запятую):");
-        q.correctText = ans ? ans.split(',').map(s => s.trim()) : [""];
-    } else {
-        let opts = prompt("Введите варианты ответов через запятую:", "Вариант 1, Вариант 2");
-        let correctIdx = prompt("Индекс правильного ответа (начиная с 0):", "0");
-        q.options = opts ? opts.split(',').map(s => s.trim()) : ["Да", "Нет"];
-        q.correct = [parseInt(correctIdx) || 0];
-    }
-
-    allForms[currentFormId].questions.push(q);
-    save();
-    renderAdminQuestions();
-}
-
 function editQuestion(i) {
     closePreviewIframe();
     const q = allForms[currentFormId].questions[i];
     let newTitle = prompt("Изменить текст вопроса:", q.title);
-    if (newTitle !== null) {
+    if (newTitle !== null && newTitle.trim() !== "") {
         q.title = newTitle.trim();
         save();
         renderAdminQuestions();
@@ -517,33 +578,97 @@ function deleteQuestion(i) {
     renderAdminQuestions(); 
 }
 
-// ==========================================
-// 6. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И ОЗВУЧКА
-// ==========================================
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') {
-        const card = document.getElementById('main-flashcard');
-        if (card && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-            e.preventDefault(); flipCard();
-        }
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
-        e.preventDefault();
-        const overlay = document.getElementById('black-screen-overlay');
-        if (overlay && !overlay.classList.contains('hidden')) overlay.classList.add('hidden');
-        else toggleBlackScreen();
-    }
-});
-
-function speakText(text) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = /[a-zA-Z]/.test(text) ? 'en-US' : 'ru-RU';
-    window.speechSynthesis.speak(utterance);
+// ЭКСПОРТ / ИМПОРТ
+function exportFormToJSON() {
+    const formToExport = allForms[currentFormId];
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(formToExport, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `form_${formToExport.name}.json`);
+    document.body.appendChild(downloadAnchorNode); 
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    const footerLink = document.getElementById('footer-link'); 
-    if (footerLink) footerLink.style.display = 'block';
-});
+function importFormFromJSON(inputElement) {
+    const file = inputElement.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const imported = JSON.parse(e.target.result);
+            if (imported && imported.questions) {
+                let id = 'imported_' + Date.now();
+                allForms[id] = { id: id, name: imported.name + " (Копия)", questions: imported.questions };
+                currentFormId = id;
+                save();
+                renderAdminQuestions();
+                alert("Форма успешно загружена!");
+            }
+        } catch (err) { alert("Ошибка чтения файла. Проверьте формат JSON."); }
+        inputElement.value = ''; // Сброс инпута
+    };
+    reader.readAsText(file);
+}
+
+// ПРЕДПРОСМОТР В IFRAME (Временная ссылка)
+async function previewSingleQuestion(index) {
+    closePreviewIframe();
+    const q = allForms[currentFormId].questions[index];
+    if (!q) return;
+
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+    const jsonStr = JSON.stringify(q);
+    
+    // Сжимаем данные
+    const byteArray = new TextEncoder().encode(jsonStr);
+    const stream = new Response(byteArray).body.pipeThrough(new CompressionStream("deflate"));
+    const compressedBuffer = await new Response(stream).arrayBuffer();
+    
+    const base64Str = btoa(String.fromCharCode(...new Uint8Array(compressedBuffer)))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+    const tempUrl = `${window.location.origin}${window.location.pathname}?preview_q=${base64Str}&expires=${expiresAt}`;
+
+    const modal = document.getElementById('preview-iframe-modal');
+    const frame = document.getElementById('preview-iframe');
+    
+    if (modal && frame) {
+        frame.src = tempUrl;
+        modal.classList.remove('hidden');
+
+        previewTimer = setTimeout(() => {
+            alert("⏰ 5 минут истекло! Временная ссылка предпросмотра сгорела.");
+            closePreviewIframe();
+        }, 5 * 60 * 1000);
+    }
+}
+
+function closePreviewIframe() {
+    if (previewTimer) clearTimeout(previewTimer);
+    const box = document.getElementById('preview-iframe-modal');
+    if (box) box.classList.add('hidden');
+    const frame = document.getElementById('preview-iframe');
+    if (frame) frame.src = 'about:blank';
+}
+
+// ПОДЕЛИТЬСЯ (ГЕНЕРАЦИЯ ССЫЛКИ НА ВЕСЬ ТЕСТ)
+async function generateShareLink() {
+    document.getElementById('tools-menu').classList.add('hidden');
+    const form = allForms[currentFormId];
+    if (!form || form.questions.length === 0) { alert("Форма пуста!"); return; }
+    
+    try {
+        const jsonStr = JSON.stringify(form);
+        const byteArray = new TextEncoder().encode(jsonStr);
+        const stream = new Response(byteArray).body.pipeThrough(new CompressionStream("deflate"));
+        const compressedBuffer = await new Response(stream).arrayBuffer();
+        const base64Str = btoa(String.fromCharCode(...new Uint8Array(compressedBuffer)))
+            .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+            
+        const shareUrl = `${window.location.origin}${window.location.pathname}?zip=${base64Str}`;
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            alert("✅ Ссылка на форму скопирована в буфер обмена!");
+        });
+    } catch(e) { console.error(e); alert("Ошибка создания ссылки!"); }
+}
