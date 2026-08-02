@@ -689,3 +689,28 @@ async function generateShareLink() {
         });
     } catch(e) { console.error(e); alert("Ошибка создания ссылки!"); }
 }
+function handleMediaUpload(event, questionIndex) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Проверяем размер (например, ограничим до 10 МБ, чтобы не забивать локальное хранилище)
+    if (file.size > 10 * 1024 * 1024) {
+        alert("Файл слишком большой! Максимальный размер — 10 МБ.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64String = e.target.result;
+        
+        // Сохраняем в текущий вопрос
+        // allForms[currentFormId].questions[questionIndex].media = {
+        //     type: file.type.startsWith('video') ? 'video' : file.type.startsWith('audio') ? 'audio' : 'image',
+        //     data: base64String
+        // };
+        
+        save();
+        renderAdminQuestions(); // Перерисовываем админку, чтобы показать превью
+    };
+    reader.readAsDataURL(file);
+}
