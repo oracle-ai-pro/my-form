@@ -107,13 +107,14 @@
         <h3 style="margin-top: 0;">Параметры нового вопроса:</h3>
         <label>Тип поля ввода:</label>
         <select id="new-type" onchange="toggleAdminFields()">
-            <option value="radio">Одиночный выбор (Radio)</option>
-            <option value="checkbox">Множественный выбор (Checkbox)</option>
-            <option value="select">Выпадающий список (Select)</option>
-            <option value="text">Ввод текста / слова (Text)</option>
-            <option value="voice_card">Продвинутые карточки (Голос)</option>
-            <option value="flashcard">Карточка слова (Flashcard)</option>
-        </select>
+    <option value="radio">Одинарный Выбор</option>
+    <option value="checkbox">Множественный выбор (Checkbox)</option>
+    <option value="select">Выпадающий список (Select)</option>
+    <option value="text">Ввод текста / слова (Text)</option>
+    <option value="voice_card">Продвинутые карточки (Голос)</option>
+    <option value="flashcard">Карточка слова (Flashcard)</option>
+    <option value="info-slide">Слайд-объяснение (Инфо-блок + Медиа)</option> <!-- Добавлено -->
+</select>
         
         <label style="margin-top: 10px; display: block;" id="title-label">Текст вопроса / Слово:</label>
         <input type="text" id="new-title" class="admin-input" placeholder="Введите текст или слово...">
@@ -168,7 +169,12 @@
             <label>Правильный текст (через запятую для синонимов):</label>
             <input type="text" id="new-correct-text" class="admin-input" placeholder="ответ1, ответ2">
         </div>
-
+<!-- Блок загрузки медиа для слайда -->
+<div id="media-upload-box" class="hidden" style="margin-top: 15px; padding: 15px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
+    <label>Прикрепить медиафайл (Фото, Видео, Аудио до 10 МБ):</label>
+    <input type="file" id="new-media-file" class="admin-input" accept="image/*,video/*,audio/*" onchange="handleMediaUploadPreview(this)">
+    <div id="media-preview-container" style="margin-top: 10px;"></div>
+</div>
         <div style="display: flex; gap: 10px;">
             <button onclick="addQuestion()"><span class="material-symbols-rounded">save</span> Сохранить</button>
             <button class="btn-secondary" onclick="toggleAddQuestionForm()"><span class="material-symbols-rounded">close</span> Отмена</button>
