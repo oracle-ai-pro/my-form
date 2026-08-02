@@ -1,36 +1,56 @@
 /* ==========================================
-   ОБЩИЕ СТИЛИ И ПЕРЕМЕННЫЕ
+   1. ПЕРЕМЕННЫЕ ТЕМ И ОБЩИЕ СТИЛИ
    ========================================== */
+
+/* 1.1 СВЕТЛАЯ ТЕМА (По умолчанию) */
 :root {
     --primary: #007bff;
     --primary-hover: #0056b3;
-    --bg-main: #f3f3f3; /* Изменили фон на #050505 */
-    --bg-card: #121212;
-    --bg-option-hover: #1e1e1e;
-    --text-main: #e0e0e0;
-    --text-muted: #a0a0a0;
-    --border-color: #262626;
+    --bg-main: #ffffff;
+    --bg-card: #f3f3f3;            /* Карточка f3f3f3 */
+    --bg-option-hover: #e4e4e7;
+    --text-main: #18181b;
+    --text-muted: #71717a;
+    --border-color: #d4d4d8;
     --success: #22c55e;
     --danger: #ef4444;
-    --radius: 24px;     /* Сделали сильные скругления для карточек */
-    --radius-mid: 14px; /* Сильные скругления для элементов внутри */
-    --shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+    --radius: 20px;
+    --radius-mid: 12px;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
+/* 1.2 ТЁМНАЯ ТЕМА */
 .dark-theme {
     --primary: #3b82f6;
     --primary-hover: #2563eb;
-    --bg-main: #050505; /* И здесь тоже #050505 */
-    --bg-card: #121212;
-    --bg-option-hover: #1e1e1e;
-    --text-main: #e0e0e0;
-    --text-muted: #a0a0a0;
-    --border-color: #262626;
+    --bg-main: #121212;
+    --bg-card: #050505;            /* Карточка 050505 */
+    --bg-option-hover: #18181b;
+    --text-main: #f4f4f5;
+    --text-muted: #a1a1aa;
+    --border-color: #27272a;
     --success: #22c55e;
     --danger: #ef4444;
-    --radius: 24px;     /* Сильные скругления */
-    --radius-mid: 14px; 
-    --shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+    --radius: 20px;
+    --radius-mid: 12px; 
+    --shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+}
+
+/* 1.3 ТЕМА GOOGLE FORMS */
+.google-theme {
+    --primary: #673ab7;
+    --primary-hover: #512da8;
+    --bg-main: #f0ebf8;
+    --bg-card: #ffffff;
+    --bg-option-hover: #f5f0fb;
+    --text-main: #202124;
+    --text-muted: #5f6368;
+    --border-color: #dadce0;
+    --success: #1e8e3e;
+    --danger: #d93025;
+    --radius: 8px;
+    --radius-mid: 4px;
+    --shadow: 0 1px 3px 0 rgba(60,64,67,0.3);
 }
 
 body {
@@ -38,749 +58,21 @@ body {
     background-color: var(--bg-main);
     color: var(--text-main);
     margin: 0;
-    padding: 0;
+    padding: 20px 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    box-sizing: border-box;
     transition: background 0.3s, color 0.3s;
 }
 
 .hidden {
     display: none !important;
 }
-
 /* ==========================================
-   ВКЛАДКИ ФОРМ И ВЕРХНЯЯ ПАНЕЛЬ ТЕСТА
-   ========================================== */
-.forms-tabs-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    max-width: 650px;
-    margin-bottom: 15px;
-    overflow-x: auto;
-    padding-bottom: 5px;
-}
-
-.forms-tabs-list {
-    display: flex;
-    gap: 8px;
-    flex-grow: 1;
-    overflow-x: auto;
-}
-
-.form-tab {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-    color: var(--text-muted);
-}
-
-.form-tab.active-tab {
-    background: var(--primary);
-    color: #ffffff;
-    border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
-}
-
-.close-tab-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    color: inherit;
-    opacity: 0.7;
-}
-.close-tab-btn:hover {
-    opacity: 1;
-}
-.close-tab-btn .material-symbols-rounded {
-    font-size: 14px;
-}
-
-.add-form-btn {
-    background: var(--bg-card);
-    border: 1px dashed var(--border-color);
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--text-main);
-    flex-shrink: 0;
-    transition: all 0.2s;
-}
-.add-form-btn:hover {
-    background: var(--primary);
-    color: #fff;
-    border-color: var(--primary);
-}
-
-/* Выпадающее меню опций */
-.tools-dropdown {
-    position: relative;
-    align-self: flex-end;
-    margin-bottom: 10px;
-}
-
-.tools-btn {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 6px 12px;
-    border-radius: var(--radius-mid);
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-.tools-btn:hover {
-    background: var(--bg-option-hover);
-}
-
-.tools-menu {
-    position: absolute;
-    right: 0;
-    top: 100%;
-    margin-top: 5px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-mid);
-    box-shadow: var(--shadow);
-    z-index: 100;
-    min-width: 170px;
-    overflow: hidden;
-}
-
-.tools-item {
-    padding: 10px 14px;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-main);
-    transition: background 0.15s;
-}
-.tools-item:hover {
-    background: var(--bg-option-hover);
-}
-.tools-item .material-symbols-rounded {
-    font-size: 18px;
-    color: var(--text-muted);
-}
-
-/* ==========================================
-   КОНТЕЙНЕРЫ КАРТОЧЕК ТЕСТА И АДМИНКИ
-   ========================================== */
-.quiz-container, .admin-box {
-    background: var(--bg-card);
-    padding: 30px;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    width: 100%;
-    max-width: 650px;
-    box-sizing: border-box;
-    transition: background 0.3s, border 0.3s;
-    border: 1px solid var(--border-color);
-}
-
-.admin-box {
-    max-width: 800px;
-}
-
-/* ШАПКА ТЕСТА */
-.quiz-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    font-size: 14px;
-    color: var(--text-muted);
-}
-
-.step-info {
-    display: flex;
-    align-items: center;
-}
-
-.timer-box {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--bg-option-hover);
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-weight: 600;
-    color: var(--danger);
-    font-size: 13px;
-}
-
-/* ПРОГРЕСС-БАР */
-.progress-bar {
-    width: 100%;
-    height: 6px;
-    background: var(--border-color);
-    border-radius: 3px;
-    margin-bottom: 25px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: var(--primary);
-    width: 0%;
-    transition: width 0.3s ease;
-}
-
-/* ==========================================
-   ЭЛЕМЕНТЫ ВВОДА И ВАРИАНТЫ ОТВЕТОВ
-   ========================================== */
-.option {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--bg-card);
-    border: 2px solid var(--border-color);
-    padding: 14px 18px;
-    border-radius: var(--radius-mid);
-    margin-bottom: 12px;
-    cursor: pointer;
-    font-size: 15px;
-    transition: all 0.2s;
-}
-
-.option:hover {
-    background: var(--bg-option-hover);
-    border-color: var(--primary);
-}
-
-.option input {
-    accent-color: var(--primary);
-    width: 18px;
-    height: 18px;
-}
-
-.admin-input, textarea.admin-input, select.admin-input {
-    width: 100%;
-    padding: 12px 14px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-mid);
-    background: var(--bg-card);
-    color: var(--text-main);
-    font-size: 14px;
-    box-sizing: border-box;
-    outline: none;
-    transition: border-color 0.2s;
-}
-.admin-input:focus, textarea.admin-input:focus, select.admin-input:focus {
-    border-color: var(--primary);
-}
-
-textarea.text-input {
-    width: 100%;
-    padding: 12px 14px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-mid);
-    background: var(--bg-card);
-    color: var(--text-main);
-    font-size: 14px;
-    box-sizing: border-box;
-    resize: vertical;
-    outline: none;
-}
-
-/* Кнопки */
-button {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 14px;
-    width: 100%;
-    border-radius: var(--radius-mid);
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-button:hover {
-    background: var(--primary-hover);
-}
-
-button:active {
-    transform: scale(0.99);
-}
-
-.btn-secondary {
-    background: transparent;
-    color: var(--text-main);
-    border: 1px solid var(--border-color);
-}
-.btn-secondary:hover {
-    background: var(--bg-option-hover);
-}
-
-/* ==========================================
-   СПЕЦИАЛЬНЫЕ КОМПОНЕНТЫ (ФЛЕШКАРТЫ И ГОЛОС)
-   ========================================== */
-.flashcard-container {
-    perspective: 1000px;
-    width: 100%;
-    height: 200px;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.flashcard {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-}
-
-.flashcard.flipped {
-    transform: rotateY(180deg);
-}
-
-.flashcard-front, .flashcard-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-card);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius);
-    padding: 20px;
-    box-sizing: border-box;
-}
-
-.flashcard-back {
-    transform: rotateY(180deg);
-    background: var(--bg-option-hover);
-    border-color: var(--primary);
-}
-
-.flashcard-word {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-.flashcard-controls {
-    display: flex;
-    gap: 10px;
-}
-.flashcard-controls button {
-    margin-top: 0;
-}
-
-.voice-card {
-    background: var(--bg-option-hover);
-    border: 2px dashed var(--border-color);
-    padding: 25px;
-    border-radius: var(--radius);
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.voice-btn {
-    background: var(--danger);
-    width: auto;
-    padding: 10px 20px;
-    margin: 10px auto 0 auto;
-    border-radius: 30px;
-}
-.voice-btn:hover {
-    background: #c82333;
-}
-
-.skip-voice-btn {
-    background: transparent;
-    color: var(--text-muted);
-    border: none;
-    width: auto;
-    padding: 5px;
-    font-size: 12px;
-    margin: 5px auto 0 auto;
-    cursor: pointer;
-    box-shadow: none;
-}
-.skip-voice-btn:hover {
-    color: var(--text-main);
-    background: transparent;
-}
-
-.voice-status {
-    margin-top: 15px;
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.speak-btn {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    padding: 0;
-    margin: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-.speak-btn:hover {
-    background: var(--primary);
-    color: #fff;
-    border-color: var(--primary);
-}
-
-/* ==========================================
-   ЭКРАН РЕЗУЛЬТАТОВ И ОБЗОР
-   ========================================== */
-.result-card {
-    text-align: center;
-}
-
-.score {
-    font-size: 42px;
-    font-weight: bold;
-    color: var(--primary);
-    margin: 20px 0;
-}
-
-.review-container {
-    margin-top: 25px;
-    text-align: left;
-    max-height: 300px;
-    overflow-y: auto;
-    padding-right: 5px;
-}
-
-.review-item {
-    padding: 12px 15px;
-    border-radius: var(--radius-mid);
-    margin-bottom: 10px;
-    font-size: 13px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-card);
-}
-
-.correct-item {
-    border-left: 4px solid var(--success);
-}
-
-.incorrect-item {
-    border-left: 4px solid var(--danger);
-}
-
-.text-success {
-    color: var(--success);
-    font-weight: 600;
-}
-
-/* ==========================================
-   ЭЛЕМЕНТЫ АДМИН-ПАНЕЛИ (КАРТОЧКИ ВОПРОСОВ)
-   ========================================== */
-#admin-questions-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-height: 400px;
-    overflow-y: auto;
-    padding-right: 5px;
-}
-
-.gcard {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-mid);
-    padding: 14px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.gcard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.gcard-num {
-    font-weight: 600;
-}
-
-.gcard-badge {
-    background: var(--bg-option-hover);
-    padding: 2px 8px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    font-size: 10px;
-    font-weight: bold;
-}
-
-.gcard-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-main);
-}
-
-/* Переключатели (Toggle switches) в админке */
-.switch-label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    margin: 10px 0;
-    cursor: pointer;
-    user-select: none;
-}
-
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 40px;
-    height: 22px;
-    flex-shrink: 0;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: var(--border-color);
-    transition: .3s;
-    border-radius: 22px;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .3s;
-    border-radius: 50%;
-}
-
-input:checked + .slider {
-    background-color: var(--primary);
-}
-
-input:checked + .slider:before {
-    transform: translateX(18px);
-}
-
-/* ==========================================
-   МОДАЛЬНОЕ ОКНО ПРЕДПРОСМОТРА (IFRAME)
-   ========================================== */
-.iframe-modal {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    backdrop-filter: blur(3px);
-}
-
-.iframe-container {
-    width: 90%;
-    max-width: 650px;
-    height: 80vh;
-    background: var(--bg-card);
-    border-radius: var(--radius);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    border: 1px solid var(--border-color);
-}
-
-.iframe-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 20px;
-    background: var(--bg-option-hover);
-    border-bottom: 1px solid var(--border-color);
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.iframe-bar button {
-    background: none;
-    border: none;
-    width: auto;
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-    color: var(--text-muted);
-}
-.iframe-bar button:hover {
-    color: var(--danger);
-}
-
-#preview-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    background: var(--bg-main);
-}
-
-/* ==========================================
-   ПОДВАЛ, ПРОМО И КНОПКИ ДЕЙСТВИЙ В КАРТОЧКАХ
-   ========================================== */
-.footer-nav {
-    margin-top: 20px;
-    text-align: center;
-    font-size: 13px;
-}
-
-.footer-nav a {
-    color: var(--text-muted);
-    text-decoration: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-.footer-nav a:hover {
-    color: var(--primary);
-}
-
-.gcard-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 14px;
-}
-
-.gcard-actions button {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 6px !important;
-    width: auto !important;
-    height: 36px !important;
-    margin: 0 !important;
-    padding: 0 14px !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    border-radius: 8px !important;
-    border: 1px solid var(--border-color) !important;
-    background: var(--bg-option-hover) !important;
-    color: var(--text-main) !important;
-    cursor: pointer;
-    transition: all 0.2s ease !important;
-}
-
-.gcard-actions button:hover {
-    background: var(--border-color) !important;
-    transform: translateY(-1px);
-}
-
-.gcard-actions button.btn-delete {
-    color: var(--danger) !important;
-    border-color: rgba(220, 53, 69, 0.3) !important;
-}
-
-.gcard-actions button.btn-delete:hover {
-    background: var(--danger) !important;
-    color: #ffffff !important;
-    border-color: var(--danger) !important;
-}
-
-.gcard-actions button .material-symbols-rounded {
-    font-size: 18px !important;
-}
-
-.promo-banner {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-    color: #fff;
-    padding: 12px 20px;
-    border-radius: var(--radius-mid);
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 14px;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-    transition: transform 0.2s, box-shadow 0.2s;
-    width: 100%;
-    max-width: 650px;
-    box-sizing: border-box;
-}
-.promo-banner:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-    color: #fff;
-}
-
-.hint-btn {
-    background: var(--bg-option-hover) !important;
-    color: var(--text-main) !important;
-    border: 1px solid var(--border-color) !important;
-    width: 30px !important; height: 30px !important; padding: 0 !important; margin: 0 0 0 10px !important;
-    border-radius: 50% !important; display: inline-flex !important;
-}
-.hint-btn:hover { background: #f59e0b !important; color: #fff !important; border-color: #f59e0b !important; }
-
-.hint-box {
-    background: #fffbeb; color: #b45309; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px;
-    display: flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 500; border: 1px solid #fde68a;
-}
-.dark-theme .hint-box { background: #382402; color: #fcd34d; border-color: #593904; }
-
-/* ==========================================
-   ВЕРХНЯЯ ПАНЕЛЬ (ВКЛАДКИ + НАСТРОЙКИ)
+   2. ВКЛАДКИ И ОСНОВНЫЕ КОНТЕЙНЕРЫ
    ========================================== */
 .forms-toolbar-container {
     display: flex;
@@ -819,33 +111,6 @@ input:checked + .slider:before {
     background: var(--primary);
     color: #ffffff;
     border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
-}
-
-.tab-actions {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    margin-left: 4px;
-}
-
-.tab-action-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 2px;
-    display: flex;
-    align-items: center;
-    color: inherit;
-    opacity: 0.7;
-    border-radius: 4px;
-}
-.tab-action-btn:hover {
-    opacity: 1;
-    background: rgba(0, 0, 0, 0.1);
-}
-.tab-action-btn .material-symbols-rounded {
-    font-size: 14px;
 }
 
 .add-form-btn, .tools-btn {
@@ -861,18 +126,9 @@ input:checked + .slider:before {
     color: var(--text-main);
     flex-shrink: 0;
     transition: all 0.2s;
-    margin: 0;
-}
-.add-form-btn:hover, .tools-btn:hover {
-    background: var(--bg-option-hover);
-    border-color: var(--primary);
 }
 
-/* Выпадающее меню опций вверху */
-.tools-dropdown {
-    position: relative;
-    flex-shrink: 0;
-}
+.tools-dropdown { position: relative; flex-shrink: 0; }
 
 .tools-menu {
     position: absolute;
@@ -896,12 +152,439 @@ input:checked + .slider:before {
     align-items: center;
     gap: 8px;
     color: var(--text-main);
-    transition: background 0.15s;
 }
-.tools-item:hover {
-    background: var(--bg-option-hover);
+
+.tools-item:hover { background: var(--bg-option-hover); }
+
+/* КОНТЕЙНЕРЫ */
+.quiz-container, .admin-box {
+    background: var(--bg-card);
+    padding: 30px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 650px;
+    box-sizing: border-box;
+    transition: background 0.3s, border 0.3s;
+    border: 1px solid var(--border-color);
 }
-.tools-item .material-symbols-rounded {
-    font-size: 18px;
+
+.admin-box { max-width: 800px; }
+
+.quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 14px;
     color: var(--text-muted);
 }
+
+.timer-box {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-option-hover);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    color: var(--danger);
+    font-size: 13px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    margin-bottom: 25px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    width: 0%;
+    transition: width 0.3s ease;
+   }
+/* ==========================================
+   3. КАСТОМНЫЕ ЭЛЕМЕНТЫ ВВОДА И КНОПКИ
+   ========================================== */
+
+/* Опция ответа */
+.option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    padding: 14px 18px;
+    border-radius: var(--radius-mid);
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.2s;
+}
+
+.option:hover {
+    background: var(--bg-option-hover);
+    border-color: var(--primary);
+}
+
+/* 3.1 КАСТОМНЫЕ RADIO & CHECKBOX */
+.option input[type="radio"],
+.option input[type="checkbox"],
+.switch-label input[type="checkbox"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    background: var(--bg-card);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.option input[type="radio"] { border-radius: 50%; }
+
+.option input[type="radio"]:hover,
+.option input[type="checkbox"]:hover {
+    border-color: var(--primary);
+}
+
+.option input[type="radio"]:checked,
+.option input[type="checkbox"]:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+/* Галочка в Checkbox */
+.option input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 6px; top: 2px;
+    width: 5px; height: 10px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Точка в Radio */
+.option input[type="radio"]:checked::after {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    transform: translate(-50%, -50%);
+}
+
+/* 3.2 КАСТОМНЫЙ SELECT И ИНПУТЫ */
+.admin-input, textarea.admin-input, select.admin-input {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-mid);
+    background: var(--bg-card);
+    color: var(--text-main);
+    font-size: 14px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+select.admin-input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding-right: 40px;
+    cursor: pointer;
+}
+
+select.admin-input option {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+}
+
+.admin-input:focus, textarea.admin-input:focus, select.admin-input:focus {
+    border-color: var(--primary);
+}
+
+/* 3.3 КНОПКИ */
+button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 14px;
+    width: 100%;
+    border-radius: var(--radius-mid);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+button:hover { background: var(--primary-hover); }
+button:active { transform: scale(0.99); }
+
+.btn-secondary {
+    background: transparent;
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+.btn-secondary:hover { background: var(--bg-option-hover); }
+/* ==========================================
+   4. СПЕЦИАЛЬНЫЕ ВОПРОСЫ (DRAG&DROP, КАРТОЧКИ)
+   ========================================== */
+
+/* 4.1 ПАЗЛЫ (Drag & Drop) */
+#puzzle-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.puzzle-item {
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.puzzle-item:hover {
+    background: var(--bg-option-hover) !important;
+    border-color: var(--primary) !important;
+}
+
+.puzzle-item:active {
+    cursor: grabbing !important;
+    opacity: 0.7;
+    transform: scale(0.98);
+}
+
+/* 4.2 МЕДИА (Инфо-Слайды) */
+#media-preview-container {
+    margin: 10px 0;
+    border-radius: var(--radius-mid);
+    overflow: hidden;
+    max-width: 100%;
+}
+
+#media-preview-container img, 
+#media-preview-container video {
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 4.3 ФЛЕШКАРТЫ И ГОЛОС */
+.flashcard-container {
+    perspective: 1000px;
+    width: 100%; height: 200px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.flashcard {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+    border-radius: var(--radius);
+}
+
+.flashcard.flipped { transform: rotateY(180deg); }
+
+.flashcard-front, .flashcard-back {
+    position: absolute;
+    width: 100%; height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.flashcard-back {
+    transform: rotateY(180deg);
+    background: var(--bg-option-hover);
+    border-color: var(--primary);
+}
+
+.flashcard-word {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.voice-card {
+    background: var(--bg-option-hover);
+    border: 2px dashed var(--border-color);
+    padding: 25px;
+    border-radius: var(--radius);
+    text-align: center;
+    margin-bottom: 20px;
+}
+/* ==========================================
+   5. КАСТОМНЫЙ ALERT, РЕЗУЛЬТАТЫ И АДМИНКА
+   ========================================== */
+
+/* 5.1 КАСТОМНЫЙ ALERT (МОДАЛЬНОЕ ОКНО) */
+.custom-alert-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.custom-alert-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.custom-alert-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 90%;
+    max-width: 380px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.2s ease;
+}
+
+.custom-alert-overlay.active .custom-alert-box {
+    transform: scale(1);
+}
+
+.custom-alert-icon {
+    font-size: 48px;
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+.custom-alert-message {
+    font-size: 15px;
+    color: var(--text-main);
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+/* 5.2 ЭКРАН РЕЗУЛЬТАТОВ И СПИСОК АДМИНА */
+.score {
+    font-size: 42px;
+    font-weight: bold;
+    color: var(--primary);
+    margin: 20px 0;
+    text-align: center;
+}
+
+.gcard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-mid);
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.gcard-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.gcard-actions button {
+    width: auto !important;
+    padding: 6px 14px !important;
+    margin: 0 !important;
+    font-size: 13px !important;
+}
+
+/* 5.3 ПЕРЕКЛЮЧАТЕЛИ (Toggles) */
+.switch-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px; height: 22px;
+    flex-shrink: 0;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: var(--border-color);
+    transition: .3s;
+    border-radius: 22px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px; width: 16px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+}
+
+input:checked + .slider { background-color: var(--primary); }
+input:checked + .slider:before { transform: translateX(18px); }
+
+/* 5.4 ПОДВАЛ И ПОДСКАЗКИ */
+.footer-nav { margin-top: 20px; text-align: center; font-size: 13px; }
+.footer-nav a { color: var(--text-muted); text-decoration: none; cursor: pointer; }
+.footer-nav a:hover { color: var(--primary); }
+
+.hint-box {
+    background: #fffbeb; color: #b45309; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px;
+    display: flex; gap: 8px; align-items: center; font-size: 14px; border: 1px solid #fde68a;
+}
+.dark-theme .hint-box { background: #382402; color: #fcd34d; border-color: #593904; }
+                                                       
