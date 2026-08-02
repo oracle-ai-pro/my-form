@@ -714,3 +714,35 @@ function handleMediaUpload(event, questionIndex) {
     };
     reader.readAsDataURL(file);
 }
+// Пример логики рендеринга вопроса в режиме прохождения
+function renderQuestionForUser(q, index) {
+    const container = document.getElementById('quiz-question-container');
+    if (!container) return;
+
+    // Проверяем, является ли вопрос слайдом-объяснением (теорема / инфо-блок)
+    if (q.type === 'info-slide') {
+        let mediaHtml = '';
+        if (q.media && q.media.data) {
+            if (q.media.type === 'image') {
+                mediaHtml = `<img src="${q.media.data}" style="width: 100%; max-height: 350px; object-fit: cover; border-radius: var(--radius-mid); margin-bottom: 15px;" alt="Медиа к слайду">`;
+            } else if (q.media.type === 'video') {
+                mediaHtml = `<video controls style="width: 100%; border-radius: var(--radius-mid); margin-bottom: 15px;"><source src="${q.media.data}"></video>`;
+            } else if (q.media.type === 'audio') {
+                mediaHtml = `<audio controls style="width: 100%; margin-bottom: 15px;"><source src="${q.media.data}"></audio>`;
+            }
+        }
+
+        container.innerHTML = `
+            <div class="card info-slide-card" style="padding: 25px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius);">
+                <div style="display: inline-block; background: rgba(0, 123, 255, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px;">Инфо-материал</div>
+                <h3 style="margin: 0 0 12px 0; font-size: 18px; color: var(--text-main);">${q.title || 'Информация'}</h3>
+                ${mediaHtml}
+                <div style="font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 25px;">${q.text || ''}</div>
+                <button onclick="nextStep()" style="width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-mid); font-weight: 600; cursor: pointer;">Понятно, продолжить</button>
+            </div>
+        `;
+        return;
+    }
+
+    // Здесь дальше идет код для обычных вопросов (выбор, текст и т.д.)
+}
