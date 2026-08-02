@@ -10,222 +10,229 @@
 </head>
 <body>
 
-    <!-- ВЕРХНЯЯ ПАНЕЛЬ С ВКЛАДКАМИ И МЕНЮ -->
-    <div class="forms-toolbar-container">
-        <div class="forms-tabs-list" id="forms-tabs-list">
-            <!-- Динамически заполняется через JS -->
-        </div>
-        <button class="add-form-btn" onclick="createNewFormPrompt()" title="Создать новую форму">
-            <span class="material-symbols-rounded">add</span>
-        </button>
-        
-        <!-- Выпадающее меню опций -->
-        <div class="tools-dropdown">
-            <button class="tools-btn" onclick="toggleToolsMenu()" title="Меню">
-                <span class="material-symbols-rounded">more_vert</span>
+    <div class="container">
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ С ВКЛАДКАМИ И МЕНЮ -->
+        <div class="forms-toolbar-container">
+            <div class="forms-tabs-list" id="forms-tabs-list">
+                <!-- Динамически заполняется через JS -->
+            </div>
+            <button class="add-form-btn" onclick="createNewFormPrompt()" title="Создать новую форму">
+                <span class="material-symbols-rounded">add</span>
             </button>
-            <div id="tools-menu" class="tools-menu hidden">
-                <div class="tools-item" onclick="setTheme('light'); toggleToolsMenu();">
-                    <span class="material-symbols-rounded">light_mode</span> Светлая тема
-                </div>
-                <div class="tools-item" onclick="setTheme('dark'); toggleToolsMenu();">
-                    <span class="material-symbols-rounded">dark_mode</span> Тёмная тема
-                </div>
-                <div class="tools-item" onclick="document.body.className='google-theme'; toggleToolsMenu();">
-                    <span class="material-symbols-rounded">style</span> Google Forms стиль
-                </div>
-                <div class="tools-item" onclick="generateShareLink()">
-                    <span class="material-symbols-rounded">share</span> Поделиться ссылкой
-                </div>
-                <div class="tools-item" onclick="printCurrentForm()">
-                    <span class="material-symbols-rounded">print</span> Распечатать
-                </div>
-                <div class="tools-item" onclick="switchScreen('login'); toggleToolsMenu();">
-                    <span class="material-symbols-rounded">admin_panel_settings</span> Панель админа
+            
+            <!-- Выпадающее меню опций -->
+            <div class="tools-dropdown">
+                <button class="tools-btn" onclick="toggleToolsMenu()" title="Меню">
+                    <span class="material-symbols-rounded">more_vert</span>
+                </button>
+                <div id="tools-menu" class="tools-menu hidden">
+                    <div class="tools-item" onclick="setTheme('light'); toggleToolsMenu();">
+                        <span class="material-symbols-rounded">light_mode</span> Светлая тема
+                    </div>
+                    <div class="tools-item" onclick="setTheme('dark'); toggleToolsMenu();">
+                        <span class="material-symbols-rounded">dark_mode</span> Тёмная тема
+                    </div>
+                    <div class="tools-item" onclick="setTheme('google'); toggleToolsMenu();">
+                        <span class="material-symbols-rounded">style</span> Google Forms стиль
+                    </div>
+                    <div class="tools-item" onclick="generateShareLink()">
+                        <span class="material-symbols-rounded">share</span> Поделиться ссылкой
+                    </div>
+                    <div class="tools-item" onclick="printCurrentForm()">
+                        <span class="material-symbols-rounded">print</span> Распечатать
+                    </div>
+                    <div class="tools-item" onclick="switchScreen('login'); toggleToolsMenu();">
+                        <span class="material-symbols-rounded">admin_panel_settings</span> Панель админа
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- ПОДСКАЗКА -->
-    <div id="hint-box" class="hint-box hidden" style="width:100%; max-width:650px; box-sizing:border-box;">
-        <span class="material-symbols-rounded">lightbulb</span>
-        <span id="hint-text"></span>
-    </div>
+        <!-- ПОДСКАЗКА -->
+        <div id="hint-box" class="hint-box hidden" style="width:100%; box-sizing:border-box; margin-bottom:15px;">
+            <span class="material-symbols-rounded">lightbulb</span>
+            <span id="hint-text"></span>
+        </div>
 
-    <!-- 1. ЭКРАН ТЕСТИРОВАНИЯ (QUIZ SCREEN) -->
-    <div id="quiz-screen" class="quiz-container">
-        <div id="quiz-box">
-            <div class="quiz-header">
-                <div class="step-info">
-                    Вопрос <span id="current-number">1</span> из <span id="total-number">1</span>
-                    <button id="hint-btn" class="hint-btn hidden" onclick="toggleHintModal()" title="Показать подсказку">
-                        <span class="material-symbols-rounded" style="font-size:16px;">help_outline</span>
+        <!-- 1. ЭКРАН ТЕСТИРОВАНИЯ (QUIZ SCREEN) -->
+        <div id="quiz-screen" class="quiz-container">
+            <div id="quiz-box" class="gcard">
+                <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <div class="step-info" style="display:flex; align-items:center; gap:8px;">
+                        Вопрос <span id="current-number">1</span> из <span id="total-number">1</span>
+                        <button id="hint-btn" class="hint-btn hidden tools-icon-btn" onclick="toggleHintModal()" title="Показать подсказку">
+                            <span class="material-symbols-rounded" style="font-size:18px;">help_outline</span>
+                        </button>
+                    </div>
+                    <div id="timer-display" class="timer-box hidden">
+                        <span class="material-symbols-rounded" style="font-size:18px;">timer</span>
+                        <span id="timer-seconds">0</span>s
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div id="progress" class="progress-fill"></div>
+                </div>
+
+                <!-- ТЕЛО ВОПРОСА (Динамический рендер через JS) -->
+                <div id="question-body" style="margin-top:20px;"></div>
+
+                <button id="next-btn" class="btn" onclick="nextStep()" style="margin-top:20px; width:100%;">Далее</button>
+            </div>
+
+            <!-- РЕЗУЛЬТАТЫ -->
+            <div id="result-box" class="result-card gcard hidden">
+                <h2>Тест завершён! 🎉</h2>
+                <p style="color:var(--text-muted); margin:10px 0 5px 0;">Ваш результат:</p>
+                <div id="final-score" class="score" style="font-size:2rem; font-weight:700; margin-bottom:20px;">0 / 0</div>
+                
+                <div id="review-box" class="review-container"></div>
+
+                <button class="btn" onclick="restartQuiz()" style="margin-top:20px; width:100%;">Пройти заново</button>
+            </div>
+        </div>
+
+        <!-- 2. ЭКРАН ВХОДА В АДМИНКУ (LOGIN SCREEN) -->
+        <div id="login-screen" class="quiz-container gcard hidden">
+            <h2 style="text-align:center; margin-bottom:20px;">Вход для администратора</h2>
+            <input type="text" id="login-user" class="admin-input" placeholder="Логин (admin)">
+            <input type="password" id="login-pass" class="admin-input" placeholder="Пароль (1234)">
+            <button class="btn" onclick="tryLogin()" style="width:100%;">Войти</button>
+            <button class="btn" onclick="logout()" style="margin-top:10px; width:100%; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Назад к тесту</button>
+        </div>
+
+        <!-- 3. ПАНЕЛЬ АДМИНИСТРАТОРА (ADMIN SCREEN) -->
+        <div id="admin-screen" class="admin-box hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0;">Редактор вопросов</h2>
+                <button onclick="logout()" class="btn" style="width:auto; padding:8px 16px; margin:0; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Выйти</button>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                <button onclick="toggleAddQuestionForm()" class="btn" style="width:auto; flex-grow:1;">+ Создать вопрос</button>
+                <button onclick="exportFormToJSON()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Экспорт JSON</button>
+                <button onclick="document.getElementById('import-file').click()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Импорт JSON</button>
+                <input type="file" id="import-file" style="display:none;" onchange="importFormFromJSON(this)" accept=".json">
+            </div>
+
+            <!-- ФОРМА СОЗДАНИЯ / РЕДАКТИРОВАНИЯ ВОПРОСА -->
+            <div id="admin-add-form" class="gcard hidden" style="margin-bottom:20px;">
+                <h3 style="margin-top:0; margin-bottom:15px;">Новый элемент</h3>
+                
+                <label style="font-size:13px; color:var(--text-muted);">Тип элемента:</label>
+                <select id="new-type" class="admin-input" onchange="toggleAdminFields()">
+                    <option value="radio">Один из списка (Radio)</option>
+                    <option value="checkbox">Несколько из списка (Checkbox)</option>
+                    <option value="select">Выпадающий список (Select)</option>
+                    <option value="text">Текстовый ответ</option>
+                    <option value="puzzle-drag">Пазл (Drag & Drop)</option>
+                    <option value="info-slide">Инфо-слайд (Картинка/Видео/Аудио)</option>
+                    <option value="voice_card">Голосовая карточка</option>
+                    <option value="flashcard">Флешкарта (Карточка для запоминания)</option>
+                </select>
+
+                <label id="title-label" style="font-size:13px; color:var(--text-muted);">Текст вопроса:</label>
+                <input type="text" id="new-title" class="admin-input" placeholder="Введите текст...">
+
+                <!-- Варианты ответов (Radio / Checkbox / Select / Puzzle) -->
+                <div id="admin-choices-fields">
+                    <label style="font-size:13px; color:var(--text-muted);">Варианты ответов (через запятую):</label>
+                    <input type="text" id="new-options" class="admin-input" placeholder="Вариант 1, Вариант 2, Вариант 3">
+                    <label style="font-size:13px; color:var(--text-muted);">Индексы правильных ответов (с 0, через запятую):</label>
+                    <input type="text" id="new-correct-choices" class="admin-input" placeholder="0">
+                </div>
+
+                <!-- Текстовые ответы / Голос -->
+                <div id="admin-text-fields" class="hidden">
+                    <label style="font-size:13px; color:var(--text-muted);">Правильные варианты текстового ответа (через запятую):</label>
+                    <input type="text" id="new-correct-text" class="admin-input" placeholder="ответ1, ответ2">
+                </div>
+
+                <!-- Ответ для карточек -->
+                <div id="flashcard-answer-box" class="hidden">
+                    <label style="font-size:13px; color:var(--text-muted);">Перевод / Оборотная сторона:</label>
+                    <input type="text" id="new-flashcard-answer" class="admin-input" placeholder="Перевод или пояснение...">
+                </div>
+
+                <!-- Загрузка Медиа (Инфо-Слайд) -->
+                <div id="media-upload-box" class="hidden">
+                    <label style="font-size:13px; color:var(--text-muted);">Прикрепить медиафайл (Картинка, Аудио, Видео):</label>
+                    <input type="file" id="new-media-file" class="admin-input" accept="image/*,video/*,audio/*" onchange="handleMediaUploadPreview(this)">
+                    <div id="media-preview-container"></div>
+                </div>
+
+                <!-- Настройки вопроса -->
+                <label class="switch-label" style="margin-bottom: 12px;">
+                    <span class="switch"><input type="checkbox" id="new-required"><span class="slider"></span></span>
+                    Обязательный вопрос
+                </label>
+
+                <label class="switch-label" style="margin-bottom: 12px;">
+                    <span class="switch"><input type="checkbox" id="new-manual-check"><span class="slider"></span></span>
+                    Требует личной проверки руководителем (Жёлтая карточка)
+                </label>
+
+                <label class="switch-label" style="margin-bottom: 12px;">
+                    <span class="switch"><input type="checkbox" id="toggle-timer-input" onchange="document.getElementById('timer-config').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span>
+                    Ограничить время
+                </label>
+                <div id="timer-config" class="hidden">
+                    <input type="number" id="new-timer" class="admin-input" placeholder="Время в секундах (напр. 20)" value="20">
+                </div>
+
+                <label class="switch-label" style="margin-bottom: 12px;">
+                    <span class="switch"><input type="checkbox" id="toggle-hint-input" onchange="document.getElementById('hint-config').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span>
+                    Добавить подсказку
+                </label>
+                <div id="hint-config" class="hidden">
+                    <input type="text" id="new-hint-text" class="admin-input" placeholder="Текст подсказки...">
+                </div>
+
+                <label class="switch-label" style="margin-bottom: 12px;">
+                    <span class="switch"><input type="checkbox" id="toggle-exp-input" onchange="document.getElementById('exp-config').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span>
+                    Показывать объяснение после ответа
+                </label>
+                <div id="exp-config" class="hidden">
+                    <input type="text" id="new-exp-title" class="admin-input" placeholder="Заголовок (напр. Разбор)">
+                    <textarea id="new-exp-desc" class="admin-input text-input" placeholder="Подробное объяснение..."></textarea>
+                    <input type="number" id="new-exp-timer" class="admin-input" placeholder="Задержка в секундах (0 - без задержки)" value="0">
+                </div>
+
+                <button class="btn" onclick="addQuestion()" style="margin-top:15px; width:100%;">Сохранить вопрос</button>
+            </div>
+
+            <!-- СПИСОК ВОПРОСОВ -->
+            <div id="admin-questions-list"></div>
+        </div>
+
+        <!-- МОДАЛЬНОЕ ОКНО ДЛЯ ПРЕДПРОСМОТРА ВОПРОСОВ (IFRAME) -->
+        <div id="preview-iframe-modal" class="iframe-modal hidden">
+            <div class="iframe-container">
+                <div class="iframe-bar">
+                    <span>Предпросмотр вопроса (Ссылка сгорит через 5 мин)</span>
+                    <button onclick="closePreviewIframe()">
+                        <span class="material-symbols-rounded">close</span>
                     </button>
                 </div>
-                <div id="timer-display" class="timer-box hidden">
-                    <span class="material-symbols-rounded" style="font-size:16px;">timer</span>
-                    <span id="timer-seconds">0</span>s
-                </div>
+                <iframe id="preview-iframe" src="about:blank"></iframe>
             </div>
-
-            <div class="progress-bar">
-                <div id="progress" class="progress-fill"></div>
-            </div>
-
-            <!-- ТЕЛО ВОПРОСА (Динамический рендер через JS) -->
-            <div id="question-body"></div>
-
-            <button id="next-btn" onclick="nextStep()" style="margin-top:20px;">Далее</button>
         </div>
 
-        <!-- РЕЗУЛЬТАТЫ -->
-        <div id="result-box" class="result-card hidden">
-            <h2>Тест завершён! 🎉</h2>
-            <p style="color:var(--text-muted);">Ваш результат:</p>
-            <div id="final-score" class="score">0 / 0</div>
-            
-            <div id="review-box" class="review-container"></div>
-
-            <button onclick="restartQuiz()" style="margin-top:20px;">Пройти заново</button>
-        </div>
-    </div>
-
-    <!-- 2. ЭКРАН ВХОДА В АДМИНКУ (LOGIN SCREEN) -->
-    <div id="login-screen" class="quiz-container hidden">
-        <h2 style="text-align:center; margin-bottom:20px;">Вход для администратора</h2>
-        <input type="text" id="login-user" class="admin-input" placeholder="Логин (admin)">
-        <input type="password" id="login-pass" class="admin-input" placeholder="Пароль (1234)">
-        <button onclick="tryLogin()">Войти</button>
-        <button class="btn-secondary" onclick="logout()" style="margin-top:10px;">Назад к тесту</button>
-    </div>
-
-    <!-- 3. Панель Администратора (ADMIN SCREEN) -->
-    <div id="admin-screen" class="admin-box hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="margin:0;">Редактор вопросов</h2>
-            <button onclick="logout()" class="btn-secondary" style="width:auto; padding:8px 16px; margin:0;">Выйти</button>
+        <!-- КАСТОМНОЕ МОДАЛЬНОЕ ОКНО ALERT -->
+        <div id="custom-alert" class="custom-alert-overlay">
+            <div class="custom-alert-card">
+                <span class="material-symbols-rounded custom-alert-icon" id="custom-alert-icon" style="font-size:48px; color:var(--accent-color); margin-bottom:12px;">info</span>
+                <div class="custom-alert-message" id="custom-alert-msg" style="margin-bottom:20px; font-weight:500;">Сообщение</div>
+                <button class="btn" onclick="closeAlert()" style="width:100%;">Понятно</button>
+            </div>
         </div>
 
-        <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-            <button onclick="toggleAddQuestionForm()" style="width:auto; flex-grow:1;">+ Создать вопрос</button>
-            <button onclick="exportFormToJSON()" class="btn-secondary" style="width:auto;">Экспорт JSON</button>
-            <button onclick="document.getElementById('import-file').click()" class="btn-secondary" style="width:auto;">Импорт JSON</button>
-            <input type="file" id="import-file" style="display:none;" onchange="importFormFromJSON(this)" accept=".json">
+        <!-- ПОДВАЛ / ССЫЛКИ -->
+        <div class="footer-nav" id="footer-link" style="text-align:center; margin-top:30px;">
+            <a onclick="switchScreen('login')" style="cursor:pointer; color:var(--text-muted); font-size:14px; text-decoration:none;">
+                <span class="material-symbols-rounded" style="font-size:16px; vertical-align:middle;">lock</span> Вход для администратора
+            </a>
         </div>
-
-        <!-- ФОРМА СОЗДАНИЯ / РЕДАКТИРОВАНИЯ ВОПРОСА -->
-        <div id="admin-add-form" class="hidden" style="background:var(--bg-option-hover); padding:20px; border-radius:var(--radius-mid); margin-bottom:20px; border:1px solid var(--border-color);">
-            <h3 style="margin-top:0;">Новый элемент</h3>
-            
-            <label style="font-size:13px; color:var(--text-muted);">Тип элемента:</label>
-            <select id="new-type" class="admin-input" onchange="toggleAdminFields()">
-                <option value="radio">Один из списка (Radio)</option>
-                <option value="checkbox">Несколько из списка (Checkbox)</option>
-                <option value="select">Выпадающий список (Select)</option>
-                <option value="text">Текстовый ответ</option>
-                <option value="puzzle-drag">Пазл (Drag & Drop)</option>
-                <option value="info-slide">Инфо-слайд (Картинка/Видео/Аудио)</option>
-                <option value="voice_card">Голосовая карточка</option>
-                <option value="flashcard">Флешкарта (Карточка для запоминания)</option>
-            </select>
-
-            <label id="title-label" style="font-size:13px; color:var(--text-muted);">Текст вопроса:</label>
-            <input type="text" id="new-title" class="admin-input" placeholder="Введите текст...">
-
-            <!-- Варианты ответов (Radio / Checkbox / Select / Puzzle) -->
-            <div id="admin-choices-fields">
-                <label style="font-size:13px; color:var(--text-muted);">Варианты ответов (через запятую):</label>
-                <input type="text" id="new-options" class="admin-input" placeholder="Вариант 1, Вариант 2, Вариант 3">
-                <label style="font-size:13px; color:var(--text-muted);">Индексы правильных ответов (с 0, через запятую):</label>
-                <input type="text" id="new-correct-choices" class="admin-input" placeholder="0">
-            </div>
-
-            <!-- Текстовые ответы / Голос -->
-            <div id="admin-text-fields" class="hidden">
-                <label style="font-size:13px; color:var(--text-muted);">Правильные варианты текстового ответа (через запятую):</label>
-                <input type="text" id="new-correct-text" class="admin-input" placeholder="ответ1, ответ2">
-            </div>
-
-            <!-- Ответ для карточек -->
-            <div id="flashcard-answer-box" class="hidden">
-                <label style="font-size:13px; color:var(--text-muted);">Перевод / Оборотная сторона:</label>
-                <input type="text" id="new-flashcard-answer" class="admin-input" placeholder="Перевод или пояснение...">
-            </div>
-
-            <!-- Загрузка Медиа (Инфо-Слайд) -->
-            <div id="media-upload-box" class="hidden">
-                <label style="font-size:13px; color:var(--text-muted);">Прикрепить медиафайл (Картинка, Аудио, Видео):</label>
-                <input type="file" id="new-media-file" class="admin-input" accept="image/*,video/*,audio/*" onchange="handleMediaUploadPreview(this)">
-                <div id="media-preview-container"></div>
-            </div>
-
-            <!-- Настройки вопроса -->
-            <label class="switch-label">
-                <span class="switch"><input type="checkbox" id="new-required"><span class="slider"></span></span>
-                Обязательный вопрос
-            </label>
-
-            <label class="switch-label">
-                <span class="switch"><input type="checkbox" id="toggle-timer-input" onchange="document.getElementById('timer-config').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span>
-                Ограничить время
-            </label>
-            <div id="timer-config" class="hidden">
-                <input type="number" id="new-timer" class="admin-input" placeholder="Время в секундах (напр. 20)" value="20">
-            </div>
-
-            <label class="switch-label">
-                <span class="switch"><input type="checkbox" id="toggle-hint-input" onchange="document.getElementById('hint-config').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span>
-                Добавить подсказку
-            </label>
-            <div id="hint-config" class="hidden">
-                <input type="text" id="new-hint-text" class="admin-input" placeholder="Текст подсказки...">
-            </div>
-
-            <label class="switch-label">
-                <span class="switch"><input type="checkbox" id="toggle-exp-input" onchange="document.getElementById('exp-config').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span>
-                Показывать объяснение после ответа
-            </label>
-            <div id="exp-config" class="hidden">
-                <input type="text" id="new-exp-title" class="admin-input" placeholder="Заголовок (напр. Разбор)">
-                <textarea id="new-exp-desc" class="admin-input text-input" placeholder="Подробное объяснение..."></textarea>
-                <input type="number" id="new-exp-timer" class="admin-input" placeholder="Задержка в секундах (0 - без задержки)" value="0">
-            </div>
-
-            <button onclick="addQuestion()" style="margin-top:10px;">Сохранить вопрос</button>
-        </div>
-
-        <!-- СПИСОК ВОПРОСОВ -->
-        <div id="admin-questions-list"></div>
-    </div>
-
-    <!-- МОДАЛЬНОЕ ОКНО ДЛЯ ПРЕДПРОСМОТРА ВОПРОСОВ (IFRAME) -->
-    <div id="preview-iframe-modal" class="iframe-modal hidden">
-        <div class="iframe-container">
-            <div class="iframe-bar">
-                <span>Предпросмотр вопроса (Ссылка сгорит через 5 мин)</span>
-                <button onclick="closePreviewIframe()">
-                    <span class="material-symbols-rounded">close</span>
-                </button>
-            </div>
-            <iframe id="preview-iframe" src="about:blank"></iframe>
-        </div>
-    </div>
-
-    <!-- КАСТОМНОЕ МОДАЛЬНОЕ ОКНО ALERT -->
-    <div id="custom-alert" class="custom-alert-overlay">
-        <div class="custom-alert-box">
-            <span class="material-symbols-rounded custom-alert-icon" id="custom-alert-icon">info</span>
-            <div class="custom-alert-message" id="custom-alert-msg">Сообщение</div>
-            <button class="custom-alert-btn" onclick="closeAlert()">Понятно</button>
-        </div>
-    </div>
-
-    <!-- ПОДВАЛ / ССЫЛКИ -->
-    <div class="footer-nav" id="footer-link">
-        <a onclick="switchScreen('login')">
-            <span class="material-symbols-rounded" style="font-size:16px;">lock</span> Вход для администратора
-        </a>
     </div>
 
     <script src="script.js"></script>
