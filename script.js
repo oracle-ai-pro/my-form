@@ -8,16 +8,26 @@ let userAnswers = {};
 let timerInterval = null;
 let currentTimerSeconds = 0;
 let uploadedMediaBase64 = null;
+let promptCallback = null;
+let editingQuestionIndex = null; // null = создание нового, number = индекс редактируемого
 
-// Стандартная демонстрационная форма по умолчанию
 const defaultForm = {
     title: "Тестовая форма",
     questions: [
         {
             type: "radio",
             title: "Какой язык используется для стилизации веб-страниц?",
+            description: "Выберите один наиболее точный вариант из предложенных.",
             options: ["HTML", "CSS", "JavaScript", "Python"],
             correctChoices: [1],
+            required: true
+        },
+        {
+            type: "text",
+            title: "Я [input] купить продукты (в настоящее время).",
+            description: "Вставьте правильную форму глагола «хотеть».",
+            useInlineInput: true,
+            correctText: ["хочу"],
             required: true
         },
         {
@@ -29,12 +39,11 @@ const defaultForm = {
             type: "puzzle-drag",
             title: "Расставьте слова по порядку (Цифры 1, 2, 3):",
             options: ["Второй", "Первый", "Третий"],
-            correctChoices: [1, 0, 2] // Порядок правильных ответов
+            correctChoices: [1, 0, 2]
         }
     ]
 };
 
-// Запуск при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     loadFormsFromStorage();
     initSettings();
@@ -65,14 +74,12 @@ function saveFormsToStorage() {
 }
 
 /* ==========================================
-   3. НАСТРОЙКИ И ИНТЕРФЕЙС (SETTINGS & THEME)
+   3. НАСТРОЙКИ И МОДАЛЬНЫЕ ОКНА
    ========================================== */
 function initSettings() {
-    // Восстановление темы
     const savedTheme = localStorage.getItem('app_theme') || 'light';
     setTheme(savedTheme, false);
 
-    // Восстановление компактного вида
     const isCompact = localStorage.getItem('compact_forms_mode') === 'true';
     const toggleInput = document.getElementById('toggle-compact-forms');
     if (toggleInput) toggleInput.checked = isCompact;
@@ -136,8 +143,118 @@ function closeAlert() {
     if (alertModal) alertModal.classList.remove('active');
 }
 
+/* Диалог подтверждения */
+function showConfirm(title, text, onConfirm) {
+    const alertModal = document.getElementById('custom-alert');
+    if (!alertModal) return;
+
+    const card = alertModal.querySelector('.custom-alert-card');
+    if (!card) return;
+
+    const originalContent = card.innerHTML;
+
+    card.innerHTML = `
+        <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: var(--text-color);">${title}</h3>
+        <p style="margin-bottom: 20px; font-size: 0.95rem; color: var(--text-muted);">${text}</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="confirm-cancel-btn" class="q-action-btn" style="padding: 8px 16px;">Отмена</button>
+            <button id="confirm-ok-btn" class="btn" style="padding: 8px 16px; background: #d32f2f;">Удалить</button>
+        </div>
+    `;
+
+    alertModal.classList.add('active');
+
+    const restoreAndClose = () => {
+        alertModal.classList.remove('active');
+        setTimeout(() => { card.innerHTML = originalContent; }, 200);
+    };
+
+    document.getElementById('confirm-cancel-btn').onclick = restoreAndClose;
+    document.getElementById('confirm-ok-btn').onclick = () => {
+        restoreAndClose();
+        if (typeof onConfirm === 'function') onConfirm();
+    };
+}
+
+/* Специальная ошибка для отсутствующего [input] */
+function showInlineErrorModal(onDisable, onFix) {
+    const alertModal = document.getElementById('custom-alert');
+    if (!alertModal) return;
+
+    const card = alertModal.querySelector('.custom-alert-card');
+    if (!card) return;
+
+    const originalContent = card.innerHTML;
+
+    card.innerHTML = `
+        <div style="text-align: center;">
+            <span class="material-symbols-rounded" style="font-size: 48px; color: #f59e0b; margin-bottom: 8px;">warning</span>
+            <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: var(--text-color);">Ошибка метки [input]</h3>
+            <p style="margin-bottom: 20px; font-size: 0.93rem; color: var(--text-muted); line-height: 1.4;">
+                В данном вопросе отсутствует метка <code>[input]</code>, но включена опция инлайнового ввода.
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button id="inline-disable-btn" class="q-action-btn" style="padding: 8px 14px;">Отключить Input</button>
+                <button id="inline-fix-btn" class="btn" style="padding: 8px 14px;">Исправить самостоятельно</button>
+            </div>
+        </div>
+    `;
+
+    alertModal.classList.add('active');
+
+    const restoreAndClose = () => {
+        alertModal.classList.remove('active');
+        setTimeout(() => { card.innerHTML = originalContent; }, 200);
+    };
+
+    document.getElementById('inline-disable-btn').onclick = () => {
+        restoreAndClose();
+        if (typeof onDisable === 'function') onDisable();
+    };
+
+    document.getElementById('inline-fix-btn').onclick = () => {
+        restoreAndClose();
+        if (typeof onFix === 'function') onFix();
+    };
+}
+
+function showPrompt(title, defaultValue = '', callback) {
+    const promptModal = document.getElementById('custom-prompt');
+    const promptTitle = document.getElementById('custom-prompt-title');
+    const promptInput = document.getElementById('custom-prompt-input');
+
+    if (!promptModal || !promptInput) return;
+
+    if (promptTitle) promptTitle.textContent = title;
+    promptInput.value = defaultValue;
+    promptCallback = callback;
+
+    promptModal.classList.add('active');
+    setTimeout(() => promptInput.focus(), 100);
+}
+
+function closePrompt(isConfirm) {
+    const promptModal = document.getElementById('custom-prompt');
+    const promptInput = document.getElementById('custom-prompt-input');
+
+    if (promptModal) promptModal.classList.remove('active');
+
+    if (promptCallback) {
+        if (isConfirm) {
+            promptCallback(promptInput.value);
+        } else {
+            promptCallback(null);
+        }
+        promptCallback = null;
+    }
+}
+
+function switchFormFromSelect(index) {
+    switchForm(index);
+}
+
 /* ==========================================
-   4. РЕНДЕР ВКЛАДОК, ПЕРЕИМЕНОВАНИЕ И ВЫБОР ФОРМ
+   4. РЕНДЕР ВКЛАДОК И ВЫБОР ФОРМ
    ========================================== */
 function renderAllFormsUI() {
     const selectEl = document.getElementById('forms-tabs-select');
@@ -149,7 +266,6 @@ function renderAllFormsUI() {
     allForms.forEach((form, index) => {
         const formTitle = form.title || `Форма №${index + 1}`;
 
-        // 1. Для компактного вида (Select)
         if (selectEl) {
             const opt = document.createElement('option');
             opt.value = index;
@@ -158,7 +274,6 @@ function renderAllFormsUI() {
             selectEl.appendChild(opt);
         }
 
-        // 2. Для обычных вкладок с иконкой Карандаша
         if (listEl) {
             const tab = document.createElement('div');
             tab.className = `form-tab ${index === currentFormIndex ? 'active-tab' : ''}`;
@@ -166,7 +281,10 @@ function renderAllFormsUI() {
             tab.innerHTML = `
                 <span class="tab-title">${formTitle}</span>
                 <button class="edit-tab-btn" onclick="renameForm(${index}, event)" title="Переименовать форму">
-                    ✏️
+                    <span class="material-symbols-rounded">edit</span>
+                </button>
+                <button class="delete-tab-btn" onclick="deleteForm(${index}, event)" title="Удалить форму">
+                    <span class="material-symbols-rounded">close</span>
                 </button>
             `;
 
@@ -177,26 +295,52 @@ function renderAllFormsUI() {
 }
 
 function renameForm(index, event) {
-    if (event) event.stopPropagation(); // Не переключаем вкладку при клике на карандаш
-
+    if (event) event.stopPropagation();
     const form = allForms[index];
     if (!form) return;
 
-    const currentTitle = form.title || `Форма №${index + 1}`;
-    const newTitle = prompt("Введите новое название для формы:", currentTitle);
+    showPrompt("Введите новое название для формы:", form.title || `Форма №${index + 1}`, (newTitle) => {
+        if (newTitle !== null && newTitle.trim() !== "") {
+            allForms[index].title = newTitle.trim();
+            saveFormsToStorage();
+            renderAllFormsUI();
+            if (!document.getElementById('admin-screen').classList.contains('hidden')) {
+                renderAdminQuestionsList();
+            }
+            showAlert('Форма успешно переименована!', 'check_circle');
+        }
+    });
+}
 
-    if (newTitle !== null && newTitle.trim() !== "") {
-        allForms[index].title = newTitle.trim();
+function deleteForm(index, event) {
+    if (event) event.stopPropagation();
+
+    if (allForms.length <= 1) {
+        showAlert('Нельзя удалить единственную форму!', 'warning');
+        return;
+    }
+
+    const formTitle = allForms[index].title || `Форму №${index + 1}`;
+
+    showConfirm(`Удалить форму?`, `Вы действительно хотите удалить "${formTitle}"?`, () => {
+        allForms.splice(index, 1);
+
+        if (currentFormIndex >= allForms.length) {
+            currentFormIndex = allForms.length - 1;
+        } else if (currentFormIndex === index) {
+            currentFormIndex = Math.max(0, index - 1);
+        }
+
         saveFormsToStorage();
         renderAllFormsUI();
+        loadCurrentForm();
 
-        const adminScreen = document.getElementById('admin-screen');
-        if (adminScreen && !adminScreen.classList.contains('hidden')) {
+        if (!document.getElementById('admin-screen').classList.contains('hidden')) {
             renderAdminQuestionsList();
         }
 
-        showAlert('Форма успешно переименована!', 'check_circle');
-    }
+        showAlert('Форма успешно удалена!', 'delete');
+    });
 }
 
 function switchForm(index) {
@@ -205,26 +349,24 @@ function switchForm(index) {
     loadCurrentForm();
 }
 
-function switchFormFromSelect(index) {
-    switchForm(index);
-}
-
 function createNewFormPrompt() {
-    const title = prompt("Введите название новой формы:");
-    if (title && title.trim()) {
-        allForms.push({
-            title: title.trim(),
-            questions: []
-        });
-        currentFormIndex = allForms.length - 1;
-        saveFormsToStorage();
-        renderAllFormsUI();
-        loadCurrentForm();
-    }
+    showPrompt("Введите название новой формы:", "", (title) => {
+        if (title && title.trim()) {
+            allForms.push({
+                title: title.trim(),
+                questions: []
+            });
+            currentFormIndex = allForms.length - 1;
+            saveFormsToStorage();
+            renderAllFormsUI();
+            loadCurrentForm();
+            showAlert('Новая форма успешно создана!', 'check_circle');
+        }
+    });
 }
 
 /* ==========================================
-   5. ДВИЖОК ТЕСТИРОВАНИЯ (QUIZ ENGINE)
+   5. ДВИЖОК ТЕСТИРОВАНИЯ
    ========================================== */
 function loadCurrentForm() {
     currentQuestionIndex = 0;
@@ -278,25 +420,54 @@ function renderQuestion() {
     }
 
     const body = document.getElementById('question-body');
-    body.innerHTML = `<h3 style="margin-bottom:15px; font-weight:600;">${q.title}</h3>`;
+    const savedVal = userAnswers[currentQuestionIndex] !== undefined ? userAnswers[currentQuestionIndex] : '';
+    
+    // Подготовка заголовка (обычного или с [input])
+    if (q.type === 'text' && q.useInlineInput && q.title.includes('[input]')) {
+        const inputHTML = `<input type="text" class="inline-quiz-input" value="${savedVal}" placeholder="..." oninput="saveAnswer(this.value.trim())">`;
+        const formattedTitle = q.title.replace('[input]', inputHTML);
+        
+        body.innerHTML = `<h3 style="margin-bottom: ${q.description ? '6px' : '15px'}; font-weight:600; line-height: 1.6;">${formattedTitle}</h3>`;
+        if (q.description) {
+            body.innerHTML += `<p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 18px; line-height: 1.4;">${q.description}</p>`;
+        }
+    } else {
+        body.innerHTML = `<h3 style="margin-bottom: ${q.description ? '6px' : '15px'}; font-weight:600;">${q.title}</h3>`;
+        if (q.description) {
+            body.innerHTML += `<p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 18px; line-height: 1.4;">${q.description}</p>`;
+        }
+    }
 
     switch (q.type) {
         case 'radio':
             q.options.forEach((opt, idx) => {
                 body.innerHTML += `
                     <label class="option">
-                        <input type="radio" name="q_opt" value="${idx}" onchange="saveAnswer(${idx})">
+                        <input type="radio" name="q_opt" value="${idx}" ${savedVal === idx ? 'checked' : ''} onchange="saveAnswer(${idx})">
                         <span>${opt}</span>
                     </label>
                 `;
             });
             break;
 
+        case 'select':
+            let selectOptions = (q.options || []).map((opt, idx) => 
+                `<option value="${idx}" ${savedVal === idx ? 'selected' : ''}>${opt}</option>`
+            ).join('');
+            body.innerHTML += `
+                <select class="admin-input" style="margin-top: 10px; font-size:15px;" onchange="saveAnswer(parseInt(this.value))">
+                    <option value="" disabled ${savedVal === '' ? 'selected' : ''}>-- Выберите вариант из списка --</option>
+                    ${selectOptions}
+                </select>
+            `;
+            break;
+
         case 'checkbox':
+            const checkedArr = Array.isArray(savedVal) ? savedVal : [];
             q.options.forEach((opt, idx) => {
                 body.innerHTML += `
                     <label class="option">
-                        <input type="checkbox" name="q_opt" value="${idx}" onchange="saveCheckboxAnswer()">
+                        <input type="checkbox" name="q_opt" value="${idx}" ${checkedArr.includes(idx) ? 'checked' : ''} onchange="saveCheckboxAnswer()">
                         <span>${opt}</span>
                     </label>
                 `;
@@ -304,17 +475,27 @@ function renderQuestion() {
             break;
 
         case 'text':
-            body.innerHTML += `
-                <input type="text" class="admin-input" placeholder="Введите ваш ответ..." oninput="saveAnswer(this.value.trim())">
-            `;
+            if (!q.useInlineInput || !q.title.includes('[input]')) {
+                body.innerHTML += `
+                    <input type="text" class="admin-input" value="${savedVal}" placeholder="Введите ваш ответ..." oninput="saveAnswer(this.value.trim())">
+                `;
+            }
             break;
 
         case 'flashcard':
             body.innerHTML += `
-                <div class="flashcard-container" onclick="this.querySelector('.flashcard-inner')?.classList.toggle('flipped')">
-                    <div class="flashcard">
-                        <p style="font-size:14px; color:var(--text-muted); margin-bottom:10px;">Нажмите, чтобы перевернуть 🃏</p>
-                        <p style="font-size:18px; font-weight:600;" id="flashcard-text">${q.title}</p>
+                <div class="flashcard-container" onclick="this.classList.toggle('flipped')">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-side flashcard-front">
+                            <span class="material-symbols-rounded" style="font-size:32px; color:var(--accent-color); margin-bottom:8px;">style</span>
+                            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Нажмите, чтобы перевернуть 🔄</p>
+                            <p style="font-size:18px; font-weight:600; margin:0;">${q.title}</p>
+                        </div>
+                        <div class="flashcard-side flashcard-back">
+                            <span class="material-symbols-rounded" style="font-size:32px; color:var(--accent-color); margin-bottom:8px;">lightbulb</span>
+                            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Оборотная сторона</p>
+                            <p style="font-size:16px; font-weight:500; margin:0;">${q.flashcardAnswer || 'Пояснение отсутствует'}</p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -322,15 +503,18 @@ function renderQuestion() {
             break;
 
         case 'puzzle-drag':
-            let shuffled = q.options.map((opt, idx) => ({ opt, idx }));
             body.innerHTML += `<div id="puzzle-list"></div>`;
             const pList = document.getElementById('puzzle-list');
             
-            shuffled.forEach((item) => {
+            let order = (Array.isArray(savedVal) && savedVal.length === q.options.length) 
+                ? savedVal 
+                : q.options.map((_, idx) => idx);
+
+            order.forEach((idx) => {
                 pList.innerHTML += `
-                    <div class="puzzle-item" data-idx="${item.idx}">
+                    <div class="puzzle-item" data-idx="${idx}">
                         <span class="material-symbols-rounded" style="color:var(--text-muted);">drag_indicator</span>
-                        <span>${item.opt}</span>
+                        <span>${q.options[idx]}</span>
                     </div>
                 `;
             });
@@ -351,9 +535,7 @@ function renderQuestion() {
     }
 }
 
-function saveAnswer(val) {
-    userAnswers[currentQuestionIndex] = val;
-}
+function saveAnswer(val) { userAnswers[currentQuestionIndex] = val; }
 
 function saveCheckboxAnswer() {
     const checked = Array.from(document.querySelectorAll('input[name="q_opt"]:checked')).map(el => parseInt(el.value));
@@ -368,32 +550,18 @@ function savePuzzleAnswer() {
 function initPuzzleEvents() {
     const list = document.getElementById('puzzle-list');
     if (!list) return;
-
     let dragItem = null;
 
     list.querySelectorAll('.puzzle-item').forEach(item => {
         item.draggable = true;
-        
-        item.addEventListener('dragstart', () => {
-            dragItem = item;
-            item.style.opacity = '0.5';
-        });
-
-        item.addEventListener('dragend', () => {
-            dragItem = null;
-            item.style.opacity = '1';
-            savePuzzleAnswer();
-        });
-
+        item.addEventListener('dragstart', () => { dragItem = item; item.style.opacity = '0.5'; });
+        item.addEventListener('dragend', () => { dragItem = null; item.style.opacity = '1'; savePuzzleAnswer(); });
         item.addEventListener('dragover', (e) => {
             e.preventDefault();
             const bounding = item.getBoundingClientRect();
             const offset = e.clientY - bounding.top - (bounding.height / 2);
-            if (offset > 0) {
-                item.after(dragItem);
-            } else {
-                item.before(dragItem);
-            }
+            if (offset > 0) item.after(dragItem);
+            else item.before(dragItem);
         });
     });
 }
@@ -415,9 +583,6 @@ function nextStep() {
     }
 }
 
-/* ==========================================
-   6. ПОДСЧЕТ РЕЗУЛЬТАТОВ
-   ========================================== */
 function calculateResults() {
     stopTimer();
     document.getElementById('quiz-box').classList.add('hidden');
@@ -436,7 +601,7 @@ function calculateResults() {
                 <div class="review-item grey-item">
                     <strong>${q.title}</strong>
                     <p style="color:var(--text-muted); font-size:13px; margin-top:4px;">
-                        🃏 Материал изучен ${q.flashcardAnswer ? `(Оборот: ${q.flashcardAnswer})` : ''}
+                        Материал изучен ${q.flashcardAnswer ? `(Оборот: ${q.flashcardAnswer})` : ''}
                     </p>
                 </div>
             `;
@@ -446,40 +611,31 @@ function calculateResults() {
         maxPossibleScore++;
         let isCorrect = false;
 
-        if (q.type === 'radio') {
-            if (q.correctChoices && q.correctChoices.includes(userAns)) {
-                isCorrect = true;
-            }
+        if (q.type === 'radio' || q.type === 'select') {
+            if (q.correctChoices && q.correctChoices.includes(userAns)) isCorrect = true;
         } else if (q.type === 'checkbox') {
             if (Array.isArray(userAns) && q.correctChoices &&
                 userAns.length === q.correctChoices.length &&
-                userAns.every(v => q.correctChoices.includes(v))) {
-                isCorrect = true;
-            }
+                userAns.every(v => q.correctChoices.includes(v))) isCorrect = true;
         } else if (q.type === 'text') {
-            if (q.correctText && q.correctText.some(t => t.toLowerCase().trim() === String(userAns).toLowerCase().trim())) {
-                isCorrect = true;
-            }
+            if (q.correctText && q.correctText.some(t => t.toLowerCase().trim() === String(userAns || '').toLowerCase().trim())) isCorrect = true;
         } else if (q.type === 'puzzle-drag') {
-            if (Array.isArray(userAns) && q.correctChoices &&
-                JSON.stringify(userAns) === JSON.stringify(q.correctChoices)) {
-                isCorrect = true;
-            }
+            if (Array.isArray(userAns) && q.correctChoices && JSON.stringify(userAns) === JSON.stringify(q.correctChoices)) isCorrect = true;
         }
 
         if (isCorrect) {
             score++;
             reviewHTML += `
                 <div class="review-item correct-item">
-                    <strong>${q.title}</strong>
+                    <strong>${q.title.replace('[input]', `<u>${userAns || '...'}</u>`)}</strong>
                     <p class="text-success" style="font-size:13px; margin-top:4px;">✓ Верно</p>
                 </div>
             `;
         } else {
             reviewHTML += `
                 <div class="review-item incorrect-item">
-                    <strong>${q.title}</strong>
-                    <p class="text-danger" style="font-size:13px; margin-top:4px;">✗ Неверно</p>
+                    <strong>${q.title.replace('[input]', `<u>${userAns || '...'}</u>`)}</strong>
+                    <p class="text-danger" style="font-size:13px; margin-top:4px;">✗ Неверно (Ваш ответ: "${userAns || 'пусто'}")</p>
                 </div>
             `;
         }
@@ -489,14 +645,11 @@ function calculateResults() {
     document.getElementById('review-box').innerHTML = reviewHTML;
 }
 
-function restartQuiz() {
-    loadCurrentForm();
-}
+function restartQuiz() { loadCurrentForm(); }
 
 function startTimer(seconds) {
     currentTimerSeconds = seconds;
     document.getElementById('timer-seconds').textContent = currentTimerSeconds;
-    
     timerInterval = setInterval(() => {
         currentTimerSeconds--;
         document.getElementById('timer-seconds').textContent = currentTimerSeconds;
@@ -507,23 +660,15 @@ function startTimer(seconds) {
     }, 1000);
 }
 
-function stopTimer() {
-    if (timerInterval) clearInterval(timerInterval);
-}
-
-function toggleHintModal() {
-    document.getElementById('hint-box').classList.toggle('hidden');
-}
+function stopTimer() { if (timerInterval) clearInterval(timerInterval); }
+function toggleHintModal() { document.getElementById('hint-box').classList.toggle('hidden'); }
 
 /* ==========================================
-   7. ЭКСПОРТ И ИМПОРТ JSON
+   6. ЭКСПОРТ И ИМПОРТ JSON
    ========================================== */
 function exportFormToJSON() {
     const currentForm = allForms[currentFormIndex];
-    if (!currentForm) {
-        showAlert('Нет выбранной формы для экспорта', 'error');
-        return;
-    }
+    if (!currentForm) return showAlert('Нет выбранной формы для экспорта', 'error');
 
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentForm, null, 2));
     const downloadAnchor = document.createElement('a');
@@ -544,7 +689,6 @@ function importFormFromJSON(input) {
     reader.onload = function(e) {
         try {
             const importedData = JSON.parse(e.target.result);
-
             if (importedData && importedData.questions && Array.isArray(importedData.questions)) {
                 allForms.push(importedData);
             } else if (Array.isArray(importedData)) {
@@ -557,11 +701,9 @@ function importFormFromJSON(input) {
             currentFormIndex = allForms.length - 1;
             renderAllFormsUI();
             loadCurrentForm();
-            
             if (!document.getElementById('admin-screen').classList.contains('hidden')) {
                 renderAdminQuestionsList();
             }
-
             showAlert('Новая форма успешно импортирована!', 'check_circle');
         } catch (err) {
             showAlert('Ошибка импорта: ' + err.message, 'error');
@@ -572,7 +714,7 @@ function importFormFromJSON(input) {
 }
 
 /* ==========================================
-   8. ПАНЕЛЬ АДМИНИСТРАТОРА (ADMIN PANEL)
+   7. ПАНЕЛЬ АДМИНИСТРАТОРА (СОЗДАНИЕ & РЕДАКТИРОВАНИЕ)
    ========================================== */
 function switchScreen(screen) {
     if (screen === 'login') {
@@ -590,20 +732,20 @@ function switchScreen(screen) {
 function tryLogin() {
     const u = document.getElementById('login-user').value;
     const p = document.getElementById('login-pass').value;
-
-    if (u === 'admin' && p === '1234') {
-        switchScreen('admin');
-    } else {
-        showAlert('Неверный логин или пароль!', 'lock');
-    }
+    if (u === 'admin' && p === '1234') switchScreen('admin');
+    else showAlert('Неверный логин или пароль!', 'lock');
 }
 
-function logout() {
-    loadCurrentForm();
-}
+function logout() { loadCurrentForm(); }
 
 function toggleAddQuestionForm() {
-    document.getElementById('admin-add-form').classList.toggle('hidden');
+    const formEl = document.getElementById('admin-add-form');
+    if (formEl.classList.contains('hidden')) {
+        cancelEditQuestion();
+        formEl.classList.remove('hidden');
+    } else {
+        formEl.classList.add('hidden');
+    }
 }
 
 function toggleAdminFields() {
@@ -611,25 +753,58 @@ function toggleAdminFields() {
     
     document.getElementById('admin-choices-fields').classList.toggle('hidden', !['radio', 'checkbox', 'select', 'puzzle-drag'].includes(type));
     document.getElementById('admin-text-fields').classList.toggle('hidden', type !== 'text');
+    
+    const inlineBox = document.getElementById('inline-input-box');
+    if (inlineBox) {
+        inlineBox.classList.toggle('hidden', type !== 'text');
+    }
+
     document.getElementById('flashcard-answer-box').classList.toggle('hidden', type !== 'flashcard');
     document.getElementById('media-upload-box').classList.toggle('hidden', type !== 'info-slide');
 }
 
+/* СОХРАНЕНИЕ / ОБНОВЛЕНИЕ ВОПРОСА */
 function addQuestion() {
-    const form = allForms[currentFormIndex];
     const type = document.getElementById('new-type').value;
     const title = document.getElementById('new-title').value.trim();
+    const useInlineEl = document.getElementById('new-inline-input');
+    const useInline = (type === 'text' && useInlineEl) ? useInlineEl.checked : false;
 
     if (!title) {
         showAlert('Введите текст вопроса!', 'warning');
         return;
     }
 
+    // Проверка отсутствия [input]
+    if (type === 'text' && useInline && !title.includes('[input]')) {
+        showInlineErrorModal(
+            () => {
+                if (useInlineEl) useInlineEl.checked = false;
+                processSaveQuestion(type, title, false);
+            },
+            () => {
+                const titleInput = document.getElementById('new-title');
+                if (titleInput) titleInput.focus();
+            }
+        );
+        return;
+    }
+
+    processSaveQuestion(type, title, useInline);
+}
+
+function processSaveQuestion(type, title, useInline) {
+    const form = allForms[currentFormIndex];
+    const descInput = document.getElementById('new-description');
+    const description = descInput ? descInput.value.trim() : '';
+
     const newQ = {
         type: type,
         title: title,
         required: document.getElementById('new-required').checked
     };
+
+    if (description) newQ.description = description;
 
     if (['radio', 'checkbox', 'select', 'puzzle-drag'].includes(type)) {
         const opts = document.getElementById('new-options').value.split(',').map(s => s.trim()).filter(Boolean);
@@ -638,10 +813,15 @@ function addQuestion() {
         newQ.correctChoices = correct;
     } else if (type === 'text') {
         newQ.correctText = document.getElementById('new-correct-text').value.split(',').map(s => s.trim()).filter(Boolean);
+        if (useInline) newQ.useInlineInput = true;
     } else if (type === 'flashcard') {
         newQ.flashcardAnswer = document.getElementById('new-flashcard-answer').value.trim();
-    } else if (type === 'info-slide' && uploadedMediaBase64) {
-        newQ.mediaUrl = uploadedMediaBase64;
+    } else if (type === 'info-slide') {
+        if (uploadedMediaBase64) {
+            newQ.mediaUrl = uploadedMediaBase64;
+        } else if (editingQuestionIndex !== null && form.questions[editingQuestionIndex].mediaUrl) {
+            newQ.mediaUrl = form.questions[editingQuestionIndex].mediaUrl;
+        }
     }
 
     if (document.getElementById('toggle-hint-input').checked) {
@@ -651,11 +831,187 @@ function addQuestion() {
         newQ.timer = parseInt(document.getElementById('new-timer').value) || 20;
     }
 
-    form.questions.push(newQ);
+    if (editingQuestionIndex !== null) {
+        form.questions[editingQuestionIndex] = newQ;
+        showAlert('Вопрос успешно обновлён!', 'check_circle');
+    } else {
+        form.questions.push(newQ);
+        showAlert('Вопрос успешно сохранён!', 'check_circle');
+    }
+
     saveFormsToStorage();
+    cancelEditQuestion();
     renderAdminQuestionsList();
-    toggleAddQuestionForm();
-    showAlert('Вопрос успешно сохранён!', 'check_circle');
+}
+
+/* ФУНКЦИЯ РЕДАКТИРОВАНИЯ ВОПРОСА */
+function editQuestion(idx) {
+    const q = allForms[currentFormIndex].questions[idx];
+    if (!q) return;
+
+    editingQuestionIndex = idx;
+
+    const formEl = document.getElementById('admin-add-form');
+    formEl.classList.remove('hidden');
+    document.getElementById('admin-form-title').textContent = `Редактирование вопроса №${idx + 1}`;
+    document.getElementById('save-question-btn').textContent = 'Сохранить изменения';
+    document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+    document.getElementById('new-type').value = q.type;
+    toggleAdminFields();
+
+    document.getElementById('new-title').value = q.title || '';
+    
+    const descInput = document.getElementById('new-description');
+    if (descInput) descInput.value = q.description || '';
+
+    document.getElementById('new-required').checked = !!q.required;
+
+    if (['radio', 'checkbox', 'select', 'puzzle-drag'].includes(q.type)) {
+        document.getElementById('new-options').value = (q.options || []).join(', ');
+        document.getElementById('new-correct-choices').value = (q.correctChoices || []).join(', ');
+    } else if (q.type === 'text') {
+        document.getElementById('new-correct-text').value = (q.correctText || []).join(', ');
+        const inlineCheck = document.getElementById('new-inline-input');
+        if (inlineCheck) inlineCheck.checked = !!q.useInlineInput;
+    } else if (q.type === 'flashcard') {
+        document.getElementById('new-flashcard-answer').value = q.flashcardAnswer || '';
+    }
+
+    const timerToggle = document.getElementById('toggle-timer-input');
+    if (q.timer) {
+        timerToggle.checked = true;
+        document.getElementById('timer-config').classList.remove('hidden');
+        document.getElementById('new-timer').value = q.timer;
+    } else {
+        timerToggle.checked = false;
+        document.getElementById('timer-config').classList.add('hidden');
+    }
+
+    const hintToggle = document.getElementById('toggle-hint-input');
+    if (q.hintText) {
+        hintToggle.checked = true;
+        document.getElementById('hint-config').classList.remove('hidden');
+        document.getElementById('new-hint-text').value = q.hintText;
+    } else {
+        hintToggle.checked = false;
+        document.getElementById('hint-config').classList.add('hidden');
+    }
+
+    formEl.scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelEditQuestion() {
+    editingQuestionIndex = null;
+    uploadedMediaBase64 = null;
+
+    document.getElementById('admin-form-title').textContent = 'Новый элемент';
+    document.getElementById('save-question-btn').textContent = 'Сохранить вопрос';
+    document.getElementById('cancel-edit-btn').classList.add('hidden');
+
+    document.getElementById('new-title').value = '';
+    
+    const descInput = document.getElementById('new-description');
+    if (descInput) descInput.value = '';
+
+    document.getElementById('new-options').value = '';
+    document.getElementById('new-correct-choices').value = '';
+    document.getElementById('new-correct-text').value = '';
+    document.getElementById('new-flashcard-answer').value = '';
+    document.getElementById('new-hint-text').value = '';
+    document.getElementById('new-required').checked = false;
+    
+    const inlineCheck = document.getElementById('new-inline-input');
+    if (inlineCheck) inlineCheck.checked = false;
+
+    document.getElementById('toggle-timer-input').checked = false;
+    document.getElementById('timer-config').classList.add('hidden');
+    document.getElementById('toggle-hint-input').checked = false;
+    document.getElementById('hint-config').classList.add('hidden');
+    document.getElementById('media-preview-container').innerHTML = '';
+
+    document.getElementById('new-type').value = 'radio';
+    toggleAdminFields();
+}
+
+function viewQuestionDetails(idx) {
+    const q = allForms[currentFormIndex].questions[idx];
+    if (!q) return;
+
+    const modal = document.getElementById('question-details-modal');
+    const content = document.getElementById('question-details-content');
+
+    let html = `
+        <div class="detail-row">
+            <strong>Текст вопроса:</strong>
+            <div style="font-size:15px; margin-top:4px; font-weight:600;">${q.title}</div>
+        </div>
+    `;
+
+    if (q.description) {
+        html += `
+            <div class="detail-row">
+                <strong>Описание:</strong>
+                <div style="font-size:13px; color:var(--text-muted); margin-top:2px;">${q.description}</div>
+            </div>
+        `;
+    }
+
+    html += `
+        <div class="detail-row">
+            <strong>Тип элемента:</strong> <span class="detail-badge">${q.type}</span>
+        </div>
+        <div class="detail-row">
+            <strong>Обязательный:</strong> ${q.required ? 'Да' : 'Нет'}
+        </div>
+    `;
+
+    if (q.type === 'text') {
+        html += `
+            <div class="detail-row">
+                <strong>Инлайновый Input:</strong> ${q.useInlineInput ? 'Да ([input])' : 'Нет'}
+            </div>
+            <div class="detail-row">
+                <strong>Правильные варианты ввода:</strong>
+                <div style="margin-top:4px;">${(q.correctText || []).map(t => `<span class="detail-badge correct">${t}</span>`).join(' ')}</div>
+            </div>
+        `;
+    } else if (['radio', 'checkbox', 'select', 'puzzle-drag'].includes(q.type)) {
+        html += `<div class="detail-row"><strong>Варианты ответов:</strong><ol style="margin-top:6px; padding-left:20px;">`;
+        (q.options || []).forEach((opt, oIdx) => {
+            const isCorrect = (q.correctChoices || []).includes(oIdx);
+            html += `
+                <li style="margin-bottom:4px;">
+                    ${opt} ${isCorrect ? '<span class="detail-badge correct">✓ Правильный (индекс ' + oIdx + ')</span>' : ''}
+                </li>
+            `;
+        });
+        html += `</ol></div>`;
+    } else if (q.type === 'flashcard') {
+        html += `
+            <div class="detail-row">
+                <strong>Оборотная сторона карточки:</strong>
+                <div style="margin-top:4px; color:var(--text-muted);">${q.flashcardAnswer || 'Не указано'}</div>
+            </div>
+        `;
+    }
+
+    if (q.timer) {
+        html += `<div class="detail-row"><strong>Таймер:</strong> ⏱️ ${q.timer} секунд</div>`;
+    }
+    if (q.hintText) {
+        html += `<div class="detail-row"><strong>Подсказка:</strong> 💡 ${q.hintText}</div>`;
+    }
+    if (q.mediaUrl) {
+        html += `<div class="detail-row"><strong>Прикреплённое медиа:</strong> <br><img src="${q.mediaUrl}" style="max-width:100%; border-radius:8px; margin-top:6px;"></div>`;
+    }
+
+    content.innerHTML = html;
+    modal.classList.add('active');
+}
+
+function closeDetailsModal() {
+    document.getElementById('question-details-modal').classList.remove('active');
 }
 
 function renderAdminQuestionsList() {
@@ -667,21 +1023,35 @@ function renderAdminQuestionsList() {
 
     form.questions.forEach((q, idx) => {
         list.innerHTML += `
-            <div class="gcard" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+            <div class="gcard" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
                     <strong>${idx + 1}. ${q.title}</strong>
-                    <span style="font-size:12px; color:var(--text-muted); display:block;">Тип: ${q.type}</span>
+                    ${q.description ? `<span style="font-size:12px; color:var(--text-muted); display:block; italic;">${q.description}</span>` : ''}
+                    <span style="font-size:11px; color:var(--accent-color); display:block; margin-top:2px;">Тип: ${q.type} ${q.useInlineInput ? '(Inline Input)' : ''}</span>
                 </div>
-                <button onclick="deleteQuestion(${idx})" class="btn" style="background:#d32f2f; padding:6px 12px; font-size:12px;">Удалить</button>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="viewQuestionDetails(${idx})" class="q-action-btn" title="Просмотреть все данные">
+                        <span class="material-symbols-rounded" style="font-size:16px;">visibility</span> Инфо
+                    </button>
+                    <button onclick="editQuestion(${idx})" class="q-action-btn" title="Изменить вопрос">
+                        <span class="material-symbols-rounded" style="font-size:16px;">edit</span> Изменить
+                    </button>
+                    <button onclick="deleteQuestion(${idx})" class="q-action-btn delete-btn" title="Удалить вопрос">
+                        <span class="material-symbols-rounded" style="font-size:16px;">delete</span>
+                    </button>
+                </div>
             </div>
         `;
     });
 }
 
 function deleteQuestion(idx) {
-    allForms[currentFormIndex].questions.splice(idx, 1);
-    saveFormsToStorage();
-    renderAdminQuestionsList();
+    showConfirm("Удалить вопрос?", "Вы уверены, что хотите удалить этот вопрос?", () => {
+        allForms[currentFormIndex].questions.splice(idx, 1);
+        saveFormsToStorage();
+        renderAdminQuestionsList();
+        showAlert('Вопрос успешно удален!', 'delete');
+    });
 }
 
 function handleMediaUploadPreview(input) {
@@ -697,7 +1067,7 @@ function handleMediaUploadPreview(input) {
 }
 
 /* ==========================================
-   9. ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ
+   8. ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ
    ========================================== */
 function generateShareLink() {
     navigator.clipboard.writeText(window.location.href);
@@ -705,55 +1075,141 @@ function generateShareLink() {
 }
 
 function printCurrentForm() {
-    window.print();
-}
-// Открытие модального окна настроек
-function openSettingsModal() {
-    const modal = document.getElementById('settings-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
-}
-
-// Закрытие модального окна настроек
-function closeSettingsModal() {
-    const modal = document.getElementById('settings-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
-
-// Открытие / закрытие меню трех точек (more_vert)
-function toggleToolsMenu() {
-    const menu = document.getElementById('tools-menu');
-    if (menu) {
-        menu.classList.toggle('hidden');
-    }
-}
-
-// Переключение темы (светлая / тёмная)
-function setTheme(theme) {
-    if (theme === 'dark') {
-        document.body.classList.add('dark-theme');
-        localStorage.setItem('theme', 'dark');
-    } else {
-        document.body.classList.remove('dark-theme');
-        localStorage.setItem('theme', 'light');
-    }
-}
-
-// Переключение компактного вида форм (Select / Вкладки)
-function toggleFormsLayout(isCompact) {
-    const select = document.getElementById('forms-tabs-select');
-    const list = document.getElementById('forms-tabs-list');
+    const form = allForms[currentFormIndex];
     
-    if (select && list) {
-        if (isCompact) {
-            select.classList.remove('hidden');
-            list.classList.add('hidden');
-        } else {
-            select.classList.add('hidden');
-            list.classList.remove('hidden');
-        }
+    if (!form || !form.questions || form.questions.length === 0) {
+        showAlert('В этой форме нет вопросов для печати!', 'warning');
+        return;
     }
+
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+        showAlert('Разрешите всплывающие окна в браузере, чтобы открыть форму для печати', 'error');
+        return;
+    }
+
+    let questionsHtml = '';
+
+    form.questions.forEach((q, idx) => {
+        questionsHtml += `
+            <div class="question-block">
+        `;
+
+        if (q.type === 'text' && q.useInlineInput && q.title.includes('[input]')) {
+            const printTitle = q.title.replace('[input]', '____________________');
+            questionsHtml += `<div class="question-title"><strong>${idx + 1}. ${printTitle}</strong></div>`;
+        } else {
+            questionsHtml += `<div class="question-title"><strong>${idx + 1}. ${q.title}</strong></div>`;
+        }
+
+        if (q.description) {
+            questionsHtml += `<div style="font-size: 13px; color: #555; margin-bottom: 8px; font-style: italic;">${q.description}</div>`;
+        }
+
+        if (['radio', 'select'].includes(q.type)) {
+            if (q.options && q.options.length > 0) {
+                questionsHtml += `<div class="options-group">`;
+                q.options.forEach(opt => {
+                    questionsHtml += `
+                        <div class="option-item">
+                            <span class="radio-circle"></span>
+                            <span>${opt}</span>
+                        </div>
+                    `;
+                });
+                questionsHtml += `</div>`;
+            }
+        } 
+        else if (q.type === 'checkbox') {
+            if (q.options && q.options.length > 0) {
+                questionsHtml += `<div class="options-group">`;
+                q.options.forEach(opt => {
+                    questionsHtml += `
+                        <div class="option-item">
+                            <span class="checkbox-square"></span>
+                            <span>${opt}</span>
+                        </div>
+                    `;
+                });
+                questionsHtml += `</div>`;
+            }
+        } 
+        else if (q.type === 'text' && (!q.useInlineInput || !q.title.includes('[input]'))) {
+            questionsHtml += `
+                <div class="text-answer-line">
+                    Ответ: __________________________________________________________________________________
+                </div>
+            `;
+        } 
+        else if (q.type === 'puzzle-drag') {
+            questionsHtml += `<div style="font-size: 13px; color: #555; margin-bottom: 6px;">Укажите правильный порядок цифрами в скобках:</div>`;
+            if (q.options && q.options.length > 0) {
+                questionsHtml += `<div class="options-group">`;
+                q.options.forEach(opt => {
+                    questionsHtml += `
+                        <div class="option-item">
+                            <span style="font-family: monospace; font-size: 14px;">[ &nbsp; ]</span>
+                            <span>${opt}</span>
+                        </div>
+                    `;
+                });
+                questionsHtml += `</div>`;
+            }
+        } 
+        else if (q.type === 'flashcard' || q.type === 'info-slide') {
+            if (q.mediaUrl) {
+                questionsHtml += `<div style="margin: 8px 0;"><img src="${q.mediaUrl}" style="max-height: 180px; border-radius: 4px;"></div>`;
+            }
+            questionsHtml += `
+                <div class="text-answer-line">
+                    Заметки / Ответ: _________________________________________________________________________
+                </div>
+            `;
+        }
+
+        questionsHtml += `</div>`;
+    });
+
+    const printContent = `
+        <!DOCTYPE html>
+        <html lang="ru">
+        <head>
+            <meta charset="UTF-8">
+            <title>Печать: ${form.title || 'Форма'}</title>
+            <style>
+                @page { size: A4; margin: 15mm; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; color: #000; background: #fff; line-height: 1.5; margin: 0; padding: 10px; }
+                .header-sheet { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 25px; }
+                .header-sheet h1 { margin: 0 0 15px 0; font-size: 22px; text-align: center; }
+                .student-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; }
+                .question-block { margin-bottom: 22px; page-break-inside: avoid; }
+                .question-title { font-size: 15px; margin-bottom: 8px; }
+                .options-group { margin-left: 10px; display: flex; flex-direction: column; gap: 6px; }
+                .option-item { font-size: 14px; display: flex; align-items: center; gap: 10px; }
+                .radio-circle { display: inline-block; width: 14px; height: 14px; border: 1.5px solid #000; border-radius: 50%; flex-shrink: 0; }
+                .checkbox-square { display: inline-block; width: 14px; height: 14px; border: 1.5px solid #000; border-radius: 2px; flex-shrink: 0; }
+                .text-answer-line { margin-top: 8px; font-size: 14px; color: #333; word-break: break-all; }
+            </style>
+        </head>
+        <body>
+            <div class="header-sheet">
+                <h1>${form.title || 'Тестовая форма'}</h1>
+                <div class="student-info">
+                    <span>Имя: ________________________________</span>
+                    <span>Дата: _______________</span>
+                </div>
+            </div>
+
+            ${questionsHtml}
+
+            <script>
+                window.onload = function() { window.print(); };
+            </script>
+        </body>
+        </html>
+    `;
+
+    printWin.document.open();
+    printWin.document.write(printContent);
+    printWin.document.close();
 }
