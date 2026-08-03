@@ -137,7 +137,7 @@ function closeAlert() {
 }
 
 /* ==========================================
-   4. РЕНДЕР ВКЛАДОК И ВЫБОР ФОРМ
+   4. РЕНДЕР ВКЛАДОК, ПЕРЕИМЕНОВАНИЕ И ВЫБОР ФОРМ
    ========================================== */
 function renderAllFormsUI() {
     const selectEl = document.getElementById('forms-tabs-select');
@@ -147,24 +147,56 @@ function renderAllFormsUI() {
     if (listEl) listEl.innerHTML = '';
 
     allForms.forEach((form, index) => {
-        // Опция для Select
+        const formTitle = form.title || `Форма №${index + 1}`;
+
+        // 1. Для компактного вида (Select)
         if (selectEl) {
             const opt = document.createElement('option');
             opt.value = index;
-            opt.textContent = form.title || `Форма №${index + 1}`;
+            opt.textContent = formTitle;
             if (index === currentFormIndex) opt.selected = true;
             selectEl.appendChild(opt);
         }
 
-        // Вкладка для горизонтальной панели
+        // 2. Для обычных вкладок с иконкой Карандаша
         if (listEl) {
             const tab = document.createElement('div');
             tab.className = `form-tab ${index === currentFormIndex ? 'active-tab' : ''}`;
-            tab.textContent = form.title || `Форма №${index + 1}`;
+            
+            tab.innerHTML = `
+                <span class="tab-title">${formTitle}</span>
+                <button class="edit-tab-btn" onclick="renameForm(${index}, event)" title="Переименовать форму">
+                    ✏️
+                </button>
+            `;
+
             tab.onclick = () => switchForm(index);
             listEl.appendChild(tab);
         }
     });
+}
+
+function renameForm(index, event) {
+    if (event) event.stopPropagation(); // Не переключаем вкладку при клике на карандаш
+
+    const form = allForms[index];
+    if (!form) return;
+
+    const currentTitle = form.title || `Форма №${index + 1}`;
+    const newTitle = prompt("Введите новое название для формы:", currentTitle);
+
+    if (newTitle !== null && newTitle.trim() !== "") {
+        allForms[index].title = newTitle.trim();
+        saveFormsToStorage();
+        renderAllFormsUI();
+
+        const adminScreen = document.getElementById('admin-screen');
+        if (adminScreen && !adminScreen.classList.contains('hidden')) {
+            renderAdminQuestionsList();
+        }
+
+        showAlert('Форма успешно переименована!', 'check_circle');
+    }
 }
 
 function switchForm(index) {
@@ -222,13 +254,11 @@ function renderQuestion() {
     document.getElementById('next-btn').classList.remove('hidden');
     const q = form.questions[currentQuestionIndex];
     
-    // Обновляем счетчики и прогресс-бар
     document.getElementById('current-number').textContent = currentQuestionIndex + 1;
     document.getElementById('total-number').textContent = form.questions.length;
     const progressPercent = ((currentQuestionIndex + 1) / form.questions.length) * 100;
     document.getElementById('progress').style.width = `${progressPercent}%`;
 
-    // Таймер
     const timerDisplay = document.getElementById('timer-display');
     if (q.timer && q.timer > 0) {
         timerDisplay.classList.remove('hidden');
@@ -237,7 +267,6 @@ function renderQuestion() {
         timerDisplay.classList.add('hidden');
     }
 
-    // Подсказка
     const hintBtn = document.getElementById('hint-btn');
     const hintBox = document.getElementById('hint-box');
     hintBox.classList.add('hidden');
@@ -248,7 +277,6 @@ function renderQuestion() {
         hintBtn.classList.add('hidden');
     }
 
-    // Рендер тела вопроса
     const body = document.getElementById('question-body');
     body.innerHTML = `<h3 style="margin-bottom:15px; font-weight:600;">${q.title}</h3>`;
 
@@ -283,14 +311,13 @@ function renderQuestion() {
 
         case 'flashcard':
             body.innerHTML += `
-                <div class="flashcard-container" onclick="this.querySelector('.flashcard-inner').classList.toggle('flipped')">
+                <div class="flashcard-container" onclick="this.querySelector('.flashcard-inner')?.classList.toggle('flipped')">
                     <div class="flashcard">
                         <p style="font-size:14px; color:var(--text-muted); margin-bottom:10px;">Нажмите, чтобы перевернуть 🃏</p>
                         <p style="font-size:18px; font-weight:600;" id="flashcard-text">${q.title}</p>
                     </div>
                 </div>
             `;
-            // Для флешкарты ответ сохраняется автоматически
             saveAnswer('viewed');
             break;
 
@@ -324,7 +351,6 @@ function renderQuestion() {
     }
 }
 
-/* Сохранение ответов */
 function saveAnswer(val) {
     userAnswers[currentQuestionIndex] = val;
 }
@@ -339,7 +365,6 @@ function savePuzzleAnswer() {
     userAnswers[currentQuestionIndex] = items;
 }
 
-/* Простой Drag/Reorder для пазлов */
 function initPuzzleEvents() {
     const list = document.getElementById('puzzle-list');
     if (!list) return;
@@ -391,7 +416,7 @@ function nextStep() {
 }
 
 /* ==========================================
-   6. ПОДСЧЕТ РЕЗУЛЬТАТОВ (БЕЗ ОШИБОК НА ФЛЕШКАРТАХ)
+   6. ПОДСЧЕТ РЕЗУЛЬТАТОВ
    ========================================== */
 function calculateResults() {
     stopTimer();
@@ -406,7 +431,6 @@ function calculateResults() {
     form.questions.forEach((q, idx) => {
         const userAns = userAnswers[idx];
 
-        // 🃏 ФЛЕШКАРТЫ И ИНФО-СЛАЙДЫ: Не влияют на ошибки и общий балл
         if (q.type === 'flashcard' || q.type === 'info-slide') {
             reviewHTML += `
                 <div class="review-item grey-item">
@@ -416,7 +440,7 @@ function calculateResults() {
                     </p>
                 </div>
             `;
-            return; // Пропускаем проверку баллов
+            return;
         }
 
         maxPossibleScore++;
@@ -469,7 +493,6 @@ function restartQuiz() {
     loadCurrentForm();
 }
 
-/* Таймер */
 function startTimer(seconds) {
     currentTimerSeconds = seconds;
     document.getElementById('timer-seconds').textContent = currentTimerSeconds;
@@ -479,7 +502,7 @@ function startTimer(seconds) {
         document.getElementById('timer-seconds').textContent = currentTimerSeconds;
         if (currentTimerSeconds <= 0) {
             stopTimer();
-            nextStep(); // Автоматический переход при истечении времени
+            nextStep();
         }
     }, 1000);
 }
@@ -493,7 +516,7 @@ function toggleHintModal() {
 }
 
 /* ==========================================
-   7. РАБОЧИЙ ЭКСПОРТ И ИМПОРТ JSON
+   7. ЭКСПОРТ И ИМПОРТ JSON
    ========================================== */
 function exportFormToJSON() {
     const currentForm = allForms[currentFormIndex];
@@ -522,7 +545,6 @@ function importFormFromJSON(input) {
         try {
             const importedData = JSON.parse(e.target.result);
 
-            // Валидация загружаемого файла
             if (importedData && importedData.questions && Array.isArray(importedData.questions)) {
                 allForms.push(importedData);
             } else if (Array.isArray(importedData)) {
@@ -544,7 +566,7 @@ function importFormFromJSON(input) {
         } catch (err) {
             showAlert('Ошибка импорта: ' + err.message, 'error');
         }
-        input.value = ''; // Сброс поля выбора файла
+        input.value = '';
     };
     reader.readAsText(file);
 }
@@ -609,7 +631,6 @@ function addQuestion() {
         required: document.getElementById('new-required').checked
     };
 
-    // Настройки вариантов ответа
     if (['radio', 'checkbox', 'select', 'puzzle-drag'].includes(type)) {
         const opts = document.getElementById('new-options').value.split(',').map(s => s.trim()).filter(Boolean);
         const correct = document.getElementById('new-correct-choices').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
@@ -623,7 +644,6 @@ function addQuestion() {
         newQ.mediaUrl = uploadedMediaBase64;
     }
 
-    // Подсказка и таймер
     if (document.getElementById('toggle-hint-input').checked) {
         newQ.hintText = document.getElementById('new-hint-text').value.trim();
     }
@@ -647,7 +667,7 @@ function renderAdminQuestionsList() {
 
     form.questions.forEach((q, idx) => {
         list.innerHTML += `
-            <div class="gcard" style="margin-top:10px; display:flex; justify-size:space-between; align-items:center;">
+            <div class="gcard" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
                     <strong>${idx + 1}. ${q.title}</strong>
                     <span style="font-size:12px; color:var(--text-muted); display:block;">Тип: ${q.type}</span>
@@ -677,7 +697,7 @@ function handleMediaUploadPreview(input) {
 }
 
 /* ==========================================
-   9. ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ (ПОДЕЛИТЬСЯ И ПЕЧАТЬ)
+   9. ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ
    ========================================== */
 function generateShareLink() {
     navigator.clipboard.writeText(window.location.href);
