@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Конструктор тестов & Пазлов</title>
-    <!-- Подключение стилизованных иконок -->
+    <title>My Form | Prestige HQ</title>
+    <!-- Иконки Material Symbols Rounded -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="stylesheet" href="style.css">
 </head>
@@ -17,9 +17,7 @@
             <select id="forms-tabs-select" class="forms-select hidden" onchange="switchFormFromSelect(this.value)"></select>
 
             <!-- 2. Классические вкладки -->
-            <div class="forms-tabs-list" id="forms-tabs-list">
-                <!-- Динамически заполняется через JS -->
-            </div>
+            <div class="forms-tabs-list" id="forms-tabs-list"></div>
 
             <button class="add-form-btn" onclick="createNewFormPrompt()" title="Создать новую форму">
                 <span class="material-symbols-rounded">add</span>
@@ -74,7 +72,7 @@
                     <div id="progress" class="progress-fill"></div>
                 </div>
 
-                <!-- ТЕЛО ВОПРОСА (Динамический рендер через JS) -->
+                <!-- ТЕЛО ВОПРОСА -->
                 <div id="question-body" style="margin-top:20px;"></div>
 
                 <button id="next-btn" class="btn" onclick="nextStep()" style="margin-top:20px; width:100%;">Далее</button>
@@ -82,9 +80,12 @@
 
             <!-- РЕЗУЛЬТАТЫ -->
             <div id="result-box" class="result-card gcard hidden">
-                <h2>Тест завершён! 🎉</h2>
-                <p style="color:var(--text-muted); margin:10px 0 5px 0;">Ваш результат:</p>
-                <div id="final-score" class="score" style="font-size:2rem; font-weight:700; margin-bottom:20px;">0 / 0</div>
+                <h2 style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <span class="material-symbols-rounded" style="color:var(--accent-color); font-size:32px;">emoji_events</span> 
+                    Тест завершён!
+                </h2>
+                <p style="color:var(--text-muted); margin:10px 0 5px 0; text-align:center;">Ваш результат:</p>
+                <div id="final-score" class="score" style="font-size:2rem; font-weight:700; margin-bottom:20px; text-align:center;">0 / 0</div>
                 
                 <div id="review-box" class="review-container"></div>
 
@@ -94,7 +95,9 @@
 
         <!-- 2. ЭКРАН ВХОДА В АДМИНКУ (LOGIN SCREEN) -->
         <div id="login-screen" class="quiz-container gcard hidden">
-            <h2 style="text-align:center; margin-bottom:20px;">Вход для администратора</h2>
+            <h2 style="text-align:center; margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <span class="material-symbols-rounded">lock</span> Вход для администратора
+            </h2>
             <input type="text" id="login-user" class="admin-input" placeholder="Логин (admin)">
             <input type="password" id="login-pass" class="admin-input" placeholder="Пароль (1234)">
             <button class="btn" onclick="tryLogin()" style="width:100%;">Войти</button>
@@ -117,7 +120,7 @@
 
             <!-- ФОРМА СОЗДАНИЯ / РЕДАКТИРОВАНИЯ ВОПРОСА -->
             <div id="admin-add-form" class="gcard hidden" style="margin-bottom:20px;">
-                <h3 style="margin-top:0; margin-bottom:15px;">Новый элемент</h3>
+                <h3 id="admin-form-title" style="margin-top:0; margin-bottom:15px;">Новый элемент</h3>
                 
                 <label style="font-size:13px; color:var(--text-muted);">Тип элемента:</label>
                 <select id="new-type" class="admin-input" onchange="toggleAdminFields()">
@@ -127,14 +130,22 @@
                     <option value="text">Текстовый ответ</option>
                     <option value="puzzle-drag">Пазл (Drag & Drop)</option>
                     <option value="info-slide">Инфо-слайд (Картинка/Видео/Аудио)</option>
-                    <option value="voice_card">Голосовая карточка</option>
                     <option value="flashcard">Флешкарта (Карточка для запоминания)</option>
                 </select>
 
-                <label id="title-label" style="font-size:13px; color:var(--text-muted);">Текст вопроса:</label>
-                <input type="text" id="new-title" class="admin-input" placeholder="Введите текст...">
+                <!-- Поле для названия вопроса -->
+                <div class="admin-field">
+                    <label for="new-title">Заголовок вопроса:</label>
+                    <input type="text" id="new-title" class="admin-input" placeholder="Введите заголовок...">
+                </div>
 
-                <!-- Варианты ответов (Radio / Checkbox / Select / Puzzle) -->
+                <!-- Поле для описания -->
+                <div class="admin-field" style="margin-top: 10px;">
+                    <label for="new-description">Описание вопроса (опционально):</label>
+                    <input type="text" id="new-description" class="admin-input" placeholder="Введите описание...">
+                </div>
+
+                <!-- Варианты ответов -->
                 <div id="admin-choices-fields">
                     <label style="font-size:13px; color:var(--text-muted);">Варианты ответов (через запятую):</label>
                     <input type="text" id="new-options" class="admin-input" placeholder="Вариант 1, Вариант 2, Вариант 3">
@@ -142,10 +153,19 @@
                     <input type="text" id="new-correct-choices" class="admin-input" placeholder="0">
                 </div>
 
-                <!-- Текстовые ответы / Голос -->
+                <!-- Текстовые ответы -->
                 <div id="admin-text-fields" class="hidden">
                     <label style="font-size:13px; color:var(--text-muted);">Правильные варианты текстового ответа (через запятую):</label>
                     <input type="text" id="new-correct-text" class="admin-input" placeholder="ответ1, ответ2">
+                    
+                    <!-- Новый тумблер -->
+                    <label class="switch-label" style="margin-top: 8px; margin-bottom: 12px;">
+                        <span class="switch">
+                            <input type="checkbox" id="new-inline-input">
+                            <span class="slider"></span>
+                        </span>
+                        Поле Input вместо нижнего текстового поля
+                    </label>
                 </div>
 
                 <!-- Ответ для карточек -->
@@ -154,9 +174,9 @@
                     <input type="text" id="new-flashcard-answer" class="admin-input" placeholder="Перевод или пояснение...">
                 </div>
 
-                <!-- Загрузка Медиа (Инфо-Слайд) -->
+                <!-- Загрузка Медиа -->
                 <div id="media-upload-box" class="hidden">
-                    <label style="font-size:13px; color:var(--text-muted);">Прикрепить медиафайл (Картинка, Аудио, Видео):</label>
+                    <label style="font-size:13px; color:var(--text-muted);">Прикрепить медиафайл:</label>
                     <input type="file" id="new-media-file" class="admin-input" accept="image/*,video/*,audio/*" onchange="handleMediaUploadPreview(this)">
                     <div id="media-preview-container"></div>
                 </div>
@@ -165,11 +185,6 @@
                 <label class="switch-label" style="margin-bottom: 12px;">
                     <span class="switch"><input type="checkbox" id="new-required"><span class="slider"></span></span>
                     Обязательный вопрос
-                </label>
-
-                <label class="switch-label" style="margin-bottom: 12px;">
-                    <span class="switch"><input type="checkbox" id="new-manual-check"><span class="slider"></span></span>
-                    Требует личной проверки руководителем (Жёлтая карточка)
                 </label>
 
                 <label class="switch-label" style="margin-bottom: 12px;">
@@ -188,25 +203,36 @@
                     <input type="text" id="new-hint-text" class="admin-input" placeholder="Текст подсказки...">
                 </div>
 
-                <label class="switch-label" style="margin-bottom: 12px;">
-                    <span class="switch"><input type="checkbox" id="toggle-exp-input" onchange="document.getElementById('exp-config').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span>
-                    Показывать объяснение после ответа
-                </label>
-                <div id="exp-config" class="hidden">
-                    <input type="text" id="new-exp-title" class="admin-input" placeholder="Заголовок (напр. Разбор)">
-                    <textarea id="new-exp-desc" class="admin-input text-input" placeholder="Подробное объяснение..."></textarea>
-                    <input type="number" id="new-exp-timer" class="admin-input" placeholder="Задержка в секундах (0 - без задержки)" value="0">
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button class="btn" id="save-question-btn" onclick="addQuestion()" style="flex:1;">Сохранить вопрос</button>
+                    <button class="btn hidden" id="cancel-edit-btn" onclick="cancelEditQuestion()" style="background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Отмена</button>
                 </div>
-
-                <button class="btn" onclick="addQuestion()" style="margin-top:15px; width:100%;">Сохранить вопрос</button>
             </div>
 
             <!-- СПИСОК ВОПРОСОВ -->
             <div id="admin-questions-list"></div>
         </div>
 
+        <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЬНОГО ПРОСМОТРА ВОПРОСА -->
+        <div id="question-details-modal" class="custom-alert-overlay">
+            <div class="custom-alert-card" style="max-width:480px; text-align:left;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-rounded" style="color:var(--accent-color);">visibility</span> Детали вопроса
+                    </h3>
+                    <button onclick="closeDetailsModal()" style="background:transparent; border:none; cursor:pointer; color:var(--text-color); display:flex;">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+                <div id="question-details-content" style="font-size:14px; line-height:1.6; max-height:60vh; overflow-y:auto; padding-right:4px;">
+                    <!-- Заполняется через JS -->
+                </div>
+                <button class="btn" onclick="closeDetailsModal()" style="width:100%; margin-top:20px;">Понятно</button>
+            </div>
+        </div>
+
         <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК -->
-        <div id="settings-modal" class="custom-alert-overlay hidden">
+        <div id="settings-modal" class="custom-alert-overlay">
             <div class="custom-alert-card" style="max-width:420px; text-align:left;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                     <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
@@ -217,18 +243,16 @@
                     </button>
                 </div>
 
-                <!-- 1. Внешний вид (Тема) -->
                 <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Тема оформления</label>
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <button class="btn" onclick="setTheme('light')" style="flex:1; padding:8px; font-size:13px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);">
-                        ☀️ Светлая
+                    <button class="btn" onclick="setTheme('light')" style="flex:1; padding:8px; font-size:13px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <span class="material-symbols-rounded" style="font-size:18px;">light_mode</span> Светлая
                     </button>
-                    <button class="btn" onclick="setTheme('dark')" style="flex:1; padding:8px; font-size:13px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);">
-                        🌙 Тёмная
+                    <button class="btn" onclick="setTheme('dark')" style="flex:1; padding:8px; font-size:13px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <span class="material-symbols-rounded" style="font-size:18px;">dark_mode</span> Тёмная
                     </button>
                 </div>
 
-                <!-- 2. Отображение форм -->
                 <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Интерфейс</label>
                 <label class="switch-label" style="justify-content:space-between; margin-bottom:12px; cursor:pointer;">
                     <span style="font-size:14px; display:flex; align-items:center; gap:8px;">
@@ -244,16 +268,15 @@
             </div>
         </div>
 
-        <!-- МОДАЛЬНОЕ ОКНО ДЛЯ ПРЕДПРОСМОТРА ВОПРОСОВ (IFRAME) -->
-        <div id="preview-iframe-modal" class="iframe-modal hidden">
-            <div class="iframe-container">
-                <div class="iframe-bar">
-                    <span>Предпросмотр вопроса (Ссылка сгорит через 5 мин)</span>
-                    <button onclick="closePreviewIframe()">
-                        <span class="material-symbols-rounded">close</span>
-                    </button>
+        <!-- КАСТОМНОЕ МОДАЛЬНОЕ ОКНО PROMPT -->
+        <div id="custom-prompt" class="custom-alert-overlay">
+            <div class="custom-alert-card">
+                <h3 id="custom-prompt-title" style="margin-top:0; margin-bottom:12px; font-size:1.1rem; text-align:left;">Введите значение</h3>
+                <input type="text" id="custom-prompt-input" class="admin-input" style="margin-bottom:16px;" placeholder="Введите название...">
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button class="btn" onclick="closePrompt(false)" style="background:transparent; color:var(--text-color); border:1px solid var(--border-color); flex:1;">Отмена</button>
+                    <button class="btn" id="custom-prompt-confirm-btn" onclick="closePrompt(true)" style="flex:1;">Сохранить</button>
                 </div>
-                <iframe id="preview-iframe" src="about:blank"></iframe>
             </div>
         </div>
 
@@ -266,10 +289,10 @@
             </div>
         </div>
 
-        <!-- ПОДВАЛ / ССЫЛКИ -->
+        <!-- ПОДВАЛ -->
         <div class="footer-nav" id="footer-link" style="text-align:center; margin-top:30px;">
-            <a onclick="switchScreen('login')" style="cursor:pointer; color:var(--text-muted); font-size:14px; text-decoration:none;">
-                <span class="material-symbols-rounded" style="font-size:16px; vertical-align:middle;">lock</span> Вход для администратора
+            <a onclick="switchScreen('login')" style="cursor:pointer; color:var(--text-muted); font-size:14px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                <span class="material-symbols-rounded" style="font-size:16px;">lock</span> Вход для администратора
             </a>
         </div>
     </div>
