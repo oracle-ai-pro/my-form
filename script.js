@@ -1,60 +1,119 @@
-// ==========================================
-// 1. ИНИЦИАЛИЗАЦИЯ, ТЕМЫ, ALERT И НАВИГАЦИЯ
-// ==========================================
-
-// Основное хранилище форм
-let forms = JSON.parse(localStorage.getItem('quiz_forms')) || [
-    {
-        id: 'form-1',
-        title: 'Тест 1',
-        questions: [
-            {
-                type: 'radio',
-                title: 'Какая планета третья от Солнца?',
-                options: ['Марс', 'Земля', 'Венера'],
-                correctChoices: [1],
-                required: true
-            }
-        ]
-    }
-];
-
-let currentFormId = localStorage.getItem('active_form_id') || forms[0].id;
+/* ==========================================
+   1. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И ИНИЦИАЛИЗАЦИЯ
+   ========================================== */
+let allForms = [];
+let currentFormIndex = 0;
 let currentQuestionIndex = 0;
 let userAnswers = {};
-let userHintsUsed = {}; // Фиксирует вопросы, где открывали подсказку
-let score = 0;
 let timerInterval = null;
-let timeLeft = 0;
+let currentTimerSeconds = 0;
+let uploadedMediaBase64 = null;
 
-// Кастомное модальное окно вместо alert()
-function alert(msg, icon = 'info') {
-    const overlay = document.getElementById('custom-alert');
-    const msgEl = document.getElementById('custom-alert-msg');
-    const iconEl = document.getElementById('custom-alert-icon');
-    if (overlay && msgEl) {
-        msgEl.innerText = msg;
-        if (iconEl) iconEl.innerText = icon;
-        overlay.classList.add('active');
+// Стандартная демонстрационная форма по умолчанию
+const defaultForm = {
+    title: "Тестовая форма",
+    questions: [
+        {
+            type: "radio",
+            title: "Какой язык используется для стилизации веб-страниц?",
+            options: ["HTML", "CSS", "JavaScript", "Python"],
+            correctChoices: [1],
+            required: true
+        },
+        {
+            type: "flashcard",
+            title: "JavaScript (JS)",
+            flashcardAnswer: "Мультипарадигменный язык программирования, используемый для создания интерактивности на веб-страницах."
+        },
+        {
+            type: "puzzle-drag",
+            title: "Расставьте слова по порядку (Цифры 1, 2, 3):",
+            options: ["Второй", "Первый", "Третий"],
+            correctChoices: [1, 0, 2] // Порядок правильных ответов
+        }
+    ]
+};
+
+// Запуск при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    loadFormsFromStorage();
+    initSettings();
+    renderAllFormsUI();
+    loadCurrentForm();
+});
+
+/* ==========================================
+   2. УПРАВЛЕНИЕ ХРАНИЛИЩЕМ (LOCALSTORAGE)
+   ========================================== */
+function loadFormsFromStorage() {
+    const saved = localStorage.getItem('my_forms_data');
+    if (saved) {
+        try {
+            allForms = JSON.parse(saved);
+        } catch (e) {
+            console.error("Ошибка чтения из localStorage", e);
+            allForms = [defaultForm];
+        }
     } else {
-        window.alert(msg);
+        allForms = [defaultForm];
+        saveFormsToStorage();
     }
 }
 
-function closeAlert() {
-    const overlay = document.getElementById('custom-alert');
-    if (overlay) overlay.classList.remove('active');
+function saveFormsToStorage() {
+    localStorage.setItem('my_forms_data', JSON.stringify(allForms));
 }
 
-// Управление темами оформления
-function setTheme(theme) {
-    document.body.className = '';
-    if (theme === 'dark') {
+/* ==========================================
+   3. НАСТРОЙКИ И ИНТЕРФЕЙС (SETTINGS & THEME)
+   ========================================== */
+function initSettings() {
+    // Восстановление темы
+    const savedTheme = localStorage.getItem('app_theme') || 'light';
+    setTheme(savedTheme, false);
+
+    // Восстановление компактного вида
+    const isCompact = localStorage.getItem('compact_forms_mode') === 'true';
+    const toggleInput = document.getElementById('toggle-compact-forms');
+    if (toggleInput) toggleInput.checked = isCompact;
+    applyFormsLayout(isCompact);
+}
+
+function setTheme(themeName, save = true) {
+    if (themeName === 'dark') {
         document.body.classList.add('dark-theme');
-    } else if (theme === 'google') {
-        document.body.classList.add('google-theme');
+    } else {
+        document.body.classList.remove('dark-theme');
     }
-    localStorage.setItem('app_theme', theme);
+    if (save) localStorage.setItem('app_theme', themeName);
+}
+
+function openSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) modal.classList.add('active');
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+function toggleFormsLayout(isCompact) {
+    localStorage.setItem('compact_forms_mode', isCompact);
+    applyFormsLayout(isCompact);
+}
+
+function applyFormsLayout(isCompact) {
+    const selectEl = document.getElementById('forms-tabs-select');
+    const listEl = document.getElementById('forms-tabs-list');
+
+    if (isCompact) {
+        if (selectEl) selectEl.classList.remove('hidden');
+        if (listEl) listEl.classList.add('hidden');
+    } else {
+        if (selectEl) selectEl.classList.add('hidden');
+        if (listEl) listEl.classList.remove('hidden');
+    }
 }
 
 function toggleToolsMenu() {
@@ -62,423 +121,464 @@ function toggleToolsMenu() {
     if (menu) menu.classList.toggle('hidden');
 }
 
-// Переключение экранов
-function switchScreen(screenName) {
-    document.getElementById('quiz-screen').classList.add('hidden');
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('admin-screen').classList.add('hidden');
+function showAlert(message, icon = 'info') {
+    const alertModal = document.getElementById('custom-alert');
+    const alertMsg = document.getElementById('custom-alert-msg');
+    const alertIcon = document.getElementById('custom-alert-icon');
+    
+    if (alertMsg) alertMsg.textContent = message;
+    if (alertIcon) alertIcon.textContent = icon;
+    if (alertModal) alertModal.classList.add('active');
+}
 
-    if (screenName === 'quiz') {
-        document.getElementById('quiz-screen').classList.remove('hidden');
-    } else if (screenName === 'login') {
+function closeAlert() {
+    const alertModal = document.getElementById('custom-alert');
+    if (alertModal) alertModal.classList.remove('active');
+}
+
+/* ==========================================
+   4. РЕНДЕР ВКЛАДОК И ВЫБОР ФОРМ
+   ========================================== */
+function renderAllFormsUI() {
+    const selectEl = document.getElementById('forms-tabs-select');
+    const listEl = document.getElementById('forms-tabs-list');
+
+    if (selectEl) selectEl.innerHTML = '';
+    if (listEl) listEl.innerHTML = '';
+
+    allForms.forEach((form, index) => {
+        // Опция для Select
+        if (selectEl) {
+            const opt = document.createElement('option');
+            opt.value = index;
+            opt.textContent = form.title || `Форма №${index + 1}`;
+            if (index === currentFormIndex) opt.selected = true;
+            selectEl.appendChild(opt);
+        }
+
+        // Вкладка для горизонтальной панели
+        if (listEl) {
+            const tab = document.createElement('div');
+            tab.className = `form-tab ${index === currentFormIndex ? 'active-tab' : ''}`;
+            tab.textContent = form.title || `Форма №${index + 1}`;
+            tab.onclick = () => switchForm(index);
+            listEl.appendChild(tab);
+        }
+    });
+}
+
+function switchForm(index) {
+    currentFormIndex = parseInt(index);
+    renderAllFormsUI();
+    loadCurrentForm();
+}
+
+function switchFormFromSelect(index) {
+    switchForm(index);
+}
+
+function createNewFormPrompt() {
+    const title = prompt("Введите название новой формы:");
+    if (title && title.trim()) {
+        allForms.push({
+            title: title.trim(),
+            questions: []
+        });
+        currentFormIndex = allForms.length - 1;
+        saveFormsToStorage();
+        renderAllFormsUI();
+        loadCurrentForm();
+    }
+}
+
+/* ==========================================
+   5. ДВИЖОК ТЕСТИРОВАНИЯ (QUIZ ENGINE)
+   ========================================== */
+function loadCurrentForm() {
+    currentQuestionIndex = 0;
+    userAnswers = {};
+    
+    document.getElementById('quiz-screen').classList.remove('hidden');
+    document.getElementById('quiz-box').classList.remove('hidden');
+    document.getElementById('result-box').classList.add('hidden');
+    document.getElementById('admin-screen').classList.add('hidden');
+    document.getElementById('login-screen').classList.add('hidden');
+
+    renderQuestion();
+}
+
+function renderQuestion() {
+    stopTimer();
+    const form = allForms[currentFormIndex];
+    if (!form || !form.questions || form.questions.length === 0) {
+        document.getElementById('question-body').innerHTML = '<p style="text-align:center; color:var(--text-muted);">В этой форме пока нет вопросов. Войдите в Панель Админа, чтобы добавить их.</p>';
+        document.getElementById('current-number').textContent = '0';
+        document.getElementById('total-number').textContent = '0';
+        document.getElementById('progress').style.width = '0%';
+        document.getElementById('next-btn').classList.add('hidden');
+        return;
+    }
+
+    document.getElementById('next-btn').classList.remove('hidden');
+    const q = form.questions[currentQuestionIndex];
+    
+    // Обновляем счетчики и прогресс-бар
+    document.getElementById('current-number').textContent = currentQuestionIndex + 1;
+    document.getElementById('total-number').textContent = form.questions.length;
+    const progressPercent = ((currentQuestionIndex + 1) / form.questions.length) * 100;
+    document.getElementById('progress').style.width = `${progressPercent}%`;
+
+    // Таймер
+    const timerDisplay = document.getElementById('timer-display');
+    if (q.timer && q.timer > 0) {
+        timerDisplay.classList.remove('hidden');
+        startTimer(q.timer);
+    } else {
+        timerDisplay.classList.add('hidden');
+    }
+
+    // Подсказка
+    const hintBtn = document.getElementById('hint-btn');
+    const hintBox = document.getElementById('hint-box');
+    hintBox.classList.add('hidden');
+    if (q.hintText) {
+        hintBtn.classList.remove('hidden');
+        document.getElementById('hint-text').textContent = q.hintText;
+    } else {
+        hintBtn.classList.add('hidden');
+    }
+
+    // Рендер тела вопроса
+    const body = document.getElementById('question-body');
+    body.innerHTML = `<h3 style="margin-bottom:15px; font-weight:600;">${q.title}</h3>`;
+
+    switch (q.type) {
+        case 'radio':
+            q.options.forEach((opt, idx) => {
+                body.innerHTML += `
+                    <label class="option">
+                        <input type="radio" name="q_opt" value="${idx}" onchange="saveAnswer(${idx})">
+                        <span>${opt}</span>
+                    </label>
+                `;
+            });
+            break;
+
+        case 'checkbox':
+            q.options.forEach((opt, idx) => {
+                body.innerHTML += `
+                    <label class="option">
+                        <input type="checkbox" name="q_opt" value="${idx}" onchange="saveCheckboxAnswer()">
+                        <span>${opt}</span>
+                    </label>
+                `;
+            });
+            break;
+
+        case 'text':
+            body.innerHTML += `
+                <input type="text" class="admin-input" placeholder="Введите ваш ответ..." oninput="saveAnswer(this.value.trim())">
+            `;
+            break;
+
+        case 'flashcard':
+            body.innerHTML += `
+                <div class="flashcard-container" onclick="this.querySelector('.flashcard-inner').classList.toggle('flipped')">
+                    <div class="flashcard">
+                        <p style="font-size:14px; color:var(--text-muted); margin-bottom:10px;">Нажмите, чтобы перевернуть 🃏</p>
+                        <p style="font-size:18px; font-weight:600;" id="flashcard-text">${q.title}</p>
+                    </div>
+                </div>
+            `;
+            // Для флешкарты ответ сохраняется автоматически
+            saveAnswer('viewed');
+            break;
+
+        case 'puzzle-drag':
+            let shuffled = q.options.map((opt, idx) => ({ opt, idx }));
+            body.innerHTML += `<div id="puzzle-list"></div>`;
+            const pList = document.getElementById('puzzle-list');
+            
+            shuffled.forEach((item) => {
+                pList.innerHTML += `
+                    <div class="puzzle-item" data-idx="${item.idx}">
+                        <span class="material-symbols-rounded" style="color:var(--text-muted);">drag_indicator</span>
+                        <span>${item.opt}</span>
+                    </div>
+                `;
+            });
+            savePuzzleAnswer();
+            initPuzzleEvents();
+            break;
+
+        case 'info-slide':
+            if (q.mediaUrl) {
+                body.innerHTML += `<div style="text-align:center; margin-bottom:15px;"><img src="${q.mediaUrl}" style="max-width:100%; border-radius:12px;"></div>`;
+            }
+            saveAnswer('viewed');
+            break;
+
+        default:
+            body.innerHTML += `<p style="color:var(--text-muted);">Тип вопроса поддерживается в упрощенном режиме.</p>`;
+            saveAnswer('viewed');
+    }
+}
+
+/* Сохранение ответов */
+function saveAnswer(val) {
+    userAnswers[currentQuestionIndex] = val;
+}
+
+function saveCheckboxAnswer() {
+    const checked = Array.from(document.querySelectorAll('input[name="q_opt"]:checked')).map(el => parseInt(el.value));
+    userAnswers[currentQuestionIndex] = checked;
+}
+
+function savePuzzleAnswer() {
+    const items = Array.from(document.querySelectorAll('.puzzle-item')).map(el => parseInt(el.getAttribute('data-idx')));
+    userAnswers[currentQuestionIndex] = items;
+}
+
+/* Простой Drag/Reorder для пазлов */
+function initPuzzleEvents() {
+    const list = document.getElementById('puzzle-list');
+    if (!list) return;
+
+    let dragItem = null;
+
+    list.querySelectorAll('.puzzle-item').forEach(item => {
+        item.draggable = true;
+        
+        item.addEventListener('dragstart', () => {
+            dragItem = item;
+            item.style.opacity = '0.5';
+        });
+
+        item.addEventListener('dragend', () => {
+            dragItem = null;
+            item.style.opacity = '1';
+            savePuzzleAnswer();
+        });
+
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const bounding = item.getBoundingClientRect();
+            const offset = e.clientY - bounding.top - (bounding.height / 2);
+            if (offset > 0) {
+                item.after(dragItem);
+            } else {
+                item.before(dragItem);
+            }
+        });
+    });
+}
+
+function nextStep() {
+    const form = allForms[currentFormIndex];
+    const q = form.questions[currentQuestionIndex];
+
+    if (q.required && (userAnswers[currentQuestionIndex] === undefined || userAnswers[currentQuestionIndex] === '')) {
+        showAlert('Пожалуйста, ответьте на обязательный вопрос!', 'warning');
+        return;
+    }
+
+    if (currentQuestionIndex < form.questions.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+    } else {
+        calculateResults();
+    }
+}
+
+/* ==========================================
+   6. ПОДСЧЕТ РЕЗУЛЬТАТОВ (БЕЗ ОШИБОК НА ФЛЕШКАРТАХ)
+   ========================================== */
+function calculateResults() {
+    stopTimer();
+    document.getElementById('quiz-box').classList.add('hidden');
+    document.getElementById('result-box').classList.remove('hidden');
+
+    const form = allForms[currentFormIndex];
+    let score = 0;
+    let maxPossibleScore = 0;
+    let reviewHTML = '';
+
+    form.questions.forEach((q, idx) => {
+        const userAns = userAnswers[idx];
+
+        // 🃏 ФЛЕШКАРТЫ И ИНФО-СЛАЙДЫ: Не влияют на ошибки и общий балл
+        if (q.type === 'flashcard' || q.type === 'info-slide') {
+            reviewHTML += `
+                <div class="review-item grey-item">
+                    <strong>${q.title}</strong>
+                    <p style="color:var(--text-muted); font-size:13px; margin-top:4px;">
+                        🃏 Материал изучен ${q.flashcardAnswer ? `(Оборот: ${q.flashcardAnswer})` : ''}
+                    </p>
+                </div>
+            `;
+            return; // Пропускаем проверку баллов
+        }
+
+        maxPossibleScore++;
+        let isCorrect = false;
+
+        if (q.type === 'radio') {
+            if (q.correctChoices && q.correctChoices.includes(userAns)) {
+                isCorrect = true;
+            }
+        } else if (q.type === 'checkbox') {
+            if (Array.isArray(userAns) && q.correctChoices &&
+                userAns.length === q.correctChoices.length &&
+                userAns.every(v => q.correctChoices.includes(v))) {
+                isCorrect = true;
+            }
+        } else if (q.type === 'text') {
+            if (q.correctText && q.correctText.some(t => t.toLowerCase().trim() === String(userAns).toLowerCase().trim())) {
+                isCorrect = true;
+            }
+        } else if (q.type === 'puzzle-drag') {
+            if (Array.isArray(userAns) && q.correctChoices &&
+                JSON.stringify(userAns) === JSON.stringify(q.correctChoices)) {
+                isCorrect = true;
+            }
+        }
+
+        if (isCorrect) {
+            score++;
+            reviewHTML += `
+                <div class="review-item correct-item">
+                    <strong>${q.title}</strong>
+                    <p class="text-success" style="font-size:13px; margin-top:4px;">✓ Верно</p>
+                </div>
+            `;
+        } else {
+            reviewHTML += `
+                <div class="review-item incorrect-item">
+                    <strong>${q.title}</strong>
+                    <p class="text-danger" style="font-size:13px; margin-top:4px;">✗ Неверно</p>
+                </div>
+            `;
+        }
+    });
+
+    document.getElementById('final-score').textContent = `${score} / ${maxPossibleScore}`;
+    document.getElementById('review-box').innerHTML = reviewHTML;
+}
+
+function restartQuiz() {
+    loadCurrentForm();
+}
+
+/* Таймер */
+function startTimer(seconds) {
+    currentTimerSeconds = seconds;
+    document.getElementById('timer-seconds').textContent = currentTimerSeconds;
+    
+    timerInterval = setInterval(() => {
+        currentTimerSeconds--;
+        document.getElementById('timer-seconds').textContent = currentTimerSeconds;
+        if (currentTimerSeconds <= 0) {
+            stopTimer();
+            nextStep(); // Автоматический переход при истечении времени
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+}
+
+function toggleHintModal() {
+    document.getElementById('hint-box').classList.toggle('hidden');
+}
+
+/* ==========================================
+   7. РАБОЧИЙ ЭКСПОРТ И ИМПОРТ JSON
+   ========================================== */
+function exportFormToJSON() {
+    const currentForm = allForms[currentFormIndex];
+    if (!currentForm) {
+        showAlert('Нет выбранной формы для экспорта', 'error');
+        return;
+    }
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentForm, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `${currentForm.title || 'form'}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+
+    showAlert('Форма успешно экспортирована в файл JSON!', 'check_circle');
+}
+
+function importFormFromJSON(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+
+            // Валидация загружаемого файла
+            if (importedData && importedData.questions && Array.isArray(importedData.questions)) {
+                allForms.push(importedData);
+            } else if (Array.isArray(importedData)) {
+                allForms.push(...importedData);
+            } else {
+                throw new Error('Файл не содержит корректных вопросов.');
+            }
+
+            saveFormsToStorage();
+            currentFormIndex = allForms.length - 1;
+            renderAllFormsUI();
+            loadCurrentForm();
+            
+            if (!document.getElementById('admin-screen').classList.contains('hidden')) {
+                renderAdminQuestionsList();
+            }
+
+            showAlert('Новая форма успешно импортирована!', 'check_circle');
+        } catch (err) {
+            showAlert('Ошибка импорта: ' + err.message, 'error');
+        }
+        input.value = ''; // Сброс поля выбора файла
+    };
+    reader.readAsText(file);
+}
+
+/* ==========================================
+   8. ПАНЕЛЬ АДМИНИСТРАТОРА (ADMIN PANEL)
+   ========================================== */
+function switchScreen(screen) {
+    if (screen === 'login') {
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('admin-screen').classList.add('hidden');
         document.getElementById('login-screen').classList.remove('hidden');
-    } else if (screenName === 'admin') {
+    } else if (screen === 'admin') {
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('admin-screen').classList.remove('hidden');
-        renderAdminQuestions();
+        renderAdminQuestionsList();
     }
 }
 
 function tryLogin() {
     const u = document.getElementById('login-user').value;
     const p = document.getElementById('login-pass').value;
+
     if (u === 'admin' && p === '1234') {
         switchScreen('admin');
     } else {
-        alert('Неверный логин или пароль!');
+        showAlert('Неверный логин или пароль!', 'lock');
     }
 }
 
 function logout() {
-    switchScreen('quiz');
+    loadCurrentForm();
 }
-// ==========================================
-// 2. УПРАВЛЕНИЕ ФОРМАМИ И ВКЛАДКАМИ
-// ==========================================
-
-function getActiveForm() {
-    return forms.find(f => f.id === currentFormId) || forms[0];
-}
-
-function saveForms() {
-    localStorage.setItem('quiz_forms', JSON.stringify(forms));
-    localStorage.setItem('active_form_id', currentFormId);
-}
-
-function renderTabs() {
-    const listEl = document.getElementById('forms-tabs-list');
-    if (!listEl) return;
-    listEl.innerHTML = '';
-    
-    forms.forEach((form) => {
-        const tab = document.createElement('div');
-        tab.className = `form-tab ${form.id === currentFormId ? 'active-tab' : ''}`;
-        tab.innerHTML = `
-            <span onclick="switchForm('${form.id}')">${form.title}</span>
-            ${forms.length > 1 ? `
-                <button class="tab-action-btn" style="background:none; border:none; color:inherit; cursor:pointer;" onclick="deleteForm('${form.id}', event)">
-                    <span class="material-symbols-rounded" style="font-size:16px;">close</span>
-                </button>
-            ` : ''}
-        `;
-        listEl.appendChild(tab);
-    });
-}
-
-function switchForm(id) {
-    currentFormId = id;
-    currentQuestionIndex = 0;
-    userAnswers = {};
-    userHintsUsed = {};
-    saveForms();
-    renderTabs();
-    startQuiz();
-}
-
-function createNewFormPrompt() {
-    const title = prompt('Введите название новой формы:', `Форма ${forms.length + 1}`);
-    if (title && title.trim()) {
-        const newForm = {
-            id: 'form-' + Date.now(),
-            title: title.trim(),
-            questions: []
-        };
-        forms.push(newForm);
-        switchForm(newForm.id);
-    }
-}
-
-function deleteForm(id, e) {
-    e.stopPropagation();
-    if (forms.length <= 1) {
-        alert('Нельзя удалить единственную форму!');
-        return;
-    }
-    if (confirm('Вы уверены, что хотите удалить эту форму?')) {
-        forms = forms.filter(f => f.id !== id);
-        if (currentFormId === id) currentFormId = forms[0].id;
-        saveForms();
-        renderTabs();
-        startQuiz();
-    }
-}
-
-function generateShareLink() {
-    const url = window.location.href.split('?')[0] + '?formId=' + currentFormId;
-    navigator.clipboard.writeText(url);
-    alert('Ссылка скопирована в буфер обмена!', 'share');
-}
-
-function printCurrentForm() {
-    window.print();
-}
-// ==========================================
-// 3. ДВИЖОК ТЕСТИРОВАНИЯ И РЕНДЕР
-// ==========================================
-
-function startQuiz() {
-    currentQuestionIndex = 0;
-    score = 0;
-    userAnswers = {};
-    userHintsUsed = {};
-    document.getElementById('quiz-box').classList.remove('hidden');
-    document.getElementById('result-box').classList.add('hidden');
-    renderQuestion();
-}
-
-function toggleHintModal() {
-    const hintBox = document.getElementById('hint-box');
-    if (hintBox) {
-        hintBox.classList.toggle('hidden');
-        if (!hintBox.classList.contains('hidden')) {
-            userHintsUsed[currentQuestionIndex] = true; // Подсказка использована!
-        }
-    }
-}
-
-function renderQuestion() {
-    clearInterval(timerInterval);
-    const form = getActiveForm();
-    const bodyEl = document.getElementById('question-body');
-    const totalEl = document.getElementById('total-number');
-    const currentEl = document.getElementById('current-number');
-    const progressEl = document.getElementById('progress');
-    const timerBox = document.getElementById('timer-display');
-    const hintBtn = document.getElementById('hint-btn');
-    const hintBox = document.getElementById('hint-box');
-
-    if (!form.questions || form.questions.length === 0) {
-        bodyEl.innerHTML = '<p style="text-align:center;">В этой форме пока нет вопросов.</p>';
-        totalEl.innerText = '0';
-        currentEl.innerText = '0';
-        progressEl.style.width = '0%';
-        return;
-    }
-
-    const q = form.questions[currentQuestionIndex];
-    totalEl.innerText = form.questions.length;
-    currentEl.innerText = currentQuestionIndex + 1;
-    progressEl.style.width = `${((currentQuestionIndex + 1) / form.questions.length) * 100}%`;
-
-    // Настройка таймера
-    if (q.timer && q.timer > 0) {
-        timeLeft = q.timer;
-        document.getElementById('timer-seconds').innerText = timeLeft;
-        timerBox.classList.remove('hidden');
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            document.getElementById('timer-seconds').innerText = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                nextStep();
-            }
-        }, 1000);
-    } else {
-        timerBox.classList.add('hidden');
-    }
-
-    // Подсказка
-    if (q.hintText) {
-        hintBtn.classList.remove('hidden');
-        document.getElementById('hint-text').innerText = q.hintText;
-    } else {
-        hintBtn.classList.add('hidden');
-        hintBox.classList.add('hidden');
-    }
-
-    let html = `<h3 style="margin-bottom:20px;">${q.title}</h3>`;
-
-    if (q.type === 'radio') {
-        q.options.forEach((opt, idx) => {
-            html += `
-                <label class="option">
-                    <input type="radio" name="q_opt" value="${idx}" ${userAnswers[currentQuestionIndex] === idx ? 'checked' : ''}>
-                    <span>${opt}</span>
-                </label>
-            `;
-        });
-    } else if (q.type === 'checkbox') {
-        const selected = userAnswers[currentQuestionIndex] || [];
-        q.options.forEach((opt, idx) => {
-            html += `
-                <label class="option">
-                    <input type="checkbox" name="q_opt" value="${idx}" ${selected.includes(idx) ? 'checked' : ''}>
-                    <span>${opt}</span>
-                </label>
-            `;
-        });
-    } else if (q.type === 'select') {
-        html += `<select id="q_select" class="admin-input"><option value="">Выберите ответ...</option>`;
-        q.options.forEach((opt, idx) => {
-            html += `<option value="${idx}" ${userAnswers[currentQuestionIndex] === idx ? 'selected' : ''}>${opt}</option>`;
-        });
-        html += `</select>`;
-    } else if (q.type === 'text') {
-        const val = userAnswers[currentQuestionIndex] || '';
-        html += `<input type="text" id="q_text" class="admin-input" placeholder="Введите ваш ответ..." value="${val}">`;
-    } else if (q.type === 'puzzle-drag') {
-        const currentOrder = userAnswers[currentQuestionIndex] || [...q.options].sort(() => Math.random() - 0.5);
-        userAnswers[currentQuestionIndex] = currentOrder;
-        html += `<div id="puzzle-list">`;
-        currentOrder.forEach((item, idx) => {
-            html += `
-                <div class="option puzzle-item" draggable="true" data-index="${idx}">
-                    <span class="material-symbols-rounded" style="color:var(--text-muted); cursor:grab;">drag_indicator</span>
-                    <span class="puzzle-text">${item}</span>
-                </div>
-            `;
-        });
-        html += `</div>`;
-    } else if (q.type === 'info-slide') {
-        if (q.mediaUrl) {
-            if (q.mediaType === 'video') {
-                html += `<div id="media-preview-container"><video src="${q.mediaUrl}" controls style="width:100%; border-radius:12px;"></video></div>`;
-            } else if (q.mediaType === 'audio') {
-                html += `<div id="media-preview-container"><audio src="${q.mediaUrl}" controls style="width:100%;"></audio></div>`;
-            } else {
-                html += `<div id="media-preview-container"><img src="${q.mediaUrl}" style="width:100%; border-radius:12px;" /></div>`;
-            }
-        }
-    } else if (q.type === 'flashcard') {
-        html += `
-            <div class="flashcard-container" onclick="this.querySelector('.flashcard').classList.toggle('flipped')">
-                <div class="flashcard">
-                    <div class="flashcard-front">
-                        <div class="flashcard-word">${q.title}</div>
-                        <span style="font-size:12px; color:var(--text-muted);">Нажмите, чтобы перевернуть</span>
-                    </div>
-                    <div class="flashcard-back">
-                        <div class="flashcard-word">${q.flashcardAnswer || 'Нет перевода'}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    } else if (q.type === 'voice_card') {
-        html += `
-            <div class="voice-card">
-                <p>Произнесите ответ голосом:</p>
-                <button class="voice-btn" onclick="alert('Голосовой ввод активирован')">
-                    <span class="material-symbols-rounded">mic</span> Говорить
-                </button>
-            </div>
-        `;
-    }
-
-    bodyEl.innerHTML = html;
-
-    if (q.type === 'puzzle-drag') {
-        initDragAndDrop();
-    }
-}
-// ==========================================
-// 4. ДРАГ-ЭНД-ДРОП И СОХРАНЕНИЕ ОТВЕТОВ
-// ==========================================
-
-function initDragAndDrop() {
-    const list = document.getElementById('puzzle-list');
-    if (!list) return;
-    let dragSrcEl = null;
-
-    const items = list.querySelectorAll('.puzzle-item');
-    items.forEach(item => {
-        item.addEventListener('dragstart', function(e) {
-            dragSrcEl = this;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', this.innerHTML);
-        });
-
-        item.addEventListener('dragover', function(e) {
-            if (e.preventDefault) e.preventDefault();
-            return false;
-        });
-
-        item.addEventListener('drop', function(e) {
-            if (e.stopPropagation) e.stopPropagation();
-            if (dragSrcEl !== this) {
-                const tempHtml = this.innerHTML;
-                this.innerHTML = dragSrcEl.innerHTML;
-                dragSrcEl.innerHTML = tempHtml;
-
-                const newOrder = Array.from(list.querySelectorAll('.puzzle-text')).map(el => el.innerText);
-                userAnswers[currentQuestionIndex] = newOrder;
-            }
-            return false;
-        });
-    });
-}
-
-function saveCurrentAnswer() {
-    const form = getActiveForm();
-    if (!form.questions.length) return;
-    const q = form.questions[currentQuestionIndex];
-
-    if (q.type === 'radio') {
-        const checked = document.querySelector('input[name="q_opt"]:checked');
-        if (checked) userAnswers[currentQuestionIndex] = parseInt(checked.value);
-    } else if (q.type === 'checkbox') {
-        const checked = Array.from(document.querySelectorAll('input[name="q_opt"]:checked')).map(c => parseInt(c.value));
-        userAnswers[currentQuestionIndex] = checked;
-    } else if (q.type === 'select') {
-        const sel = document.getElementById('q_select');
-        if (sel && sel.value !== '') userAnswers[currentQuestionIndex] = parseInt(sel.value);
-    } else if (q.type === 'text') {
-        const txt = document.getElementById('q_text');
-        if (txt) userAnswers[currentQuestionIndex] = txt.value.trim();
-    }
-}
-
-function nextStep() {
-    saveCurrentAnswer();
-    const form = getActiveForm();
-
-    if (currentQuestionIndex < form.questions.length - 1) {
-        currentQuestionIndex++;
-        renderQuestion();
-    } else {
-        finishQuiz();
-    }
-}
-// ==========================================
-// 5. ПОДСЧЕТ И ОТОБРАЖЕНИЕ (4 ЦВЕТА КАРТОЧЕК)
-// ==========================================
-
-function finishQuiz() {
-    clearInterval(timerInterval);
-    document.getElementById('quiz-box').classList.add('hidden');
-    document.getElementById('result-box').classList.remove('hidden');
-
-    const form = getActiveForm();
-    score = 0;
-    let reviewHtml = '';
-
-    form.questions.forEach((q, idx) => {
-        const userAns = userAnswers[idx];
-        let isCorrect = false;
-        let statusClass = 'incorrect-item';
-        let statusText = 'Неверно ❌';
-        let statusSpanClass = 'text-danger';
-
-        // 1. Ручная проверка руководителем (Желтый)
-        if (q.manualCheck) {
-            statusClass = 'yellow-item';
-            statusText = 'На проверке у руководителя ⏳';
-            statusSpanClass = 'text-warning';
-        } 
-        // 2. Использована подсказка (Серый)
-        else if (userHintsUsed[idx]) {
-            statusClass = 'grey-item';
-            statusText = 'Использована подсказка 💡';
-            statusSpanClass = 'text-hint-used';
-        } 
-        // 3. Зеленый или Красный
-        else {
-            if (q.type === 'radio' || q.type === 'select') {
-                if (q.correctChoices && q.correctChoices.includes(userAns)) isCorrect = true;
-            } else if (q.type === 'checkbox') {
-                if (Array.isArray(userAns) && Array.isArray(q.correctChoices)) {
-                    const sUser = [...userAns].sort().join(',');
-                    const sCorr = [...q.correctChoices].sort().join(',');
-                    if (sUser === sCorr) isCorrect = true;
-                }
-            } else if (q.type === 'text') {
-                if (q.correctTextAnswers && q.correctTextAnswers.map(t => t.toLowerCase()).includes((userAns || '').toLowerCase())) {
-                    isCorrect = true;
-                }
-            } else if (q.type === 'puzzle-drag') {
-                if (Array.isArray(userAns) && JSON.stringify(userAns) === JSON.stringify(q.options)) {
-                    isCorrect = true;
-                }
-            } else if (q.type === 'info-slide' || q.type === 'flashcard') {
-                isCorrect = true;
-            }
-
-            if (isCorrect) {
-                score++;
-                statusClass = 'correct-item';
-                statusText = 'Верно ✅';
-                statusSpanClass = 'text-success';
-            }
-        }
-
-        reviewHtml += `
-            <div class="review-item ${statusClass}">
-                <strong>${idx + 1}. ${q.title}</strong><br/>
-                <span class="${statusSpanClass}">
-                    ${statusText}
-                </span>
-            </div>
-        `;
-    });
-
-    document.getElementById('final-score').innerText = `${score} / ${form.questions.length}`;
-    document.getElementById('review-box').innerHTML = reviewHtml;
-}
-
-function restartQuiz() {
-    startQuiz();
-}
-// ==========================================
-// 6. АДМИНКА - СПИСОК ВОПРОСОВ И КНОПКИ
-// ==========================================
 
 function toggleAddQuestionForm() {
     document.getElementById('admin-add-form').classList.toggle('hidden');
@@ -486,210 +586,104 @@ function toggleAddQuestionForm() {
 
 function toggleAdminFields() {
     const type = document.getElementById('new-type').value;
+    
     document.getElementById('admin-choices-fields').classList.toggle('hidden', !['radio', 'checkbox', 'select', 'puzzle-drag'].includes(type));
-    document.getElementById('admin-text-fields').classList.toggle('hidden', !['text', 'voice_card'].includes(type));
+    document.getElementById('admin-text-fields').classList.toggle('hidden', type !== 'text');
     document.getElementById('flashcard-answer-box').classList.toggle('hidden', type !== 'flashcard');
     document.getElementById('media-upload-box').classList.toggle('hidden', type !== 'info-slide');
 }
 
-function renderAdminQuestions() {
-    const form = getActiveForm();
-    const listEl = document.getElementById('admin-questions-list');
-    if (!listEl) return;
-    listEl.innerHTML = '';
-
-    form.questions.forEach((q, idx) => {
-        const card = document.createElement('div');
-        card.className = 'gcard';
-        card.innerHTML = `
-            <div class="gcard-header">
-                <span class="gcard-num">#${idx + 1}</span>
-                <span class="gcard-badge">${q.type}</span>
-            </div>
-            <div class="gcard-title">${q.title}</div>
-            <div class="gcard-actions" style="display:flex; gap:8px; margin-top:10px;">
-                <button onclick="editQuestion(${idx})" class="btn-secondary" style="width:auto; margin:0;">
-                    <span class="material-symbols-rounded">edit</span> Изменить
-                </button>
-                <button onclick="previewQuestionItem(${idx})" class="btn-secondary" style="width:auto; margin:0;">
-                    <span class="material-symbols-rounded">visibility</span> Просмотреть
-                </button>
-                <button class="btn-secondary" style="width:auto; margin:0; color:var(--danger);" onclick="deleteQuestion(${idx})">
-                    <span class="material-symbols-rounded">delete</span> Удалить
-                </button>
-            </div>
-        `;
-        listEl.appendChild(card);
-    });
-}
-
-function previewQuestionItem(index) {
-    const form = getActiveForm();
-    const q = form.questions[index];
-    alert(`Предпросмотр вопроса #${index + 1}:\n\nТип: ${q.type}\nТекст: ${q.title}`, 'visibility');
-}
-
-function editQuestion(index) {
-    const form = getActiveForm();
-    const q = form.questions[index];
-    
-    document.getElementById('new-type').value = q.type;
-    toggleAdminFields();
-    document.getElementById('new-title').value = q.title;
-    
-    if (q.options) {
-        document.getElementById('new-options').value = q.options.join(', ');
-    }
-    if (q.correctChoices) {
-        document.getElementById('new-correct-choices').value = q.correctChoices.join(', ');
-    }
-    if (q.correctTextAnswers) {
-        document.getElementById('new-correct-text').value = q.correctTextAnswers.join(', ');
-    }
-    if (q.flashcardAnswer) {
-        document.getElementById('new-flashcard-answer').value = q.flashcardAnswer;
-    }
-    if (document.getElementById('new-manual-check')) {
-        document.getElementById('new-manual-check').checked = !!q.manualCheck;
-    }
-
-    form.questions.splice(index, 1);
-    saveForms();
-    renderAdminQuestions();
-    
-    document.getElementById('admin-add-form').classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    alert('Вопрос загружен в форму редактирования!', 'edit');
-}
-
-function deleteQuestion(index) {
-    const form = getActiveForm();
-    if (confirm('Удалить этот вопрос?')) {
-        form.questions.splice(index, 1);
-        saveForms();
-        renderAdminQuestions();
-    }
-}
-// ==========================================
-// 7. СОЗДАНИЕ ВОПРОСА, ИМПОРТ/ЭКСПОРТ И СТАРТ
-// ==========================================
-
-let tempMediaUrl = '';
-let tempMediaType = 'image';
-
-function handleMediaUploadPreview(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        tempMediaUrl = e.target.result;
-        if (file.type.startsWith('video/')) tempMediaType = 'video';
-        else if (file.type.startsWith('audio/')) tempMediaType = 'audio';
-        else tempMediaType = 'image';
-
-        const container = document.getElementById('media-preview-container');
-        if (container) {
-            if (tempMediaType === 'video') {
-                container.innerHTML = `<video src="${tempMediaUrl}" controls style="max-width:100%; height:150px;"></video>`;
-            } else if (tempMediaType === 'audio') {
-                container.innerHTML = `<audio src="${tempMediaUrl}" controls></audio>`;
-            } else {
-                container.innerHTML = `<img src="${tempMediaUrl}" style="max-width:100%; height:150px;" />`;
-            }
-        }
-    };
-    reader.readAsDataURL(file);
-}
-
 function addQuestion() {
-    const title = document.getElementById('new-title').value.trim();
+    const form = allForms[currentFormIndex];
     const type = document.getElementById('new-type').value;
+    const title = document.getElementById('new-title').value.trim();
 
     if (!title) {
-        alert('Введите текст вопроса!');
+        showAlert('Введите текст вопроса!', 'warning');
         return;
     }
 
-    const form = getActiveForm();
-    const q = {
+    const newQ = {
         type: type,
         title: title,
-        required: document.getElementById('new-required').checked,
-        manualCheck: document.getElementById('new-manual-check') ? document.getElementById('new-manual-check').checked : false
+        required: document.getElementById('new-required').checked
     };
 
+    // Настройки вариантов ответа
     if (['radio', 'checkbox', 'select', 'puzzle-drag'].includes(type)) {
-        const rawOpts = document.getElementById('new-options').value;
-        q.options = rawOpts.split(',').map(s => s.trim()).filter(Boolean);
-        const rawCorr = document.getElementById('new-correct-choices').value;
-        q.correctChoices = rawCorr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-    } else if (['text', 'voice_card'].includes(type)) {
-        const rawCorrText = document.getElementById('new-correct-text').value;
-        q.correctTextAnswers = rawCorrText.split(',').map(s => s.trim()).filter(Boolean);
+        const opts = document.getElementById('new-options').value.split(',').map(s => s.trim()).filter(Boolean);
+        const correct = document.getElementById('new-correct-choices').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+        newQ.options = opts;
+        newQ.correctChoices = correct;
+    } else if (type === 'text') {
+        newQ.correctText = document.getElementById('new-correct-text').value.split(',').map(s => s.trim()).filter(Boolean);
     } else if (type === 'flashcard') {
-        q.flashcardAnswer = document.getElementById('new-flashcard-answer').value.trim();
-    } else if (type === 'info-slide') {
-        q.mediaUrl = tempMediaUrl;
-        q.mediaType = tempMediaType;
+        newQ.flashcardAnswer = document.getElementById('new-flashcard-answer').value.trim();
+    } else if (type === 'info-slide' && uploadedMediaBase64) {
+        newQ.mediaUrl = uploadedMediaBase64;
     }
 
-    if (document.getElementById('toggle-timer-input').checked) {
-        q.timer = parseInt(document.getElementById('new-timer').value) || 20;
-    }
-
+    // Подсказка и таймер
     if (document.getElementById('toggle-hint-input').checked) {
-        q.hintText = document.getElementById('new-hint-text').value.trim();
+        newQ.hintText = document.getElementById('new-hint-text').value.trim();
+    }
+    if (document.getElementById('toggle-timer-input').checked) {
+        newQ.timer = parseInt(document.getElementById('new-timer').value) || 20;
     }
 
-    form.questions.push(q);
-    saveForms();
-    renderAdminQuestions();
+    form.questions.push(newQ);
+    saveFormsToStorage();
+    renderAdminQuestionsList();
     toggleAddQuestionForm();
-    alert('Вопрос успешно сохранён!', 'check_circle');
+    showAlert('Вопрос успешно сохранён!', 'check_circle');
 }
 
-function exportFormToJSON() {
-    const form = getActiveForm();
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(form, null, 2));
-    const dlAnchorElem = document.createElement('a');
-    dlAnchorElem.setAttribute("href", dataStr);
-    dlAnchorElem.setAttribute("download", `${form.title}.json`);
-    dlAnchorElem.click();
+function renderAdminQuestionsList() {
+    const list = document.getElementById('admin-questions-list');
+    const form = allForms[currentFormIndex];
+    if (!list || !form) return;
+
+    list.innerHTML = `<h3>Вопросы формы "${form.title}" (${form.questions.length}):</h3>`;
+
+    form.questions.forEach((q, idx) => {
+        list.innerHTML += `
+            <div class="gcard" style="margin-top:10px; display:flex; justify-size:space-between; align-items:center;">
+                <div>
+                    <strong>${idx + 1}. ${q.title}</strong>
+                    <span style="font-size:12px; color:var(--text-muted); display:block;">Тип: ${q.type}</span>
+                </div>
+                <button onclick="deleteQuestion(${idx})" class="btn" style="background:#d32f2f; padding:6px 12px; font-size:12px;">Удалить</button>
+            </div>
+        `;
+    });
 }
 
-function importFormFromJSON(input) {
+function deleteQuestion(idx) {
+    allForms[currentFormIndex].questions.splice(idx, 1);
+    saveFormsToStorage();
+    renderAdminQuestionsList();
+}
+
+function handleMediaUploadPreview(input) {
     const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const imported = JSON.parse(e.target.result);
-            if (imported && imported.title && Array.isArray(imported.questions)) {
-                imported.id = 'form-' + Date.now();
-                forms.push(imported);
-                switchForm(imported.id);
-                alert('Форма импортирована!', 'check_circle');
-            } else {
-                alert('Неверный формат JSON.');
-            }
-        } catch (err) {
-            alert('Ошибка чтения файла.');
-        }
-    };
-    reader.readAsText(file);
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            uploadedMediaBase64 = e.target.result;
+            document.getElementById('media-preview-container').innerHTML = `<img src="${uploadedMediaBase64}" style="max-width:100px; margin-top:10px; border-radius:8px;">`;
+        };
+        reader.readAsDataURL(file);
+    }
 }
 
-// Старт приложения при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('app_theme') || 'light';
-    setTheme(savedTheme);
+/* ==========================================
+   9. ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ (ПОДЕЛИТЬСЯ И ПЕЧАТЬ)
+   ========================================== */
+function generateShareLink() {
+    navigator.clipboard.writeText(window.location.href);
+    showAlert('Ссылка на форму скопирована в буфер обмена!', 'share');
+}
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const linkFormId = urlParams.get('formId');
-    if (linkFormId && forms.some(f => f.id === linkFormId)) {
-        currentFormId = linkFormId;
-    }
-
-    renderTabs();
-    startQuiz();
-});
+function printCurrentForm() {
+    window.print();
+}
