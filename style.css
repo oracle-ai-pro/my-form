@@ -1,7 +1,8 @@
 /* ==========================================
-   1. ПЕРЕМЕННЫЕ И БАЗОВЫЕ СТИЛИ
+   1. ПЕРЕМЕННЫЕ, ТЕМЫ И НАСТРОЙКИ СКРУГЛЕНИЯ
    ========================================== */
 :root {
+    /* Базовая палитра (Светлая тема) */
     --bg-color: #e5e5e5;
     --card-bg: #f3f3f3;
     --text-color: #1f1f1f;
@@ -10,11 +11,16 @@
     --accent-hover: #1557b0;
     --border-color: #dcdcdc;
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    --radius: 16px;
-    --radius-mid: 12px;
     --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+    /* Пресет скругления по умолчанию (Rounded) */
+    --radius-lg: 16px;   /* Карточки, модальные окна */
+    --radius-md: 12px;   /* Кнопки, варианты ответов */
+    --radius-sm: 8px;    /* Инпуты, бейджи, элементы списков */
+    --radius-pill: 24px; /* Вкладки, переключатели, овальные кнопки */
 }
 
+/* 🌙 Тёмная тема */
 body.dark-theme {
     --bg-color: #121212;
     --card-bg: #050505;
@@ -26,12 +32,43 @@ body.dark-theme {
     --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
+/* ==========================================
+   ПРЕСЕТЫ СКРУГЛЕНИЯ (Переключаются в Настройках)
+   ========================================== */
+
+/* 1. Острые углы (Sharp) */
+body[data-radius="sharp"] {
+    --radius-lg: 2px;
+    --radius-md: 2px;
+    --radius-sm: 2px;
+    --radius-pill: 4px;
+}
+
+/* 2. Стандартные / Умеренные (Rounded) - подхватывается по умолчанию */
+body[data-radius="rounded"] {
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --radius-pill: 24px;
+}
+
+/* 3. Максимально мягкие / Овальные (Full) */
+body[data-radius="full"] {
+    --radius-lg: 24px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+    --radius-pill: 50px;
+}
+
+/* ==========================================
+   БАЗОВЫЕ СТИЛИ СТРАНИЦЫ
+   ========================================== */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     font-family: var(--font);
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, border-radius 0.25s ease;
 }
 
 body {
@@ -54,7 +91,7 @@ body {
 }
 
 /* ==========================================
-   2. ШАПКА, ВКЛАДКИ И КОМПАКТНЫЙ SELECT
+   2. ШАПКА, ВКЛАДКИ И КНОПКИ УПРАВЛЕНИЯ
    ========================================== */
 .forms-toolbar-container {
     display: flex;
@@ -65,7 +102,6 @@ body {
     width: 100%;
 }
 
-/* Классические вкладки */
 .forms-tabs-list {
     display: flex;
     align-items: center;
@@ -76,20 +112,20 @@ body {
 }
 
 .forms-tabs-list::-webkit-scrollbar {
-    display: none; /* Скрываем полосу скролла для эстетики */
+    display: none;
 }
 
 .form-tab {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    padding: 8px 14px;
-    border-radius: 20px;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
     font-size: 0.9rem;
     cursor: pointer;
     white-space: nowrap;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     color: var(--text-color);
     user-select: none;
 }
@@ -100,7 +136,41 @@ body {
     border-color: var(--accent-color);
 }
 
-/* Компактный режим (Select) */
+/* Кнопки переименования и удаления внутри вкладок */
+.edit-tab-btn,
+.delete-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.form-tab.active-tab .edit-tab-btn,
+.form-tab.active-tab .delete-tab-btn {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.edit-tab-btn:hover {
+    color: var(--accent-color) !important;
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.delete-tab-btn:hover {
+    color: #d32f2f !important;
+    background: rgba(211, 47, 47, 0.15);
+}
+
+.edit-tab-btn .material-symbols-rounded,
+.delete-tab-btn .material-symbols-rounded {
+    font-size: 15px;
+}
+
 .forms-select {
     flex-grow: 1;
     height: 38px;
@@ -108,7 +178,7 @@ body {
     background: var(--card-bg);
     color: var(--text-color);
     border: 1px solid var(--border-color);
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     font-size: 0.9rem;
     font-weight: 600;
     outline: none;
@@ -116,7 +186,6 @@ body {
     box-shadow: var(--shadow);
 }
 
-/* Кнопка плюса и Меню options */
 .add-form-btn, .tools-btn {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -146,7 +215,7 @@ body {
     top: 45px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-mid);
+    border-radius: var(--radius-md);
     padding: 8px;
     min-width: 220px;
     box-shadow: var(--shadow);
@@ -158,7 +227,7 @@ body {
 
 .tools-item {
     padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -194,7 +263,7 @@ body {
 .gcard, .admin-box {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     padding: 24px;
     margin-bottom: 20px;
     box-shadow: var(--shadow);
@@ -204,14 +273,14 @@ body {
     background: var(--accent-color);
     color: #fff;
     border: none;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     padding: 12px 20px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     text-align: center;
     display: inline-block;
-    transition: background 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
+    transition: background 0.2s ease, transform 0.1s ease;
 }
 
 .btn:hover {
@@ -226,7 +295,7 @@ body {
     width: 100%;
     padding: 12px;
     border: 1px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     background: var(--card-bg);
     color: var(--text-color);
     margin-bottom: 12px;
@@ -247,7 +316,7 @@ textarea.admin-input {
 .hint-box {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-mid);
+    border-radius: var(--radius-md);
     padding: 12px 16px;
     display: flex;
     align-items: center;
@@ -266,7 +335,7 @@ textarea.admin-input {
     gap: 12px;
     padding: 12px 16px;
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     margin-bottom: 10px;
     cursor: pointer;
     background: var(--card-bg);
@@ -291,7 +360,7 @@ textarea.admin-input {
 }
 
 .option input[type="radio"] { border-radius: 50%; }
-.option input[type="checkbox"] { border-radius: 6px; }
+.option input[type="checkbox"] { border-radius: var(--radius-sm); }
 
 .option input[type="radio"]:checked,
 .option input[type="checkbox"]:checked {
@@ -320,7 +389,6 @@ textarea.admin-input {
     transform: translate(-50%, -50%);
 }
 
-/* Переключатели (Toggle Switch) */
 .switch-label {
     display: flex;
     align-items: center;
@@ -350,7 +418,7 @@ textarea.admin-input {
     top: 0; left: 0; right: 0; bottom: 0;
     background-color: var(--border-color);
     transition: .3s;
-    border-radius: 24px;
+    border-radius: var(--radius-pill);
 }
 
 .slider:before {
@@ -381,7 +449,7 @@ input:checked + .slider:before {
     touch-action: manipulation;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     padding: 12px 16px;
     margin-bottom: 8px;
     cursor: grab;
@@ -397,26 +465,56 @@ input:checked + .slider:before {
     transform: scale(0.98);
 }
 
+/* 3D-Переворот Флешкарт */
 .flashcard-container {
     perspective: 1000px;
-    margin: 20px 0;
+    width: 100%;
+    min-height: 220px;
+    cursor: pointer;
+    margin: 15px 0;
 }
 
-.flashcard {
+.flashcard-inner {
+    position: relative;
     width: 100%;
-    min-height: 180px;
-    background: var(--card-bg);
+    height: 100%;
+    min-height: 220px;
+    text-align: center;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+.flashcard-container.flipped .flashcard-inner {
+    transform: rotateY(180deg);
+}
+
+.flashcard-side {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius);
+    background: var(--card-bg);
+    padding: 24px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    padding: 20px;
-    cursor: pointer;
-    text-align: center;
+    justify-content: center;
     box-shadow: var(--shadow);
-    user-select: none;
+}
+
+.flashcard-front {
+    z-index: 2;
+}
+
+.flashcard-back {
+    transform: rotateY(180deg);
+    background: var(--bg-color);
+    border-color: var(--accent-color);
 }
 
 .timer-box {
@@ -431,7 +529,7 @@ input:checked + .slider:before {
     width: 100%;
     height: 6px;
     background: var(--border-color);
-    border-radius: 3px;
+    border-radius: var(--radius-pill);
     overflow: hidden;
     margin: 15px 0;
 }
@@ -444,11 +542,11 @@ input:checked + .slider:before {
 }
 
 /* ==========================================
-   6. СТАТУСЫ РЕЗУЛЬТАТОВ И ОБЗОР
+   6. СТАТУСЫ РЕЗУЛЬТАТОВ, АДМИНКА И МОДАЛКИ
    ========================================== */
 .review-item {
     padding: 14px;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     margin-bottom: 10px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -457,17 +555,10 @@ input:checked + .slider:before {
 .correct-item { border-left: 5px solid #2e7d32; }
 .incorrect-item { border-left: 5px solid #d32f2f; }
 .grey-item { border-left: 5px solid var(--text-muted); }
-.yellow-item { border-left: 5px solid #f59e0b; }
 
 .text-success { color: #2e7d32; font-weight: 600; }
 .text-danger { color: #d32f2f; font-weight: 600; }
-.text-warning { color: #f59e0b; font-weight: 600; }
-.text-hint-used { color: var(--text-muted); font-weight: 600; }
 
-/* ==========================================
-   7. МОДАЛЬНЫЕ ОКНА И ОВЕРЛЕИ
-   ========================================== */
-/* Кастомный Alert и Модалка Настроек */
 .custom-alert-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -490,87 +581,90 @@ input:checked + .slider:before {
 .custom-alert-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     padding: 24px;
     width: 90%;
     max-width: 380px;
     box-shadow: var(--shadow);
+    text-align: center;
 }
 
-/* Модальное окно предпросмотра (Iframe) */
-.iframe-modal {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-}
-
-.iframe-container {
-    background: var(--card-bg);
-    width: 95%;
-    max-width: 600px;
-    height: 80vh;
-    border-radius: var(--radius);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow);
-}
-
-.iframe-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    background: var(--bg-color);
-    border-bottom: 1px solid var(--border-color);
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.iframe-bar button {
+.q-action-btn {
     background: transparent;
-    border: none;
-    cursor: pointer;
+    border: 1px solid var(--border-color);
     color: var(--text-color);
-    display: flex;
-    align-items: center;
-}
-
-.iframe-container iframe {
-    width: 100%;
-    flex-grow: 1;
-    border: none;
-    background: #fff;
-}
-.form-tab {
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    cursor: pointer;
+    gap: 4px;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.edit-tab-btn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 13px;
-    opacity: 0.6;
-    padding: 2px 4px;
-    border-radius: 4px;
-    transition: opacity 0.2s, background 0.2s;
+.q-action-btn:hover {
+    background: var(--bg-color);
+    border-color: var(--accent-color);
 }
 
-.edit-tab-btn:hover {
-    opacity: 1;
-    background: rgba(0, 0, 0, 0.1);
+.q-action-btn.delete-btn:hover {
+    background: rgba(211, 47, 47, 0.1);
+    border-color: #d32f2f;
+    color: #d32f2f;
 }
 
-.dark-theme .edit-tab-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
+.detail-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--border-color);
+    color: var(--text-color);
+}
+
+.detail-badge.correct {
+    background: rgba(46, 125, 50, 0.15);
+    color: #2e7d32;
+}
+
+.detail-row {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+/* ==========================================
+   ИНЛАЙН-ПОЛЕ ВВОДА (ВНУТРИ ТЕКСТА)
+   ========================================== */
+.inline-quiz-input {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text-color);
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    outline: none;
+    min-width: 140px;
+    margin: 0 6px;
+    vertical-align: middle;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Эффект при фокусе (клике) */
+.inline-quiz-input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+}
+
+/* Плейсхолдер */
+.inline-quiz-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
 }
