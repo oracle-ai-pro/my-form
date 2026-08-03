@@ -13,9 +13,14 @@
     <div class="container">
         <!-- ВЕРХНЯЯ ПАНЕЛЬ С ВКЛАДКАМИ И МЕНЮ -->
         <div class="forms-toolbar-container">
+            <!-- 1. Компактный выбор форм (Select) -->
+            <select id="forms-tabs-select" class="forms-select hidden" onchange="switchFormFromSelect(this.value)"></select>
+
+            <!-- 2. Классические вкладки -->
             <div class="forms-tabs-list" id="forms-tabs-list">
                 <!-- Динамически заполняется через JS -->
             </div>
+
             <button class="add-form-btn" onclick="createNewFormPrompt()" title="Создать новую форму">
                 <span class="material-symbols-rounded">add</span>
             </button>
@@ -26,23 +31,18 @@
                     <span class="material-symbols-rounded">more_vert</span>
                 </button>
                 <div id="tools-menu" class="tools-menu hidden">
-                    <div class="tools-item" onclick="setTheme('light'); toggleToolsMenu();">
-                        <span class="material-symbols-rounded">light_mode</span> Светлая тема
-                    </div>
-                    <div class="tools-item" onclick="setTheme('dark'); toggleToolsMenu();">
-                        <span class="material-symbols-rounded">dark_mode</span> Тёмная тема
-                    </div>
-                    <div class="tools-item" onclick="setTheme('google'); toggleToolsMenu();">
-                        <span class="material-symbols-rounded">style</span> Google Forms стиль
-                    </div>
-                    <div class="tools-item" onclick="generateShareLink()">
+                    <div class="tools-item" onclick="generateShareLink(); toggleToolsMenu();">
                         <span class="material-symbols-rounded">share</span> Поделиться ссылкой
                     </div>
-                    <div class="tools-item" onclick="printCurrentForm()">
+                    <div class="tools-item" onclick="printCurrentForm(); toggleToolsMenu();">
                         <span class="material-symbols-rounded">print</span> Распечатать
                     </div>
                     <div class="tools-item" onclick="switchScreen('login'); toggleToolsMenu();">
                         <span class="material-symbols-rounded">admin_panel_settings</span> Панель админа
+                    </div>
+                    <hr style="border:none; border-top:1px solid var(--border-color); margin: 4px 0;">
+                    <div class="tools-item" onclick="openSettingsModal(); toggleToolsMenu();">
+                        <span class="material-symbols-rounded">settings</span> Настройки
                     </div>
                 </div>
             </div>
@@ -203,6 +203,45 @@
 
             <!-- СПИСОК ВОПРОСОВ -->
             <div id="admin-questions-list"></div>
+        </div>
+
+        <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК -->
+        <div id="settings-modal" class="custom-alert-overlay">
+            <div class="custom-alert-card" style="max-width:420px; text-align:left;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-rounded" style="color:var(--accent-color);">settings</span> Настройки
+                    </h3>
+                    <button onclick="closeSettingsModal()" style="background:transparent; border:none; cursor:pointer; color:var(--text-color); display:flex;">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+
+                <!-- 1. Внешний вид (Тема) -->
+                <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Тема оформления</label>
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <button class="btn" onclick="setTheme('light')" style="flex:1; padding:8px; font-size:13px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);">
+                        ☀️ Светлая
+                    </button>
+                    <button class="btn" onclick="setTheme('dark')" style="flex:1; padding:8px; font-size:13px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);">
+                        🌙 Тёмная
+                    </button>
+                </div>
+
+                <!-- 2. Отображение форм -->
+                <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Интерфейс</label>
+                <label class="switch-label" style="justify-content:space-between; margin-bottom:12px; cursor:pointer;">
+                    <span style="font-size:14px; display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-rounded" style="font-size:18px;">view_compact</span> Компактный вид форм
+                    </span>
+                    <span class="switch">
+                        <input type="checkbox" id="toggle-compact-forms" onchange="toggleFormsLayout(this.checked)">
+                        <span class="slider"></span>
+                    </span>
+                </label>
+
+                <button class="btn" onclick="closeSettingsModal()" style="width:100%; margin-top:15px;">Готово</button>
+            </div>
         </div>
 
         <!-- МОДАЛЬНОЕ ОКНО ДЛЯ ПРЕДПРОСМОТРА ВОПРОСОВ (IFRAME) -->
