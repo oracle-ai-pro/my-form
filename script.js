@@ -9,7 +9,7 @@ let timerInterval = null;
 let currentTimerSeconds = 0;
 let uploadedMediaBase64 = null;
 let promptCallback = null;
-let editingQuestionIndex = null; // null = создание нового, number = индекс редактируемого
+let editingQuestionIndex = null; 
 
 const defaultForm = {
     title: "Тестовая форма",
@@ -143,7 +143,6 @@ function closeAlert() {
     if (alertModal) alertModal.classList.remove('active');
 }
 
-/* Диалог подтверждения */
 function showConfirm(title, text, onConfirm) {
     const alertModal = document.getElementById('custom-alert');
     if (!alertModal) return;
@@ -176,7 +175,6 @@ function showConfirm(title, text, onConfirm) {
     };
 }
 
-/* Специальная ошибка для отсутствующего [input] */
 function showInlineErrorModal(onDisable, onFix) {
     const alertModal = document.getElementById('custom-alert');
     if (!alertModal) return;
@@ -348,7 +346,6 @@ function switchForm(index) {
     renderAllFormsUI();
     loadCurrentForm();
 }
-
 function createNewFormPrompt() {
     showPrompt("Введите название новой формы:", "", (title) => {
         if (title && title.trim()) {
@@ -422,7 +419,6 @@ function renderQuestion() {
     const body = document.getElementById('question-body');
     const savedVal = userAnswers[currentQuestionIndex] !== undefined ? userAnswers[currentQuestionIndex] : '';
     
-    // Подготовка заголовка (обычного или с [input])
     if (q.type === 'text' && q.useInlineInput && q.title.includes('[input]')) {
         const inputHTML = `<input type="text" class="inline-quiz-input" value="${savedVal}" placeholder="..." oninput="saveAnswer(this.value.trim())">`;
         const formattedTitle = q.title.replace('[input]', inputHTML);
@@ -711,8 +707,7 @@ function importFormFromJSON(input) {
         input.value = '';
     };
     reader.readAsText(file);
-}
-
+        }
 /* ==========================================
    7. ПАНЕЛЬ АДМИНИСТРАТОРА (СОЗДАНИЕ & РЕДАКТИРОВАНИЕ)
    ========================================== */
@@ -763,7 +758,6 @@ function toggleAdminFields() {
     document.getElementById('media-upload-box').classList.toggle('hidden', type !== 'info-slide');
 }
 
-/* СОХРАНЕНИЕ / ОБНОВЛЕНИЕ ВОПРОСА */
 function addQuestion() {
     const type = document.getElementById('new-type').value;
     const title = document.getElementById('new-title').value.trim();
@@ -775,7 +769,6 @@ function addQuestion() {
         return;
     }
 
-    // Проверка отсутствия [input]
     if (type === 'text' && useInline && !title.includes('[input]')) {
         showInlineErrorModal(
             () => {
@@ -844,7 +837,6 @@ function processSaveQuestion(type, title, useInline) {
     renderAdminQuestionsList();
 }
 
-/* ФУНКЦИЯ РЕДАКТИРОВАНИЯ ВОПРОСА */
 function editQuestion(idx) {
     const q = allForms[currentFormIndex].questions[idx];
     if (!q) return;
@@ -1022,14 +1014,23 @@ function renderAdminQuestionsList() {
     list.innerHTML = `<h3>Вопросы формы "${form.title}" (${form.questions.length}):</h3>`;
 
     form.questions.forEach((q, idx) => {
+        const isFirst = idx === 0;
+        const isLast = idx === form.questions.length - 1;
+
         list.innerHTML += `
             <div class="gcard" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
                     <strong>${idx + 1}. ${q.title}</strong>
-                    ${q.description ? `<span style="font-size:12px; color:var(--text-muted); display:block; italic;">${q.description}</span>` : ''}
+                    ${q.description ? `<span style="font-size:12px; color:var(--text-muted); display:block; font-style: italic;">${q.description}</span>` : ''}
                     <span style="font-size:11px; color:var(--accent-color); display:block; margin-top:2px;">Тип: ${q.type} ${q.useInlineInput ? '(Inline Input)' : ''}</span>
                 </div>
                 <div style="display:flex; gap:6px;">
+                    <button onclick="moveQuestionUp(${idx})" class="q-action-btn" title="Переместить вверх" ${isFirst ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
+                        <span class="material-symbols-rounded" style="font-size:18px;">arrow_upward</span>
+                    </button>
+                    <button onclick="moveQuestionDown(${idx})" class="q-action-btn" title="Переместить вниз" ${isLast ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
+                        <span class="material-symbols-rounded" style="font-size:18px;">arrow_downward</span>
+                    </button>
                     <button onclick="viewQuestionDetails(${idx})" class="q-action-btn" title="Просмотреть все данные">
                         <span class="material-symbols-rounded" style="font-size:16px;">visibility</span> Инфо
                     </button>
@@ -1043,6 +1044,26 @@ function renderAdminQuestionsList() {
             </div>
         `;
     });
+}
+
+function moveQuestionUp(idx) {
+    if (idx === 0) return; 
+    const form = allForms[currentFormIndex];
+    const temp = form.questions[idx - 1];
+    form.questions[idx - 1] = form.questions[idx];
+    form.questions[idx] = temp;
+    saveFormsToStorage();
+    renderAdminQuestionsList();
+}
+
+function moveQuestionDown(idx) {
+    const form = allForms[currentFormIndex];
+    if (idx === form.questions.length - 1) return; 
+    const temp = form.questions[idx + 1];
+    form.questions[idx + 1] = form.questions[idx];
+    form.questions[idx] = temp;
+    saveFormsToStorage();
+    renderAdminQuestionsList();
 }
 
 function deleteQuestion(idx) {
@@ -1170,7 +1191,7 @@ function printCurrentForm() {
         questionsHtml += `</div>`;
     });
 
-    const printContent = `
+   const printContent = `
         <!DOCTYPE html>
         <html lang="ru">
         <head>
