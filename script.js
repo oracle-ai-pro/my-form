@@ -707,3 +707,53 @@ function generateShareLink() {
 function printCurrentForm() {
     window.print();
 }
+// Открытие модального окна настроек
+function openSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+}
+
+// Закрытие модального окна настроек
+function closeSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+// Открытие / закрытие меню трех точек (more_vert)
+function toggleToolsMenu() {
+    const menu = document.getElementById('tools-menu');
+    if (menu) {
+        menu.classList.toggle('hidden');
+    }
+}
+
+// Переключение темы (светлая / тёмная)
+function setTheme(theme) {
+    if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+        localStorage.setItem('theme', 'dark');
+    } else {
+        document.body.classList.remove('dark-theme');
+        localStorage.setItem('theme', 'light');
+    }
+}
+
+// Переключение компактного вида форм (Select / Вкладки)
+function toggleFormsLayout(isCompact) {
+    const select = document.getElementById('forms-tabs-select');
+    const list = document.getElementById('forms-tabs-list');
+    
+    if (select && list) {
+        if (isCompact) {
+            select.classList.remove('hidden');
+            list.classList.add('hidden');
+        } else {
+            select.classList.add('hidden');
+            list.classList.remove('hidden');
+        }
+    }
+}
