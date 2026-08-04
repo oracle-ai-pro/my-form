@@ -49,7 +49,69 @@ document.addEventListener('DOMContentLoaded', () => {
     initSettings();
     renderAllFormsUI();
     loadCurrentForm();
+    checkOldDataMigration();
 });
+// Проверка наличия старых данных при входе
+function checkOldDataMigration() {
+    // Допустим, в старой версии ключи назывались иначе или лежал общий массив 'forms' / 'my_forms_old'
+    // Проверим типичные ключи старого localStorage (подставь свои ключи, если они отличались)
+    const oldData = localStorage.getItem('forms') || localStorage.getItem('quiz_data_old');
+    
+    // Также проверяем, не мигрировали ли мы уже раньше
+    const alreadyMigrated = localStorage.getItem('is_migrated_to_new');
+
+    if (oldData && !alreadyMigrated) {
+        try {
+            const parsedForms = JSON.parse(oldData);
+            if (Array.isArray(parsedForms) && parsedForms.length > 0) {
+                // Выводим список найденных старых форм в модалку
+                const listContainer = document.getElementById('migrationFormsList');
+                listContainer.innerHTML = parsedForms.map(f => `• ${f.title || 'Без названия'}`).join('<br>');
+                
+                // Показываем модальное окно
+                document.getElementById('migrationModal').style.display = 'flex';
+            }
+        } catch (e) {
+            console.error('Ошибка при чтении старых данных:', e);
+        }
+    }
+}
+
+// Кнопка подтверждения миграции
+function performMigration() {
+    try {
+        const oldData = localStorage.getItem('forms') || localStorage.getItem('quiz_data_old');
+        if (oldData) {
+            const parsedForms = JSON.parse(oldData);
+            
+            // Получаем текущие формы новой версии
+            let currentNewForms = JSON.parse(localStorage.getItem('app_forms') || '[]');
+            
+            // Объединяем (или добавляем старые к новым)
+            const mergedForms = [...currentNewForms, ...parsedForms];
+            
+            // Сохраняем в новый формат
+            localStorage.setItem('app_forms', JSON.stringify(mergedForms));
+            
+            // Помечаем, что миграция прошла успешно
+            localStorage.setItem('is_migrated_to_new', 'true');
+            
+            // Закрываем модалку и обновляем интерфейс
+            closeMigrationModal();
+            alert('Формы успешно перенесены в новую версию!');
+            location.reload(); // Перезагружаем страницу для применения
+        }
+    } catch (e) {
+        alert('Ошибка при импорте: ' + e.message);
+    }
+}
+
+function closeMigrationModal() {
+    document.getElementById('migrationModal').style.display = 'none';
+    // Помечаем флаг, чтобы больше не надоедать, если пользователь нажал «Позже»
+    localStorage.setItem('is_migrated_to_new', 'true');
+}
+
 
 /* ==========================================
    2. УПРАВЛЕНИЕ ХРАНИЛИЩЕМ (LOCALSTORAGE)
@@ -1233,4 +1295,10 @@ function printCurrentForm() {
     printWin.document.open();
     printWin.document.write(printContent);
     printWin.document.close();
+}
+function toggleExplanationFields(checkbox) {
+    const container = document.getElementById('explanationFieldsContainer');
+    if (container) {
+        container.style.display = checkbox.checked ? 'block' : 'none';
+    }
 }
