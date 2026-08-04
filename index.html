@@ -317,7 +317,18 @@
             </a>
         </div>
     </div>
-
+<!-- Модальное окно миграции со старой версии -->
+<div id="migrationModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+        <h3><span class="material-symbols-rounded">snowing</span> Обнаружены данные старой версии!</h3>
+        <p>Мы нашли ваши сохраненные формы из предыдущей версии приложения. Хотите автоматически импортировать их в новый формат?</p>
+        <div id="migrationFormsList" class="migration-list" style="margin: 15px 0; max-height: 150px; overflow-y: auto; text-align: left; font-size: 14px; opacity: 0.9;"></div>
+        <div class="modal-buttons" style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button onclick="closeMigrationModal()" class="btn-secondary">Позже</button>
+            <button onclick="performMigration()" class="btn-primary">Импортировать всё</button>
+        </div>
+    </div>
+</div>
     <script src="script.js"></script>
 </body>
 </html>
