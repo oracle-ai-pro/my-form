@@ -198,7 +198,24 @@
                 <div id="timer-config" class="hidden">
                     <input type="number" id="new-timer" class="admin-input" placeholder="Время в секундах (напр. 20)" value="20">
                 </div>
+<div class="admin-explanation-settings">
+    <label class="toggle-switch-label">
+        <input type="checkbox" id="questionHasExplanation" onchange="toggleExplanationFields(this)">
+        <span class="slider-round"></span>
+        Добавить блок Объяснения после ответа
+    </label>
 
+    <div id="explanationFieldsContainer" style="display: none; margin-top: 15px;">
+        <label>Заголовок объяснения (необязательно):</label>
+        <input type="text" id="questionExplanationTitle" placeholder="Например: А вы знали?">
+
+        <label style="margin-top: 10px; display: block;">Текст объяснения / Описание:</label>
+        <textarea id="questionExplanationText" placeholder="Подробный разбор правильного ответа..."></textarea>
+
+        <label style="margin-top: 10px; display: block;">Удерживать кнопку 'Продолжить' (таймер в сек, 0 — без удержания):</label>
+        <input type="number" id="questionHoldTimer" value="0" min="0">
+    </div>
+</div>
                 <label class="switch-label" style="margin-bottom: 12px;">
                     <span class="switch"><input type="checkbox" id="toggle-hint-input" onchange="document.getElementById('hint-config').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span>
                     Добавить подсказку
