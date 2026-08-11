@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>My Easy Form | Prestige HQ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="quiz-screen" class="quiz-container">
+    <div class="tools-dropdown">
+        <button class="tools-btn" onclick="toggleToolsMenu()">Tools ▼</button>
+        <div id="tools-menu" class="tools-menu hidden">
+            <div class="tools-item" onclick="setTheme('light')">☀️ Светлая</div>
+            <div class="tools-item" onclick="setTheme('dark')">🌙 Темная</div>
+            <div class="tools-item" onclick="generateShareLink()">🔗 Ссылка (zip)</div>
+        </div>
+    </div>
+
+    <div id="quiz-box">
+        <div class="quiz-header">
+            <div class="step-info">Вопрос <span id="current-number">1</span> из <span id="total-number">0</span></div>
+            <div id="timer-display" class="timer-box hidden">⏱️ <span id="timer-seconds">0</span>с</div>
+        </div>
+        <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
+        <div id="question-body"></div>
+        <button id="next-btn" onclick="nextStep()">Далее</button>
+    </div>
+    
+    <div id="result-box" class="result-card hidden">
+        <h2>Тест завершен! 🎉</h2>
+        <div class="score" id="final-score">0 / 0</div>
+        <p id="feedback-text"></p>
+        <button onclick="restartQuiz()">Начать заново</button>
+        <div id="review-box" class="review-container"></div>
+    </div>
+</div>
+
+<div id="login-screen" class="quiz-container hidden">
+    <h2>Вход в Admin</h2>
+    <input type="text" id="login-user" class="admin-input" placeholder="Логин">
+    <input type="password" id="login-pass" class="admin-input" placeholder="Пароль">
+    <button onclick="tryLogin()">Войти</button>
+    <button class="btn-secondary" onclick="switchScreen('quiz')">Назад</button>
+</div>
+
+<div id="admin-screen" class="admin-box hidden">
+    <h2>Панель администратора 😎</h2>
+    <button onclick="changeAdminCreds()" class="btn-secondary">🔑 Изменить логин/пароль</button>
+    <hr>
+    <h3>Добавить/Редактировать вопрос:</h3>
+    <select id="new-type" onchange="toggleAdminFields()">
+        <option value="radio">Radio</option><option value="checkbox">Checkbox</option>
+        <option value="select">Select</option><option value="text">Text</option>
+    </select>
+    <input type="text" id="new-title" class="admin-input" placeholder="Текст вопроса...">
+    <div id="admin-choices-fields">
+        <input type="text" id="new-options" class="admin-input" placeholder="Варианты через запятую">
+        <input type="text" id="new-correct-choices" class="admin-input" placeholder="Индексы ответов (0, 1)">
+    </div>
+    <div id="admin-text-fields" class="hidden">
+        <input type="text" id="new-correct-text" class="admin-input" placeholder="Правильный ответ">
+    </div>
+    <button onclick="saveAdminQuestion()">Сохранить вопрос</button>
+    
+    <h3>Список вопросов:</h3>
+    <div id="admin-questions-list"></div>
+    <button class="btn-secondary" onclick="switchScreen('quiz')">Выйти из админки</button>
+</div>
+
+<div class="footer-nav" id="footer-link"><a onclick="switchScreen('login')">🔒 Admin</a></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
