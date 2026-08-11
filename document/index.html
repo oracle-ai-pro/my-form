@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Document | Prestige HQ</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+        <div class="forms-toolbar-container">
+            <select id="forms-tabs-select" class="forms-select hidden" onchange="switchDocFromSelect(this.value)"></select>
+            <div class="forms-tabs-list" id="forms-tabs-list"></div>
+
+            <button class="add-form-btn" onclick="createNewDocPrompt()" title="Создать новый документ">
+                <span class="material-symbols-rounded">add</span>
+            </button>
+
+            <button class="tools-btn" onclick="openAiModal()" title="ИИ Генератор и Чат">
+                <span class="material-symbols-rounded">auto_awesome</span>
+            </button>
+
+            <!-- Выпадающее меню опций -->
+            <div class="tools-dropdown">
+                <button class="tools-btn" onclick="toggleToolsMenu()" title="Меню">
+                    <span class="material-symbols-rounded">more_vert</span>
+                </button>
+                <div id="tools-menu" class="tools-menu hidden">
+                    <div class="tools-item" onclick="openAiModal(); toggleToolsMenu();">
+                        <span class="material-symbols-rounded">auto_awesome</span> <span>ИИ Помощник</span>
+                    </div>
+                    <div class="tools-item" onclick="generateShareLink(); toggleToolsMenu();">
+                        <span class="material-symbols-rounded">share</span> <span>Поделиться ссылкой</span>
+                    </div>
+                    <div class="tools-item" onclick="printCurrentDoc(); toggleToolsMenu();">
+                        <span class="material-symbols-rounded">print</span> <span>Распечатать</span>
+                    </div>
+                    <div class="tools-item" onclick="openLoginModal(); toggleToolsMenu();">
+                        <span class="material-symbols-rounded">admin_panel_settings</span> <span>Панель редактора</span>
+                    </div>
+
+                    <hr style="border:none; border-top:1px solid var(--border-color); margin: 4px 0;">
+
+                    <!-- НАШИ СЕРВИСЫ -->
+                    <div style="padding: 6px 15px 2px 15px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                        Наши Сервисы
+                    </div>
+                    <div class="tools-item" onclick="window.location.href='../forms'">
+                        <span class="material-symbols-rounded">description</span> <span>Формы</span>
+                    </div>
+                    <div class="tools-item" onclick="window.location.href='../spreadsheet'">
+                        <span class="material-symbols-rounded">table_chart</span> <span>Таблицы</span>
+                    </div>
+                    <div class="tools-item" onclick="window.location.href='../slides'">
+                        <span class="material-symbols-rounded">slideshow</span> <span>Слайды</span>
+                    </div>
+
+                    <hr style="border:none; border-top:1px solid var(--border-color); margin: 4px 0;">
+
+                    <div class="tools-item" onclick="openSettingsModal(); toggleToolsMenu();">
+                        <span class="material-symbols-rounded">settings</span> <span>Настройки</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ЭКРАН ПРОСМОТРА ДОКУМЕНТА -->
+        <div id="doc-screen" class="quiz-container">
+            <div id="doc-box" class="gcard">
+                <div class="doc-header">
+                    <h1 id="doc-display-title" class="doc-title-main">Название документа</h1>
+                    <div class="doc-meta-info">
+                        <span>Страница <span id="current-number">1</span> из <span id="total-number">1</span></span>
+                        <div id="read-timer-display" class="timer-box hidden">
+                            <span class="material-symbols-rounded" style="font-size:18px;">schedule</span>
+                            <span id="timer-seconds">0</span>s
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div id="progress" class="progress-fill"></div>
+                </div>
+
+                <!-- ТЕЛО СТРАНИЦЫ/СЕКЦИИ ДОКУМЕНТА -->
+                <div id="document-body" class="doc-body-content"></div>
+
+                <div class="doc-nav-buttons">
+                    <button id="prev-btn" class="btn btn-secondary hidden" onclick="prevStep()">Назад</button>
+                    <button id="next-btn" class="btn" onclick="nextStep()">Далее</button>
+                </div>
+            </div>
+
+            <!-- ФИНАЛЬНЫЙ ЭКРАН -->
+            <div id="result-box" class="result-card gcard hidden">
+                <h2 style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <span class="material-symbols-rounded" style="color:var(--accent-color); font-size:32px;">task_alt</span> 
+                    Документ изучен!
+                </h2>
+                <p style="color:var(--text-muted); margin:10px 0 5px 0; text-align:center;">Вы успешно ознакомились со всеми разделами.</p>
+                <div id="bonus-text" style="text-align:center; color:var(--text-muted); margin-bottom:15px; font-weight:500;"></div>
+                <div id="review-box" class="review-container"></div>
+                <button class="btn" onclick="restartDocView()" style="margin-top:20px; width:100%;">Читать заново</button>
+            </div>
+        </div>
+
+        <!-- ПАНЕЛЬ РЕДАКТИРОВАНИЯ ДОКУМЕНТА -->
+        <div id="admin-screen" class="admin-box hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0;">Редактор документа</h2>
+                <button onclick="logout()" class="btn btn-secondary" style="width:auto; padding:8px 16px; margin:0;">Выйти</button>
+            </div>
+
+            <!-- ПАНЕЛЬ УПРАВЛЕНИЯ ТЕКУЩИМ ДОКУМЕНТОМ -->
+            <div style="display:flex; gap:10px; margin-bottom:20px; align-items:center; flex-wrap:wrap; background: var(--bg-color); padding: 15px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div style="flex-grow: 1; min-width: 200px;">
+                    <span style="font-size:12px; color:var(--text-muted); display:block;">Редактируемый документ:</span>
+                    <strong id="admin-current-doc-name" style="font-size: 16px;">Название</strong>
+                </div>
+                <button onclick="renameDocAtIndex(currentDocIndex)" class="btn btn-secondary" style="width:auto; padding: 6px 12px; font-size: 13px; display:flex; align-items:center; gap:4px;">
+                    <span class="material-symbols-rounded" style="font-size:16px;">edit</span> Переименовать
+                </button>
+                <button onclick="deleteDocAtIndex(currentDocIndex)" class="btn btn-secondary" style="width:auto; padding: 6px 12px; font-size: 13px; color: #e74c3c; border-color: #e74c3c; display:flex; align-items:center; gap:4px;">
+                    <span class="material-symbols-rounded" style="font-size:16px;">delete</span> Удалить
+                </button>
+            </div>
+
+            <!-- КНОПКИ ДЕЙСТВИЙ И JSON ИМПОРТА/ЭКСПОРТА -->
+            <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                <button onclick="toggleAddBlockForm()" class="btn" style="width:auto; flex-grow:1;">+ Добавить блок</button>
+                <button onclick="exportDocToJSON()" class="btn btn-secondary" style="width:auto;">Экспорт JSON</button>
+                <button onclick="document.getElementById('import-file').click()" class="btn btn-secondary" style="width:auto;">Импорт JSON</button>
+                <input type="file" id="import-file" style="display:none;" onchange="importDocFromJSON(this)" accept=".json">
+            </div>
+
+            <!-- ФОРМА СОЗДАНИЯ / РЕДАКТИРОВАНИЯ БЛОКА -->
+            <div id="admin-add-form" class="gcard hidden" style="margin-bottom:20px;">
+                <h3 id="admin-form-title" style="margin-top:0; margin-bottom:15px;">Новый элемент документа</h3>
+                
+                <label style="font-size:13px; color:var(--text-muted);">Тип блока:</label>
+                <select id="new-type" class="admin-input" onchange="toggleAdminFields()">
+                    <option value="text-block">Текстовый раздел / Параграф</option>
+                    <option value="a4-sheet">📄 Свободный Лист А4 (Rich Text)</option>
+                    <option value="interactive-fields">Форма / Поля ввода данных</option>
+                    <option value="checklist">Чек-лист / Согласование</option>
+                    <option value="info-slide">Медиа-слайд (Изображение/Документ)</option>
+                    <option value="flashcard">Карточка-выжимка (Памятка)</option>
+                </select>
+
+                <div class="admin-field">
+                    <label for="new-title">Заголовок блока/раздела:</label>
+                    <input type="text" id="new-title" class="admin-input" placeholder="Введите заголовок...">
+                </div>
+
+                <div class="admin-field" id="desc-field-box">
+                    <label for="new-description">Основной текст / Описание:</label>
+                    <textarea id="new-description" class="admin-input" style="height:100px;" placeholder="Введите содержание..."></textarea>
+                </div>
+
+                <!-- ПАНЕЛЬ РЕДАКТОРА А4 -->
+                <div id="a4-editor-box" class="hidden" style="margin-top: 15px;">
+                    <label style="font-size:13px; color:var(--text-muted); margin-bottom: 6px; display:block;">Содержимое листа А4:</label>
+                    <div class="rich-toolbar">
+                        <button type="button" class="rich-btn" onclick="execEditorCmd('bold')" title="Жирный"><b>B</b></button>
+                        <button type="button" class="rich-btn" onclick="execEditorCmd('italic')" title="Курсив"><i>I</i></button>
+                        <button type="button" class="rich-btn" onclick="execEditorCmd('underline')" title="Подчеркнутый"><u>U</u></button>
+                        <div class="toolbar-divider"></div>
+                        <button type="button" class="rich-btn" onclick="execEditorCmd('formatBlock', 'H1')">H1</button>
+                        <button type="button" class="rich-btn" onclick="execEditorCmd('formatBlock', 'H2')">H2</button>
+                        <button type="button" class="rich-btn" onclick="execEditorCmd('formatBlock', 'H3')">H3</button>
+                        <button type="button" class="rich-btn" onclick="execEditorCmd('formatBlock', 'P')">Параграф</button>
+                        <div class="toolbar-divider"></div>
+                        <button type="button" class="rich-btn" onclick="execEditorCmd('insertUnorderedList')" title="Список">• Список</button>
+                        <button type="button" class="rich-btn" onclick="execEditorCmd('removeFormat')" title="Очистить форматирование">✕</button>
+                    </div>
+                    <div id="a4-editor-content" class="a4-editor-area" contenteditable="true" placeholder="Начните печатать документ здесь..."></div>
+                </div>
+
+                <!-- Опции для интерактивных чек-листов -->
+                <div id="admin-choices-fields" class="hidden" style="margin-top:15px;">
+                    <label style="font-size:13px; color:var(--text-muted);">Пункты списка (через запятую):</label>
+                    <input type="text" id="new-options" class="admin-input" placeholder="Пункт 1, Пункт 2, Пункт 3">
+                </div>
+
+                <!-- Ответ для карточек-памяток -->
+                <div id="flashcard-answer-box" class="hidden" style="margin-top:15px;">
+                    <label style="font-size:13px; color:var(--text-muted);">Детали / Оборотная сторона памятки:</label>
+                    <input type="text" id="new-flashcard-answer" class="admin-input" placeholder="Дополнительная информация...">
+                </div>
+
+                <!-- Загрузка Медиа -->
+                <div id="media-upload-box" class="hidden" style="margin-top:15px;">
+                    <label style="font-size:13px; color:var(--text-muted);">Прикрепить медиа/скан:</label>
+                    <input type="file" id="new-media-file" class="admin-input" accept="image/*,video/*,audio/*" onchange="handleMediaUploadPreview(this)">
+                    <div id="media-preview-container"></div>
+                </div>
+
+                <!-- Настройки -->
+                <div style="margin-top:20px;">
+                    <label class="switch-label" style="margin-bottom: 12px;">
+                        <span class="switch"><input type="checkbox" id="new-required"><span class="slider"></span></span>
+                        Обязательный раздел
+                    </label>
+
+                    <label class="switch-label" style="margin-bottom: 12px;">
+                        <span class="switch"><input type="checkbox" id="toggle-timer-input" onchange="document.getElementById('timer-config').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span>
+                        Таймер чтения
+                    </label>
+                    <div id="timer-config" class="hidden">
+                        <input type="number" id="new-timer" class="admin-input" placeholder="Время (сек)" value="10">
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button class="btn" onclick="addBlock()" style="flex:1;">Сохранить блок</button>
+                    <button class="btn btn-secondary" onclick="cancelEditBlock()" style="flex:1;">Отмена</button>
+                </div>
+            </div>
+
+            <!-- СПИСОК БЛОКОВ -->
+            <div id="admin-questions-list"></div>
+        </div>
+
+        <!-- МОДАЛЬНЫЕ ОКНА -->
+        <div id="login-modal" class="custom-alert-overlay hidden">
+            <div class="custom-alert-card" style="max-width:340px; text-align:left;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-rounded" style="color:var(--accent-color);">lock</span> Вход
+                    </h3>
+                    <button onclick="closeLoginModal()" style="background:transparent; border:none; cursor:pointer; color:var(--text-color); display:flex;">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+                <input type="text" id="login-user" class="admin-input" placeholder="Логин (admin)" style="margin-bottom:10px;">
+                <input type="password" id="login-pass" class="admin-input" placeholder="Пароль (1234)" style="margin-bottom:15px;">
+                <button class="btn" onclick="tryLogin()" style="width:100%;">Войти</button>
+            </div>
+        </div>
+
+        <div id="ai-modal" class="custom-alert-overlay hidden">
+            <div class="custom-alert-card" style="max-width:520px; text-align:left;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-rounded" style="color:var(--accent-color);">auto_awesome</span> ИИ-Помощник
+                    </h3>
+                    <button onclick="closeAiModal()" style="background:transparent; border:none; cursor:pointer; color:var(--text-color); display:flex;">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:16px;">
+                    <button id="ai-tab-gen" class="btn active" onclick="switchAiMode('generate')" style="flex:1; font-size:13px; padding:8px;">Генерация</button>
+                    <button id="ai-tab-chat" class="btn btn-secondary" onclick="switchAiMode('chat')" style="flex:1; font-size:13px; padding:8px;">Чат</button>
+                </div>
+
+                <div id="ai-mode-generate-container">
+                    <label style="font-size:13px; color:var(--text-muted);">Тема документа:</label>
+                    <input type="text" id="ai-prompt-input" class="admin-input" placeholder="Например: Регламент работы..." style="margin-bottom:10px;">
+                    <button class="btn" onclick="generateAiDocument()" style="width:100%;">Сгенерировать</button>
+                </div>
+
+                <div id="ai-mode-chat-container" class="hidden">
+                    <div id="ai-chat-history" style="height:200px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-bottom:10px;"></div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="ai-chat-input" class="admin-input" placeholder="Задайте вопрос..." style="margin:0;">
+                        <button class="btn" onclick="sendAiChatMessage()" style="width:auto; padding:8px 16px;">
+                            <span class="material-symbols-rounded">send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-modal" class="custom-alert-overlay hidden">
+            <div class="custom-alert-card" style="max-width:420px; text-align:left;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-rounded" style="color:var(--accent-color);">settings</span> Настройки
+                    </h3>
+                    <button onclick="closeSettingsModal()" style="background:transparent; border:none; cursor:pointer; color:var(--text-color); display:flex;">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+
+                <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; display:block;">Тема оформления</label>
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <button class="btn btn-secondary" onclick="setTheme('light')" style="flex:1; display:flex; justify-content:center; gap:6px;">
+                        <span class="material-symbols-rounded" style="font-size:18px;">light_mode</span> Светлая
+                    </button>
+                    <button class="btn btn-secondary" onclick="setTheme('dark')" style="flex:1; display:flex; justify-content:center; gap:6px;">
+                        <span class="material-symbols-rounded" style="font-size:18px;">dark_mode</span> Тёмная
+                    </button>
+                </div>
+
+                <button class="btn" onclick="closeSettingsModal()" style="width:100%;">Готово</button>
+            </div>
+        </div>
+
+        <div id="custom-prompt" class="custom-alert-overlay hidden">
+            <div class="custom-alert-card">
+                <h3 id="custom-prompt-title" style="margin-top:0; margin-bottom:12px; font-size:1.1rem;">Введите значение</h3>
+                <input type="text" id="custom-prompt-input" class="admin-input" style="margin-bottom:16px;">
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="closePrompt(false)" style="flex:1;">Отмена</button>
+                    <button class="btn" id="custom-prompt-confirm-btn" onclick="closePrompt(true)" style="flex:1;">Сохранить</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="custom-alert" class="custom-alert-overlay hidden">
+            <div class="custom-alert-card">
+                <span class="material-symbols-rounded" id="custom-alert-icon" style="font-size:48px; color:var(--accent-color); margin-bottom:12px; display:block; text-align:center;">info</span>
+                <div id="custom-alert-msg" style="margin-bottom:20px; font-weight:500; text-align:center;"></div>
+                <button class="btn" onclick="closeAlert()" style="width:100%;">Понятно</button>
+            </div>
+        </div>
+
+        <!-- КАСТОМНОЕ КОНТЕКСТНОЕ МЕНЮ ДЛЯ ВКЛАДОК -->
+        <div id="tab-context-menu" class="tools-menu hidden" style="position:fixed; z-index:9999;">
+            <div class="tools-item" id="ctx-rename-btn">
+                <span class="material-symbols-rounded">edit</span> <span>Переименовать</span>
+            </div>
+            <div class="tools-item" id="ctx-delete-btn" style="color:#e74c3c;">
+                <span class="material-symbols-rounded">delete</span> <span>Удалить</span>
+            </div>
+        </div>
+
+        <!-- ПОДВАЛ -->
+        <div class="footer-nav" style="text-align:center; margin-top:30px;">
+            <a onclick="openLoginModal()" style="cursor:pointer; color:var(--text-muted); font-size:14px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                <span class="material-symbols-rounded" style="font-size:16px;">lock</span> Режим редактора
+            </a>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
