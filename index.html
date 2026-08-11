@@ -3,332 +3,339 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Form | Prestige HQ</title>
-    <!-- Иконки Material Symbols Rounded -->
+    <title>My Work | Prestige HQ </title>
+    <!-- Google Fonts & Material Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="style.css">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --card-hover-bg: #334155;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-color: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.25);
+            --card-radius: 16px;
+            --transition-speed: 0.25s;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-color: #f8fafc;
+                --card-bg: #ffffff;
+                --card-hover-bg: #f1f5f9;
+                --text-color: #0f172a;
+                --text-muted: #64748b;
+                --border-color: rgba(0, 0, 0, 0.08);
+                --accent-glow: rgba(99, 102, 241, 0.15);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 960px;
+            text-align: center;
+        }
+
+        /* Баннер одноразового уведомления */
+        .notice-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-bottom: 24px;
+            text-align: left;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .notice-banner.hidden {
+            display: none;
+        }
+
+        .notice-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notice-content .material-symbols-rounded {
+            color: var(--accent-color);
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .notice-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 4px;
+            border-radius: 6px;
+            transition: color 0.2s ease;
+        }
+
+        .notice-close-btn:hover {
+            color: var(--text-color);
+        }
+
+        /* Шапка */
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--accent-glow);
+            color: var(--accent-color);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* Сетка карточек */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            width: 100%;
+        }
+
+        .service-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            padding: 28px 20px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all var(--transition-speed) ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card:hover {
+            transform: translateY(-6px);
+            background: var(--card-hover-bg);
+            box-shadow: 0 12px 24px -10px var(--accent-glow);
+            border-color: var(--accent-color);
+        }
+
+        /* Иконка сервиса */
+        .icon-wrapper {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .service-card:hover .icon-wrapper {
+            transform: scale(1.1);
+        }
+
+        .icon-wrapper .material-symbols-rounded {
+            font-size: 32px;
+        }
+
+        /* Цветовые акценты */
+        .card-doc .icon-wrapper { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .card-slides .icon-wrapper { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .card-forms .icon-wrapper { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .card-sheets .icon-wrapper { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+
+        .service-card h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .service-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .card-action {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            opacity: 0;
+            transform: translateY(6px);
+            transition: all var(--transition-speed) ease;
+        }
+
+        .service-card:hover .card-action {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Подвал */
+        .footer {
+            margin-top: 50px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- ВЕРХНЯЯ ПАНЕЛЬ С ВКЛАДКАМИ И МЕНЮ -->
-        <div class="forms-toolbar-container">
-            <!-- 1. Компактный выбор форм (Select) -->
-            <select id="forms-tabs-select" class="forms-select hidden" onchange="switchFormFromSelect(this.value)"></select>
-
-            <!-- 2. Классические вкладки -->
-            <div class="forms-tabs-list" id="forms-tabs-list"></div>
-
-            <button class="add-form-btn" onclick="createNewFormPrompt()" title="Создать новую форму">
-                <span class="material-symbols-rounded">add</span>
+        
+        <!-- ОДНОРАЗОВОЕ УВЕДОМЛЕНИЕ О СМЕНЕ ИМЕНИ РЕПОЗИТОРИЯ -->
+        <div id="repo-notice" class="notice-banner hidden">
+            <div class="notice-content">
+                <span class="material-symbols-rounded">info</span>
+                <span>Мы сменили название репозитория с <strong>my-form</strong> на <strong>my-work</strong>, чтобы показать вам гораздо больше, чем кажется на первый взгляд!</span>
+            </div>
+            <button class="notice-close-btn" onclick="dismissNotice()" title="Закрыть">
+                <span class="material-symbols-rounded">close</span>
             </button>
+        </div>
+
+        <!-- Заголовок -->
+        <header class="header">
+            <div class="badge">
+                <span class="material-symbols-rounded" style="font-size: 16px;">dashboard</span>
+                Prestige HQ WorkSuite
+            </div>
+            <h1>Выберите сервис для работы</h1>
+            <p>Единый рабочий центр для ваших документов, презентаций и данных</p>
+        </header>
+
+        <!-- Карточки вариантов -->
+        <div class="services-grid">
             
-            <!-- Выпадающее меню опций -->
-            <div class="tools-dropdown">
-                <button class="tools-btn" onclick="toggleToolsMenu()" title="Меню">
-                    <span class="material-symbols-rounded">more_vert</span>
-                </button>
-                <div id="tools-menu" class="tools-menu hidden">
-                    <div class="tools-item" onclick="generateShareLink(); toggleToolsMenu();">
-                        <span class="material-symbols-rounded">share</span> Поделиться ссылкой
-                    </div>
-                    <div class="tools-item" onclick="printCurrentForm(); toggleToolsMenu();">
-                        <span class="material-symbols-rounded">print</span> Распечатать
-                    </div>
-                    <div class="tools-item" onclick="switchScreen('login'); toggleToolsMenu();">
-                        <span class="material-symbols-rounded">admin_panel_settings</span> Панель админа
-                    </div>
-                    <hr style="border:none; border-top:1px solid var(--border-color); margin: 4px 0;">
-                    <div class="tools-item" onclick="window.location.href='index_old.html'" toggleToolsMenu();">
-                    <span class="material-symbols-rounded">history</span> Загрузить Legacy
-                        </div>
-                    <hr style="border:none; border-top:1px solid var(--border-color); margin: 4px 0;">
-                    <div class="tools-item" onclick="openSettingsModal(); toggleToolsMenu();">
-                        <span class="material-symbols-rounded">settings</span> Настройки
-                    </div>
+            <!-- Документы -->
+            <a href="./document/" class="service-card card-doc">
+                <div class="icon-wrapper">
+                    <span class="material-symbols-rounded">article</span>
                 </div>
-            </div>
-        </div>
-
-        <!-- ПОДСКАЗКА -->
-        <div id="hint-box" class="hint-box hidden" style="width:100%; box-sizing:border-box; margin-bottom:15px;">
-            <span class="material-symbols-rounded">lightbulb</span>
-            <span id="hint-text"></span>
-        </div>
-
-        <!-- 1. ЭКРАН ТЕСТИРОВАНИЯ (QUIZ SCREEN) -->
-        <div id="quiz-screen" class="quiz-container">
-            <div id="quiz-box" class="gcard">
-                <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <div class="step-info" style="display:flex; align-items:center; gap:8px;">
-                        Вопрос <span id="current-number">1</span> из <span id="total-number">1</span>
-                        <button id="hint-btn" class="hint-btn hidden tools-icon-btn" onclick="toggleHintModal()" title="Показать подсказку">
-                            <span class="material-symbols-rounded" style="font-size:18px;">help_outline</span>
-                        </button>
-                    </div>
-                    <div id="timer-display" class="timer-box hidden">
-                        <span class="material-symbols-rounded" style="font-size:18px;">timer</span>
-                        <span id="timer-seconds">0</span>s
-                    </div>
+                <h2>Документы</h2>
+                <p>Текстовый редактор для отчетов, заметок и статей.</p>
+                <div class="card-action">
+                    Открыть <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span>
                 </div>
-
-                <div class="progress-bar">
-                    <div id="progress" class="progress-fill"></div>
-                </div>
-
-                <!-- ТЕЛО ВОПРОСА -->
-                <div id="question-body" style="margin-top:20px;"></div>
-
-                <button id="next-btn" class="btn" onclick="nextStep()" style="margin-top:20px; width:100%;">Далее</button>
-            </div>
-
-            <!-- РЕЗУЛЬТАТЫ -->
-            <div id="result-box" class="result-card gcard hidden">
-                <h2 style="display:flex; align-items:center; justify-content:center; gap:8px;">
-                    <span class="material-symbols-rounded" style="color:var(--accent-color); font-size:32px;">emoji_events</span> 
-                    Тест завершён!
-                </h2>
-                <p style="color:var(--text-muted); margin:10px 0 5px 0; text-align:center;">Ваш результат:</p>
-                <div id="final-score" class="score" style="font-size:2rem; font-weight:700; margin-bottom:20px; text-align:center;">0 / 0</div>
-                
-                <div id="review-box" class="review-container"></div>
-
-                <button class="btn" onclick="restartQuiz()" style="margin-top:20px; width:100%;">Пройти заново</button>
-            </div>
-        </div>
-
-        <!-- 2. ЭКРАН ВХОДА В АДМИНКУ (LOGIN SCREEN) -->
-        <div id="login-screen" class="quiz-container gcard hidden">
-            <h2 style="text-align:center; margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:8px;">
-                <span class="material-symbols-rounded">lock</span> Вход для администратора
-            </h2>
-            <input type="text" id="login-user" class="admin-input" placeholder="Логин (admin)">
-            <input type="password" id="login-pass" class="admin-input" placeholder="Пароль (1234)">
-            <button class="btn" onclick="tryLogin()" style="width:100%;">Войти</button>
-            <button class="btn" onclick="logout()" style="margin-top:10px; width:100%; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Назад к тесту</button>
-        </div>
-
-        <!-- 3. ПАНЕЛЬ АДМИНИСТРАТОРА (ADMIN SCREEN) -->
-        <div id="admin-screen" class="admin-box hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 style="margin:0;">Редактор вопросов</h2>
-                <button onclick="logout()" class="btn" style="width:auto; padding:8px 16px; margin:0; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Выйти</button>
-            </div>
-
-            <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-                <button onclick="toggleAddQuestionForm()" class="btn" style="width:auto; flex-grow:1;">+ Создать вопрос</button>
-                <button onclick="exportFormToJSON()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Экспорт JSON</button>
-                <button onclick="document.getElementById('import-file').click()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Импорт JSON</button>
-                <input type="file" id="import-file" style="display:none;" onchange="importFormFromJSON(this)" accept=".json">
-            </div>
-
-            <!-- ФОРМА СОЗДАНИЯ / РЕДАКТИРОВАНИЯ ВОПРОСА -->
-            <div id="admin-add-form" class="gcard hidden" style="margin-bottom:20px;">
-                <h3 id="admin-form-title" style="margin-top:0; margin-bottom:15px;">Новый элемент</h3>
-                
-                <label style="font-size:13px; color:var(--text-muted);">Тип элемента:</label>
-                <select id="new-type" class="admin-input" onchange="toggleAdminFields()">
-                    <option value="radio">Один из списка (Radio)</option>
-                    <option value="checkbox">Несколько из списка (Checkbox)</option>
-                    <option value="select">Выпадающий список (Select)</option>
-                    <option value="text">Текстовый ответ</option>
-                    <option value="puzzle-drag">Пазл (Drag & Drop)</option>
-                    <option value="info-slide">Инфо-слайд (Картинка/Видео/Аудио)</option>
-                    <option value="flashcard">Флешкарта (Карточка для запоминания)</option>
-                </select>
-
-                <!-- Поле для названия вопроса -->
-                <div class="admin-field">
-                    <label for="new-title">Заголовок вопроса:</label>
-                    <input type="text" id="new-title" class="admin-input" placeholder="Введите заголовок...">
-                </div>
-
-                <!-- Поле для описания -->
-                <div class="admin-field" style="margin-top: 10px;">
-                    <label for="new-description">Описание вопроса (опционально):</label>
-                    <input type="text" id="new-description" class="admin-input" placeholder="Введите описание...">
-                </div>
-
-                <!-- Варианты ответов -->
-                <div id="admin-choices-fields">
-                    <label style="font-size:13px; color:var(--text-muted);">Варианты ответов (через запятую):</label>
-                    <input type="text" id="new-options" class="admin-input" placeholder="Вариант 1, Вариант 2, Вариант 3">
-                    <label style="font-size:13px; color:var(--text-muted);">Индексы правильных ответов (с 0, через запятую):</label>
-                    <input type="text" id="new-correct-choices" class="admin-input" placeholder="0">
-                </div>
-
-                <!-- Текстовые ответы -->
-                <div id="admin-text-fields" class="hidden">
-                    <label style="font-size:13px; color:var(--text-muted);">Правильные варианты текстового ответа (через запятую):</label>
-                    <input type="text" id="new-correct-text" class="admin-input" placeholder="ответ1, ответ2">
-                    
-                    <!-- Новый тумблер -->
-                    <label class="switch-label" style="margin-top: 8px; margin-bottom: 12px;">
-                        <span class="switch">
-                            <input type="checkbox" id="new-inline-input">
-                            <span class="slider"></span>
-                        </span>
-                        Поле Input вместо нижнего текстового поля
-                    </label>
-                </div>
-
-                <!-- Ответ для карточек -->
-                <div id="flashcard-answer-box" class="hidden">
-                    <label style="font-size:13px; color:var(--text-muted);">Перевод / Оборотная сторона:</label>
-                    <input type="text" id="new-flashcard-answer" class="admin-input" placeholder="Перевод или пояснение...">
-                </div>
-
-                <!-- Загрузка Медиа -->
-                <div id="media-upload-box" class="hidden">
-                    <label style="font-size:13px; color:var(--text-muted);">Прикрепить медиафайл:</label>
-                    <input type="file" id="new-media-file" class="admin-input" accept="image/*,video/*,audio/*" onchange="handleMediaUploadPreview(this)">
-                    <div id="media-preview-container"></div>
-                </div>
-
-                <!-- Настройки вопроса -->
-                <label class="switch-label" style="margin-bottom: 12px;">
-                    <span class="switch"><input type="checkbox" id="new-required"><span class="slider"></span></span>
-                    Обязательный вопрос
-                </label>
-
-                <label class="switch-label" style="margin-bottom: 12px;">
-                    <span class="switch"><input type="checkbox" id="toggle-timer-input" onchange="document.getElementById('timer-config').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span>
-                    Ограничить время
-                </label>
-                <div id="timer-config" class="hidden">
-                    <input type="number" id="new-timer" class="admin-input" placeholder="Время в секундах (напр. 20)" value="20">
-                </div>
-<div class="admin-explanation-settings">
-    <label class="toggle-switch-label">
-        <input type="checkbox" id="questionHasExplanation" onchange="toggleExplanationFields(this)">
-        <span class="slider-round"></span>
-        Добавить блок Объяснения после ответа
-    </label>
-
-    <div id="explanationFieldsContainer" style="display: none; margin-top: 15px;">
-        <label>Заголовок объяснения (необязательно):</label>
-        <input type="text" id="questionExplanationTitle" placeholder="Например: А вы знали?">
-
-        <label style="margin-top: 10px; display: block;">Текст объяснения / Описание:</label>
-        <textarea id="questionExplanationText" placeholder="Подробный разбор правильного ответа..."></textarea>
-
-        <label style="margin-top: 10px; display: block;">Удерживать кнопку 'Продолжить' (таймер в сек, 0 — без удержания):</label>
-        <input type="number" id="questionHoldTimer" value="0" min="0">
-    </div>
-</div>
-                <label class="switch-label" style="margin-bottom: 12px;">
-                    <span class="switch"><input type="checkbox" id="toggle-hint-input" onchange="document.getElementById('hint-config').classList.toggle('hidden', !this.checked)"><span class="slider"></span></span>
-                    Добавить подсказку
-                </label>
-                <div id="hint-config" class="hidden">
-                    <input type="text" id="new-hint-text" class="admin-input" placeholder="Текст подсказки...">
-                </div>
-
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button class="btn" id="save-question-btn" onclick="addQuestion()" style="flex:1;">Сохранить вопрос</button>
-                    <button class="btn hidden" id="cancel-edit-btn" onclick="cancelEditQuestion()" style="background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Отмена</button>
-                </div>
-            </div>
-
-            <!-- СПИСОК ВОПРОСОВ -->
-            <div id="admin-questions-list"></div>
-        </div>
-
-        <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЬНОГО ПРОСМОТРА ВОПРОСА -->
-        <div id="question-details-modal" class="custom-alert-overlay">
-            <div class="custom-alert-card" style="max-width:480px; text-align:left;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                    <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
-                        <span class="material-symbols-rounded" style="color:var(--accent-color);">visibility</span> Детали вопроса
-                    </h3>
-                    <button onclick="closeDetailsModal()" style="background:transparent; border:none; cursor:pointer; color:var(--text-color); display:flex;">
-                        <span class="material-symbols-rounded">close</span>
-                    </button>
-                </div>
-                <div id="question-details-content" style="font-size:14px; line-height:1.6; max-height:60vh; overflow-y:auto; padding-right:4px;">
-                    <!-- Заполняется через JS -->
-                </div>
-                <button class="btn" onclick="closeDetailsModal()" style="width:100%; margin-top:20px;">Понятно</button>
-            </div>
-        </div>
-
-        <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК -->
-        <div id="settings-modal" class="custom-alert-overlay">
-            <div class="custom-alert-card" style="max-width:420px; text-align:left;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                    <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
-                        <span class="material-symbols-rounded" style="color:var(--accent-color);">settings</span> Настройки
-                    </h3>
-                    <button onclick="closeSettingsModal()" style="background:transparent; border:none; cursor:pointer; color:var(--text-color); display:flex;">
-                        <span class="material-symbols-rounded">close</span>
-                    </button>
-                </div>
-
-                <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Тема оформления</label>
-                <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <button class="btn" onclick="setTheme('light')" style="flex:1; padding:8px; font-size:13px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; gap:6px;">
-                        <span class="material-symbols-rounded" style="font-size:18px;">light_mode</span> Светлая
-                    </button>
-                    <button class="btn" onclick="setTheme('dark')" style="flex:1; padding:8px; font-size:13px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; gap:6px;">
-                        <span class="material-symbols-rounded" style="font-size:18px;">dark_mode</span> Тёмная
-                    </button>
-                </div>
-
-                <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Интерфейс</label>
-                <label class="switch-label" style="justify-content:space-between; margin-bottom:12px; cursor:pointer;">
-                    <span style="font-size:14px; display:flex; align-items:center; gap:8px;">
-                        <span class="material-symbols-rounded" style="font-size:18px;">view_compact</span> Компактный вид форм
-                    </span>
-                    <span class="switch">
-                        <input type="checkbox" id="toggle-compact-forms" onchange="toggleFormsLayout(this.checked)">
-                        <span class="slider"></span>
-                    </span>
-                </label>
-
-                <button class="btn" onclick="closeSettingsModal()" style="width:100%; margin-top:15px;">Готово</button>
-            </div>
-        </div>
-
-        <!-- КАСТОМНОЕ МОДАЛЬНОЕ ОКНО PROMPT -->
-        <div id="custom-prompt" class="custom-alert-overlay">
-            <div class="custom-alert-card">
-                <h3 id="custom-prompt-title" style="margin-top:0; margin-bottom:12px; font-size:1.1rem; text-align:left;">Введите значение</h3>
-                <input type="text" id="custom-prompt-input" class="admin-input" style="margin-bottom:16px;" placeholder="Введите название...">
-                <div style="display:flex; gap:10px; justify-content:flex-end;">
-                    <button class="btn" onclick="closePrompt(false)" style="background:transparent; color:var(--text-color); border:1px solid var(--border-color); flex:1;">Отмена</button>
-                    <button class="btn" id="custom-prompt-confirm-btn" onclick="closePrompt(true)" style="flex:1;">Сохранить</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- КАСТОМНОЕ МОДАЛЬНОЕ ОКНО ALERT -->
-        <div id="custom-alert" class="custom-alert-overlay">
-            <div class="custom-alert-card">
-                <span class="material-symbols-rounded custom-alert-icon" id="custom-alert-icon" style="font-size:48px; color:var(--accent-color); margin-bottom:12px;">info</span>
-                <div class="custom-alert-message" id="custom-alert-msg" style="margin-bottom:20px; font-weight:500;">Сообщение</div>
-                <button class="btn" onclick="closeAlert()" style="width:100%;">Понятно</button>
-            </div>
-        </div>
-
-        <!-- ПОДВАЛ -->
-        <div class="footer-nav" id="footer-link" style="text-align:center; margin-top:30px;">
-            <a onclick="switchScreen('login')" style="cursor:pointer; color:var(--text-muted); font-size:14px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
-                <span class="material-symbols-rounded" style="font-size:16px;">lock</span> Вход для администратора
             </a>
+
+            <!-- Презентации -->
+            <a href="./slides/" class="service-card card-slides">
+                <div class="icon-wrapper">
+                    <span class="material-symbols-rounded">slideshow</span>
+                </div>
+                <h2>Презентации</h2>
+                <p>Интерактивные слайды, заметки и генерация с ИИ.</p>
+                <div class="card-action">
+                    Открыть <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span>
+                </div>
+            </a>
+
+            <!-- Формы -->
+            <a href="./forms/" class="service-card card-forms">
+                <div class="icon-wrapper">
+                    <span class="material-symbols-rounded">assignment</span>
+                </div>
+                <h2>Формы</h2>
+                <p>Конструктор опросов, тестов и сбора ответов.</p>
+                <div class="card-action">
+                    Открыть <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span>
+                </div>
+            </a>
+
+            <!-- Таблицы -->
+            <a href="./spreadsheets/" class="service-card card-sheets">
+                <div class="icon-wrapper">
+                    <span class="material-symbols-rounded">table_chart</span>
+                </div>
+                <h2>Таблицы</h2>
+                <p>Работа с данными, расчетами и структурированием.</p>
+                <div class="card-action">
+                    Открыть <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span>
+                </div>
+            </a>
+
         </div>
+
+        <footer class="footer">
+            &copy; Prestige HQ Hub. Все права защищены.
+        </footer>
     </div>
-<!-- Модальное окно миграции со старой версии -->
-<div id="migrationModal" class="modal-overlay" style="display: none;">
-    <div class="modal-card">
-        <h3><span class="material-symbols-rounded">snowing</span> Обнаружены данные старой версии!</h3>
-        <p>Мы нашли ваши сохраненные формы из предыдущей версии приложения. Хотите автоматически импортировать их в новый формат?</p>
-        <div id="migrationFormsList" class="migration-list" style="margin: 15px 0; max-height: 150px; overflow-y: auto; text-align: left; font-size: 14px; opacity: 0.9;"></div>
-        <div class="modal-buttons" style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button onclick="closeMigrationModal()" class="btn-secondary">Позже</button>
-            <button onclick="performMigration()" class="btn-primary">Импортировать всё</button>
-        </div>
-    </div>
-</div>
-    <script src="script.js"></script>
+
+    <script>
+        // Проверка: показывалось ли баннер-уведомление ранее
+        document.addEventListener('DOMContentLoaded', () => {
+            const isNoticeDismissed = localStorage.getItem('repo_rename_notice_dismissed');
+            if (!isNoticeDismissed) {
+                document.getElementById('repo-notice').classList.remove('hidden');
+            }
+        });
+
+        // Закрытие и сохранение в localStorage
+        function dismissNotice() {
+            localStorage.setItem('repo_rename_notice_dismissed', 'true');
+            document.getElementById('repo-notice').classList.add('hidden');
+        }
+    </script>
 </body>
 </html>
