@@ -7,6 +7,7 @@
     --bg-option-hover: #f8f9fa; 
     --bg-review-correct: #f4fbf6; 
     --bg-review-incorrect: #fff5f5;
+    --bg-review-skipped: #f8f9fa;
     --primary: #007bff; 
     --primary-hover: #0056b3; 
     --success: #28a745; 
@@ -25,6 +26,7 @@ body.dark-theme {
     --bg-option-hover: #1a1a1a; 
     --bg-review-correct: #14251b; 
     --bg-review-incorrect: #2d1616;
+    --bg-review-skipped: #1a1a1a;
 }
 
 body { 
@@ -43,11 +45,11 @@ body {
 /* Финальные карточки отчета */
 .review-item.correct-item { border-left-color: var(--success); background: var(--bg-review-correct); }
 .review-item.incorrect-item { border-left-color: var(--danger); background: var(--bg-review-incorrect); }
-.review-item.skipped-item { border-left-color: var(--gray); background: var(--bg-review-skipped); } /* Серый статус */
+.review-item.skipped-item { border-left-color: var(--gray); background: var(--bg-review-skipped); }
 
 .text-success { color: var(--success); font-weight: bold; }
 .text-danger { color: var(--danger); font-weight: bold; }
-.text-skipped { color: var(--gray); font-weight: bold; } /* Серый текст */
+.text-skipped { color: var(--gray); font-weight: bold; }
 
 /* Вспомогательный класс для кнопок пропуска внутри карточки */
 .skip-voice-btn {
@@ -85,12 +87,11 @@ body {
 }
 
 /* ==========================================
-   ВКЛАДКИ (ТАБЫ) ФОРМ
+   ВКЛАДКИ (ТАБЫ) ФОРМ И ШАПКА
    ========================================== */
 .forms-tabs-container {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 10px;
     margin-bottom: 25px;
     border-bottom: 2px solid var(--border-color);
@@ -108,10 +109,10 @@ body {
 .form-tab {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     background: var(--bg-option-hover);
     color: var(--text-main);
-    padding: 8px 16px;
+    padding: 8px 14px;
     border-radius: var(--radius-mid);
     border: 1px solid var(--border-color);
     font-size: 14px;
@@ -133,7 +134,9 @@ body {
     box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
-.form-tab .close-tab-btn {
+/* Кнопки редактирования и закрытия табов */
+.form-tab .close-tab-btn,
+.form-tab .edit-tab-btn {
     background: transparent !important;
     color: inherit !important;
     border: none !important;
@@ -145,9 +148,16 @@ body {
     cursor: pointer;
     display: inline-flex !important;
     box-shadow: none !important;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.form-tab .edit-tab-btn:hover {
+    opacity: 1;
 }
 
 .form-tab .close-tab-btn:hover {
+    opacity: 1;
     color: var(--danger) !important;
 }
 
@@ -176,39 +186,13 @@ body {
 }
 
 /* ==========================================
-   КНОПКИ ОБЩИЕ (ГЛАВНЫЕ ДЕЙСТВИЯ)
-   ========================================== */
-/* Применяем стили только к кнопкам действий, чтобы не ломать мелкие кнопочки */
-button:not(.tools-btn):not(.close-tab-btn):not(.add-form-btn) { 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 14px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: var(--radius-mid);
-    cursor: pointer;
-    margin-top: 20px;
-    transition: 0.2s;
-}
-
-button:not(.tools-btn):not(.close-tab-btn):not(.add-form-btn):hover { 
-    background: var(--primary-hover); 
-}
-
-button:disabled { background: var(--gray) !important; cursor: not-allowed; opacity: 0.6; }
-.btn-secondary { background: var(--gray) !important; }
-.btn-secondary:hover { background: #5a6268 !important; }
-
-/* ==========================================
    МЕНЮ ОПЦИЙ (TOOLS)
    ========================================== */
-.tools-dropdown { position: absolute; top: 15px; right: 15px; z-index: 100; }
+.tools-dropdown { 
+    position: relative; 
+    margin-left: auto;
+    flex-shrink: 0;
+}
 
 .tools-btn { 
     background: var(--gray); 
@@ -229,7 +213,7 @@ button:disabled { background: var(--gray) !important; cursor: not-allowed; opaci
 .tools-menu { 
     position: absolute; 
     right: 0; 
-    top: 35px; 
+    top: calc(100% + 8px); 
     background: var(--bg-card); 
     border: 1px solid var(--border-color); 
     border-radius: var(--radius-mid); 
@@ -237,6 +221,7 @@ button:disabled { background: var(--gray) !important; cursor: not-allowed; opaci
     padding: 5px 0; 
     width: 190px; 
     overflow: hidden; 
+    z-index: 1000;
 }
 
 .tools-item { 
@@ -251,8 +236,42 @@ button:disabled { background: var(--gray) !important; cursor: not-allowed; opaci
 }
 .tools-item:hover { background: var(--bg-option-hover); }
 
+/* ==========================================
+   КНОПКИ ОБЩИЕ (ГЛАВНЫЕ ДЕЙСТВИЯ)
+   ========================================== */
+button:not(.tools-btn):not(.close-tab-btn):not(.edit-tab-btn):not(.add-form-btn) { 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: var(--radius-mid);
+    cursor: pointer;
+    margin-top: 20px;
+    transition: 0.2s;
+}
+
+button:not(.tools-btn):not(.close-tab-btn):not(.edit-tab-btn):not(.add-form-btn):hover { 
+    background: var(--primary-hover); 
+}
+
+button:disabled { background: var(--gray) !important; cursor: not-allowed; opacity: 0.6; }
+.btn-secondary { background: var(--gray) !important; }
+.btn-secondary:hover { background: #5a6268 !important; }
+
 /* ИНПУТЫ И ТЕКСТ */
-.quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-right: 130px; }
+.quiz-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 10px; 
+}
 .step-info { font-size: 14px; color: var(--text-muted); font-weight: bold; }
 .timer-box { font-size: 14px; font-weight: bold; color: var(--danger); background: var(--bg-review-incorrect); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 4px; }
 .progress-bar { height: 6px; background: var(--border-color); border-radius: 3px; margin-bottom: 25px; overflow: hidden; }
@@ -276,8 +295,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 .score { font-size: 48px; color: var(--success); font-weight: bold; margin: 15px 0; }
 .review-container { text-align: left; margin-top: 30px; border-top: 2px solid var(--border-color); padding-top: 20px; }
 .review-item { padding: 15px; border-radius: var(--radius-mid); margin-bottom: 12px; border-left: 5px solid #ccc; background: var(--bg-card); border: 1px solid var(--border-color); border-left-width: 5px; }
-.review-item.correct-item { border-left-color: var(--success); background: var(--bg-review-correct); }
-.review-item.incorrect-item { border-left-color: var(--danger); background: var(--bg-review-incorrect); }
 
 .question-list-item { background: var(--bg-option-hover); padding: 12px; border-radius: var(--radius-mid); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid var(--border-color); }
 .footer-nav { margin-top: 20px; font-size: 14px; }
