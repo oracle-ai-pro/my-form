@@ -46,6 +46,9 @@
                     <div class="tools-item" onclick="startFullscreenPresentation(); toggleToolsMenu();">
                         <span class="material-symbols-rounded">slideshow</span> <span>Полноэкранный показ</span>
                     </div>
+                    <div class="tools-item" onclick="openPresenterMode(); toggleToolsMenu();">
+                        <span class="material-symbols-rounded">badge</span> <span>Режим докладчика</span>
+                    </div>
                     <div class="tools-item" onclick="toggleSpeakerNotes(); toggleToolsMenu();">
                         <span class="material-symbols-rounded">description</span> <span>Заметки докладчика</span>
                     </div>
@@ -89,14 +92,20 @@
 
         <!-- 1. ЭКРАН ПРОСМОТРА СЛАЙДОВ (SLIDE PLAYER) -->
         <div id="presentation-screen" class="quiz-container">
-            <div id="slide-box" class="gcard" style="min-height: 380px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div id="slide-box" class="gcard interactive-slide-area" style="min-height: 420px; display: flex; flex-direction: column; justify-content: space-between; position: relative; user-select: none;">
                 
                 <!-- ШАПКА ПЛЕЕРА -->
-                <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; z-index: 2;">
                     <div class="step-info" style="display:flex; align-items:center; gap:8px;">
                         Слайд <span id="current-slide-number">1</span> из <span id="total-slides-number">1</span>
                     </div>
                     <div style="display:flex; gap:8px; align-items:center;">
+                        <button class="tools-icon-btn" onclick="openPresenterMode()" title="Режим докладчика">
+                            <span class="material-symbols-rounded" style="font-size:18px;">badge</span>
+                        </button>
+                        <button class="tools-icon-btn" onclick="openSlideGridModal()" title="Просмотр всех слайдов">
+                            <span class="material-symbols-rounded" style="font-size:18px;">grid_view</span>
+                        </button>
                         <button class="tools-icon-btn" onclick="toggleSpeakerNotes()" title="Показать заметки">
                             <span class="material-symbols-rounded" style="font-size:18px;">sticky_note_2</span>
                         </button>
@@ -107,21 +116,17 @@
                 </div>
 
                 <!-- ПРОГРЕСС-БАР -->
-                <div class="progress-bar">
+                <div class="progress-bar" style="z-index: 2;">
                     <div id="progress" class="progress-fill"></div>
                 </div>
 
                 <!-- ТЕЛО СЛАЙДА -->
-                <div id="slide-body" style="margin: 20px 0; flex-grow: 1; display: flex; flex-direction: column; justify-content: center;"></div>
+                <div id="slide-body" style="margin: 20px 0; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; z-index: 2;"></div>
 
-                <!-- НАВИГАЦИЯ ПО СЛАЙДАМ -->
-                <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button id="prev-btn" class="btn" onclick="prevSlide()" style="flex:1; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">
-                        <span class="material-symbols-rounded" style="vertical-align:middle;">navigate_before</span> Назад
-                    </button>
-                    <button id="next-btn" class="btn" onclick="nextSlide()" style="flex:1;">
-                        Далее <span class="material-symbols-rounded" style="vertical-align:middle;">navigate_next</span>
-                    </button>
+                <!-- ПОДСКАЗКА ПО НАВИГАЦИИ (ВМЕСТО КНОПОК) -->
+                <div class="slide-navigation-hint" style="z-index: 2;">
+                    <span class="material-symbols-rounded" style="font-size: 16px;">touch_app</span>
+                    <span>ПК: <strong>← / →</strong> | Смартфон: <strong>Тап слева / справа</strong> или <strong>Свайп</strong></span>
                 </div>
             </div>
         </div>
@@ -280,6 +285,21 @@
             </div>
         </div>
 
+        <!-- МОДАЛЬНОЕ ОКНО СЕТКИ СЛАЙДОВ (ПРОСМОТР ВСЕХ СЛАЙДОВ) -->
+        <div id="slide-grid-modal" class="custom-alert-overlay">
+            <div class="custom-alert-card" style="max-width:720px; text-align:left;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-rounded" style="color:var(--accent-color);">grid_view</span> Просмотр всех слайдов
+                    </h3>
+                    <button onclick="closeSlideGridModal()" style="background:transparent; border:none; cursor:pointer; color:var(--text-color); display:flex;">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+                <div id="slide-grid-container" class="slide-grid-container"></div>
+            </div>
+        </div>
+
         <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЬНОГО ПРОСМОТРА СЛАЙДА -->
         <div id="slide-details-modal" class="custom-alert-overlay">
             <div class="custom-alert-card" style="max-width:480px; text-align:left;">
@@ -366,6 +386,89 @@
             </a>
         </div>
     </div>
+
+    <!-- РЕЖИМ ДОКЛАДЧИКА (PRESENTER VIEW OVERLAY) -->
+    <div id="presenter-view-modal" class="presenter-overlay hidden">
+        <!-- Верхняя панель управления -->
+        <div class="presenter-header">
+            <div class="presenter-header-left">
+                <div class="presenter-timer">
+                    <span id="presenter-timer-display">0:00:00</span>
+                    <button class="presenter-timer-btn" id="presenter-pause-btn" onclick="togglePresenterTimer()" title="Пауза/Пуск">
+                        <span class="material-symbols-rounded">pause</span>
+                    </button>
+                    <button class="presenter-timer-btn" onclick="resetPresenterTimer()" title="Сбросить таймер">
+                        <span class="material-symbols-rounded">restart_alt</span>
+                    </button>
+                </div>
+                <div id="presenter-clock-display" class="presenter-clock">12:00</div>
+            </div>
+            <div class="presenter-header-right">
+                <button class="presenter-top-btn" onclick="openSlideGridModal()">
+                    <span class="material-symbols-rounded">grid_view</span> ПРОСМОТР ВСЕХ СЛАЙДОВ
+                </button>
+                <button class="presenter-top-btn" onclick="closePresenterMode()">
+                    <span class="material-symbols-rounded">close</span> ЗАВЕРШИТЬ СЛАЙД-ШОУ
+                </button>
+            </div>
+        </div>
+
+        <!-- Основная область режимов -->
+        <div class="presenter-main">
+            <!-- Левая часть: Текущий слайд -->
+            <div class="presenter-current-container">
+                <div class="presenter-slide-card" id="presenter-current-slide-body"></div>
+            </div>
+
+            <!-- Правая часть: Следующий слайд и Заметки -->
+            <div class="presenter-side-container">
+                <div class="presenter-next-box">
+                    <div class="presenter-section-title">Следующий слайд</div>
+                    <div class="presenter-next-preview" id="presenter-next-slide-body"></div>
+                </div>
+
+                <div class="presenter-notes-box">
+                    <div class="presenter-section-title">Заметки докладчика</div>
+                    <div id="presenter-notes-text" class="presenter-notes-content">Щелкните, чтобы добавить заметки</div>
+                    <div class="presenter-font-controls">
+                        <button onclick="changePresenterNotesFont(2)">A<sup>▲</sup></button>
+                        <button onclick="changePresenterNotesFont(-2)">A<sup>▼</sup></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Нижняя панель действий -->
+        <div class="presenter-footer">
+            <div class="presenter-tools-bar">
+                <button class="presenter-tool-btn" onclick="toggleScreenMute('black')" title="Черный экран (A/V Mute)">
+                    <span class="material-symbols-rounded">edit</span>
+                </button>
+                <button class="presenter-tool-btn" onclick="openSlideGridModal()" title="Все слайды">
+                    <span class="material-symbols-rounded">grid_view</span>
+                </button>
+                <button class="presenter-tool-btn" onclick="toggleScreenMute('black')" title="Затемнить экран (B)">
+                    <span class="material-symbols-rounded">desktop_access_disabled</span>
+                </button>
+                <button class="presenter-tool-btn" onclick="toggleScreenMute('white')" title="Забелить экран (W)">
+                    <span class="material-symbols-rounded">light_mode</span>
+                </button>
+            </div>
+
+            <div class="presenter-nav-bar">
+                <button class="presenter-nav-arrow" onclick="prevSlide()" id="presenter-prev-btn">
+                    <span class="material-symbols-rounded">chevron_left</span>
+                </button>
+                <span class="presenter-counter">Слайд <span id="presenter-cur-num">1</span> из <span id="presenter-tot-num">1</span></span>
+                <button class="presenter-nav-arrow" onclick="nextSlide()" id="presenter-next-btn">
+                    <span class="material-symbols-rounded">chevron_right</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ОВЕРЛЕЙ ЭКРАНА (A/V MUTE: ЧЕРНЫЙ / БЕЛЫЙ ЭКРАН) -->
+    <div id="screen-mute-overlay" class="screen-mute-overlay hidden" onclick="toggleScreenMute(null)"></div>
 
     <!-- МОДАЛЬНОЕ ОКНО ВЫБОРА ЯЗЫКА -->
     <div id="language-modal" class="custom-alert-overlay">
