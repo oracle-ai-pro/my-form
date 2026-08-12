@@ -39,13 +39,19 @@ let customPromptCallback = null;
 let contextMenuDeckId = null;
 let confirmModalCallback = null;
 
+// ТАЙМЕР И РЕЖИМ ДОКЛАДЧИКА
+let presenterTimerInterval = null;
+let presenterSeconds = 0;
+let isTimerPaused = false;
+let presenterNotesFontSize = 16;
+let currentMuteMode = null; // 'black', 'white' или null
+
 /* ==========================================================================
    СОБЫТИЕ ЗАГРУЗКИ СТРАНИЦЫ И ГЛОБАЛЬНЫЕ СЛУШАТЕЛИ
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
 
-    // Проверяем, есть ли deckId в URL-адресе (например, site.com/?deckId=deck-123)
     const urlParams = new URLSearchParams(window.location.search);
     const deckIdFromUrl = urlParams.get('deckId');
 
@@ -58,7 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderTabsAndSelect();
     renderSlide();
-    
+    initSlideTouchAndClick();
+    initPresentationContextMenu();
+
     // Закрытие выпадающего меню инструментов при клике снаружи
     document.addEventListener('click', (e) => {
         const dropdown = document.querySelector('.tools-dropdown');
@@ -68,15 +76,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Горячие клавиши для переключения слайдов (Стрелки / Пробел)
+    // Клавиатурная навигация и горячие клавиши
     document.addEventListener('keydown', (e) => {
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
-        if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
-        if (e.key === 'ArrowLeft') prevSlide();
+        
+        // Горячие клавиши для A/V Mute (B = Black, W = White)
+        if (e.key === 'b' || e.key === 'B' || e.key === 'и' || e.key === 'И') {
+            toggleScreenMute('black');
+            return;
+        }
+        if (e.key === 'w' || e.key === 'W' || e.key === 'ц' || e.key === 'Ц') {
+            toggleScreenMute('white');
+            return;
+        }
+
+        // Выход из затемнения экрана по Esc или любой клавише
+        if (currentMuteMode !== null) {
+            toggleScreenMute(null);
+            return;
+        }
+
+        // Переключение слайдов
+        if (e.key === 'ArrowRight' || e.key === 'Space' || e.key === 'PageDown') {
+            e.preventDefault();
+            nextSlide();
+        }
+        if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            e.preventDefault();
+            prevSlide();
+        }
     });
+
+    // Обновление часов в режиме докладчика
+    setInterval(updatePresenterClock, 1000);
 });
 
-// Закрывать контекстное меню при клике или скролле в любом месте
 document.addEventListener('click', hideTabContextMenu);
 document.addEventListener('scroll', hideTabContextMenu, true);
 
@@ -116,7 +150,116 @@ function toggleDeckLayout(isCompact) {
 }
 
 /* ==========================================================================
-   ПЕРЕКЛЮЧЕНИЕ ПРЕЗЕНТАЦИЙ И ВКАДОК
+   ТАПЫ И СВАЙПЫ ДЛЯ МОБИЛЬНЫХ И ПК
+   ========================================================================== */
+function initSlideTouchAndClick() {
+    const slideBox = document.getElementById('slide-box');
+    if (!slideBox) return;
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    slideBox.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    slideBox.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+
+        // Порог свайпа по горизонтали
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+            if (diffX < 0) nextSlide();
+            else prevSlide();
+        }
+    }, { passive: true });
+
+    // Тап по левой / правой стороне экрана
+    slideBox.addEventListener('click', (e) => {
+        // Игнорируем клик по интерактивным элементам (кнопки, ссылки, видео)
+        if (e.target.closest('button, a, input, textarea, select, video, .tools-icon-btn, .slide-context-menu')) return;
+
+        const rect = slideBox.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        
+        if (clickX < rect.width * 0.4) {
+            prevSlide();
+        } else {
+            nextSlide();
+        }
+    });
+}
+
+/* ==========================================================================
+   КОНТЕКСТНОЕ МЕНЮ ПРЕЗЕНТАЦИИ (ПО ПКМ ВО ВРЕМЯ ПОКАЗА)
+   ========================================================================== */
+function initPresentationContextMenu() {
+    const presentationScreen = document.getElementById('presentation-screen');
+    if (!presentationScreen) return;
+
+    presentationScreen.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        showPresentationContextMenu(e.clientX, e.clientY);
+    });
+
+    document.addEventListener('click', hidePresentationContextMenu);
+}
+
+function showPresentationContextMenu(x, y) {
+    let menu = document.getElementById('presentation-context-menu');
+    if (!menu) {
+        menu = document.createElement('div');
+        menu.id = 'presentation-context-menu';
+        menu.className = 'slide-context-menu hidden';
+        document.body.appendChild(menu);
+    }
+
+    menu.innerHTML = `
+        <div class="slide-context-item" onclick="nextSlide()"><span class="material-symbols-rounded">navigate_next</span> Следующий</div>
+        <div class="slide-context-item" onclick="prevSlide()"><span class="material-symbols-rounded">navigate_before</span> Предыдущий</div>
+        <div class="slide-context-divider"></div>
+        <div class="slide-context-item" onclick="openSlideGridModal()"><span class="material-symbols-rounded">grid_view</span> Просмотр всех слайдов</div>
+        <div class="slide-context-item" onclick="openPresenterMode()"><span class="material-symbols-rounded">badge</span> Показать режим докладчика</div>
+        <div class="slide-context-divider"></div>
+        <div class="slide-context-item" onclick="toggleScreenMute('black')"><span class="material-symbols-rounded">desktop_access_disabled</span> Черный экран (B)</div>
+        <div class="slide-context-item" onclick="toggleScreenMute('white')"><span class="material-symbols-rounded">light_mode</span> Белый экран (W)</div>
+        <div class="slide-context-divider"></div>
+        <div class="slide-context-item danger" onclick="exitFullscreenPresentation()"><span class="material-symbols-rounded">close</span> Завершить показ слайдов</div>
+    `;
+
+    menu.style.top = `${y}px`;
+    menu.style.left = `${x}px`;
+    menu.classList.remove('hidden');
+}
+
+function hidePresentationContextMenu() {
+    const menu = document.getElementById('presentation-context-menu');
+    if (menu) menu.classList.add('hidden');
+}
+
+/* ==========================================================================
+   A/V MUTE (ЧЕРНЫЙ / БЕЛЫЙ ЭКРАН)
+   ========================================================================== */
+function toggleScreenMute(mode) {
+    const overlay = document.getElementById('screen-mute-overlay');
+    if (!overlay) return;
+
+    if (mode === null || (currentMuteMode === mode && !overlay.classList.contains('hidden'))) {
+        overlay.classList.add('hidden');
+        overlay.className = 'screen-mute-overlay hidden';
+        currentMuteMode = null;
+    } else {
+        currentMuteMode = mode;
+        overlay.className = `screen-mute-overlay active ${mode}`;
+        overlay.classList.remove('hidden');
+    }
+}
+
+/* ==========================================================================
+   ПЕРЕКЛЮЧЕНИЕ ПРЕЗЕНТАЦИЙ И ВКЛАДОК
    ========================================================================== */
 function saveDecks() {
     localStorage.setItem('prestige_decks', JSON.stringify(decks));
@@ -137,18 +280,14 @@ function renderTabsAndSelect() {
     select.innerHTML = '';
 
     decks.forEach(deck => {
-        // Отрисовка кнопок вкладок
         const tab = document.createElement('button');
         tab.className = `tab-btn ${deck.id === currentDeckId ? 'active' : ''}`;
         tab.innerText = deck.title;
         tab.onclick = () => switchDeck(deck.id);
-        
-        // Обработчик ПКМ (Контекстное меню)
         tab.oncontextmenu = (e) => showTabContextMenu(e, deck.id);
 
         tabsList.appendChild(tab);
 
-        // Отрисовка элементов Select
         const option = document.createElement('option');
         option.value = deck.id;
         option.innerText = deck.title;
@@ -186,6 +325,73 @@ function createNewDeckPrompt() {
 /* ==========================================================================
    ОТРИСОВКА И НАВИГАЦИЯ ПО СЛАЙДАМ
    ========================================================================== */
+function generateSlideHTML(slide) {
+    if (!slide) return '<div style="text-align:center;">Пустой слайд</div>';
+
+    switch (slide.type) {
+        case 'title-slide':
+            return `
+                <div class="slide-title-layout">
+                    <h1>${escapeHtml(slide.title || '')}</h1>
+                    <p>${escapeHtml(slide.subtitle || '')}</p>
+                </div>`;
+
+        case 'content':
+            const bulletsArr = (slide.bullets || '').split('\n').filter(b => b.trim());
+            const bulletsHtml = bulletsArr.map(b => `<li>${escapeHtml(b)}</li>`).join('');
+            return `
+                <div class="slide-content-layout">
+                    <h2>${escapeHtml(slide.title || '')}</h2>
+                    ${slide.subtitle ? `<p style="color:var(--text-muted); margin-bottom:12px;">${escapeHtml(slide.subtitle)}</p>` : ''}
+                    <ul class="slide-bullets">${bulletsHtml}</ul>
+                </div>`;
+
+        case 'two-column':
+            return `
+                <div class="slide-content-layout">
+                    <h2>${escapeHtml(slide.title || '')}</h2>
+                    <div class="slide-two-col">
+                        <div>${escapeHtml(slide.bullets || '').replace(/\n/g, '<br>')}</div>
+                        <div>${escapeHtml(slide.col2 || '').replace(/\n/g, '<br>')}</div>
+                    </div>
+                </div>`;
+
+        case 'quote':
+            return `
+                <div class="slide-quote-layout">
+                    <blockquote>“${escapeHtml(slide.title || slide.subtitle || '')}”</blockquote>
+                    ${slide.quoteAuthor ? `<div class="slide-quote-author">— ${escapeHtml(slide.quoteAuthor)}</div>` : ''}
+                </div>`;
+
+        case 'media':
+            const mediaUrl = slide.mediaUrl || currentMediaData;
+            let mediaHtml = '';
+            if (mediaUrl) {
+                if (mediaUrl.startsWith('data:video') || mediaUrl.endsWith('.mp4')) {
+                    mediaHtml = `<video src="${mediaUrl}" controls></video>`;
+                } else {
+                    mediaHtml = `<img src="${mediaUrl}" alt="Slide Media">`;
+                }
+            }
+            return `
+                <div class="slide-content-layout">
+                    <h2>${escapeHtml(slide.title || '')}</h2>
+                    <p>${escapeHtml(slide.subtitle || '')}</p>
+                    <div class="slide-media-container">${mediaHtml}</div>
+                </div>`;
+
+        case 'code':
+            return `
+                <div class="slide-content-layout">
+                    <h2>${escapeHtml(slide.title || '')}</h2>
+                    <pre class="slide-code-block"><code>${escapeHtml(slide.bullets || '')}</code></pre>
+                </div>`;
+
+        default:
+            return `<h3>${escapeHtml(slide.title || '')}</h3><p>${escapeHtml(slide.subtitle || '')}</p>`;
+    }
+}
+
 function renderSlide() {
     const deck = getCurrentDeck();
     const slides = deck ? deck.slides || [] : [];
@@ -203,92 +409,20 @@ function renderSlide() {
 
     const slide = slides[currentSlideIndex];
     
-    // Обновление заголовка и прогресс-бара
     const curNum = document.getElementById('current-slide-number');
     const totNum = document.getElementById('total-slides-number');
     const progress = document.getElementById('progress');
     const speakerText = document.getElementById('speaker-notes-text');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
 
     if (curNum) curNum.innerText = currentSlideIndex + 1;
     if (totNum) totNum.innerText = slides.length;
     if (progress) progress.style.width = `${((currentSlideIndex + 1) / slides.length) * 100}%`;
     if (speakerText) speakerText.innerText = slide.notes || 'Нет заметок к этому слайду.';
-    if (prevBtn) prevBtn.disabled = currentSlideIndex === 0;
-    if (nextBtn) nextBtn.disabled = currentSlideIndex === slides.length - 1;
 
-    // Генерируем HTML макета
-    body.innerHTML = '';
+    body.innerHTML = generateSlideHTML(slide);
 
-    switch (slide.type) {
-        case 'title-slide':
-            body.innerHTML = `
-                <div class="slide-title-layout">
-                    <h1>${escapeHtml(slide.title || '')}</h1>
-                    <p>${escapeHtml(slide.subtitle || '')}</p>
-                </div>`;
-            break;
-
-        case 'content':
-            const bulletsArr = (slide.bullets || '').split('\n').filter(b => b.trim());
-            const bulletsHtml = bulletsArr.map(b => `<li>${escapeHtml(b)}</li>`).join('');
-            body.innerHTML = `
-                <div class="slide-content-layout">
-                    <h2>${escapeHtml(slide.title || '')}</h2>
-                    ${slide.subtitle ? `<p style="color:var(--text-muted); margin-bottom:12px;">${escapeHtml(slide.subtitle)}</p>` : ''}
-                    <ul class="slide-bullets">${bulletsHtml}</ul>
-                </div>`;
-            break;
-
-        case 'two-column':
-            body.innerHTML = `
-                <div class="slide-content-layout">
-                    <h2>${escapeHtml(slide.title || '')}</h2>
-                    <div class="slide-two-col">
-                        <div>${escapeHtml(slide.bullets || '').replace(/\n/g, '<br>')}</div>
-                        <div>${escapeHtml(slide.col2 || '').replace(/\n/g, '<br>')}</div>
-                    </div>
-                </div>`;
-            break;
-
-        case 'quote':
-            body.innerHTML = `
-                <div class="slide-quote-layout">
-                    <blockquote>“${escapeHtml(slide.title || slide.subtitle || '')}”</blockquote>
-                    ${slide.quoteAuthor ? `<div class="slide-quote-author">— ${escapeHtml(slide.quoteAuthor)}</div>` : ''}
-                </div>`;
-            break;
-
-        case 'media':
-            const mediaUrl = slide.mediaUrl || currentMediaData;
-            let mediaHtml = '';
-            if (mediaUrl) {
-                if (mediaUrl.startsWith('data:video') || mediaUrl.endsWith('.mp4')) {
-                    mediaHtml = `<video src="${mediaUrl}" controls></video>`;
-                } else {
-                    mediaHtml = `<img src="${mediaUrl}" alt="Slide Media">`;
-                }
-            }
-            body.innerHTML = `
-                <div class="slide-content-layout">
-                    <h2>${escapeHtml(slide.title || '')}</h2>
-                    <p>${escapeHtml(slide.subtitle || '')}</p>
-                    <div class="slide-media-container">${mediaHtml}</div>
-                </div>`;
-            break;
-
-        case 'code':
-            body.innerHTML = `
-                <div class="slide-content-layout">
-                    <h2>${escapeHtml(slide.title || '')}</h2>
-                    <pre class="slide-code-block"><code>${escapeHtml(slide.bullets || '')}</code></pre>
-                </div>`;
-            break;
-
-        default:
-            body.innerHTML = `<h3>${escapeHtml(slide.title || '')}</h3><p>${escapeHtml(slide.subtitle || '')}</p>`;
-    }
+    // Если открыт режим докладчика — обновляем и его
+    updatePresenterModeUI();
 }
 
 function nextSlide() {
@@ -306,10 +440,158 @@ function prevSlide() {
     }
 }
 
+function goToSlide(index) {
+    const deck = getCurrentDeck();
+    if (deck && index >= 0 && index < deck.slides.length) {
+        currentSlideIndex = index;
+        renderSlide();
+        closeSlideGridModal();
+    }
+}
+
 function startFullscreenPresentation() {
     const elem = document.documentElement;
     if (elem.requestFullscreen) elem.requestFullscreen();
     else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+}
+
+function exitFullscreenPresentation() {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+}
+
+/* ==========================================================================
+   РЕЖИМ ДОКЛАДЧИКА (PRESENTER VIEW)
+   ========================================================================== */
+function openPresenterMode() {
+    const modal = document.getElementById('presenter-view-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+
+    startPresenterTimer();
+    updatePresenterModeUI();
+}
+
+function closePresenterMode() {
+    const modal = document.getElementById('presenter-view-modal');
+    if (modal) modal.classList.add('hidden');
+    if (presenterTimerInterval) clearInterval(presenterTimerInterval);
+}
+
+function updatePresenterModeUI() {
+    const modal = document.getElementById('presenter-view-modal');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    const deck = getCurrentDeck();
+    const slides = deck ? deck.slides || [] : [];
+    if (slides.length === 0) return;
+
+    const currentSlide = slides[currentSlideIndex];
+    const nextSlide = slides[currentSlideIndex + 1];
+
+    // Отрисовка текущего слайда
+    const curBody = document.getElementById('presenter-current-slide-body');
+    if (curBody) curBody.innerHTML = generateSlideHTML(currentSlide);
+
+    // Отрисовка превью следующего слайда
+    const nextBody = document.getElementById('presenter-next-slide-body');
+    if (nextBody) {
+        if (nextSlide) {
+            nextBody.innerHTML = generateSlideHTML(nextSlide);
+        } else {
+            nextBody.innerHTML = '<div style="text-align:center; padding-top:40px; color:#888;">Конец презентации</div>';
+        }
+    }
+
+    // Заметки
+    const notesText = document.getElementById('presenter-notes-text');
+    if (notesText) {
+        notesText.innerText = currentSlide.notes || 'Щелкните, чтобы добавить заметки';
+        notesText.style.fontSize = `${presenterNotesFontSize}px`;
+    }
+
+    // Счетчики
+    const curNum = document.getElementById('presenter-cur-num');
+    const totNum = document.getElementById('presenter-tot-num');
+    const prevBtn = document.getElementById('presenter-prev-btn');
+    const nextBtn = document.getElementById('presenter-next-btn');
+
+    if (curNum) curNum.innerText = currentSlideIndex + 1;
+    if (totNum) totNum.innerText = slides.length;
+    if (prevBtn) prevBtn.disabled = currentSlideIndex === 0;
+    if (nextBtn) nextBtn.disabled = currentSlideIndex === slides.length - 1;
+}
+
+function startPresenterTimer() {
+    if (presenterTimerInterval) clearInterval(presenterTimerInterval);
+    presenterTimerInterval = setInterval(() => {
+        if (!isTimerPaused) {
+            presenterSeconds++;
+            const display = document.getElementById('presenter-timer-display');
+            if (display) {
+                const h = Math.floor(presenterSeconds / 3600);
+                const m = Math.floor((presenterSeconds % 3600) / 60);
+                const s = presenterSeconds % 60;
+                display.innerText = `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+        }
+    }, 1000);
+}
+
+function togglePresenterTimer() {
+    isTimerPaused = !isTimerPaused;
+    const btn = document.getElementById('presenter-pause-btn');
+    if (btn) btn.innerHTML = isTimerPaused ? '<span class="material-symbols-rounded">play_arrow</span>' : '<span class="material-symbols-rounded">pause</span>';
+}
+
+function resetPresenterTimer() {
+    presenterSeconds = 0;
+    const display = document.getElementById('presenter-timer-display');
+    if (display) display.innerText = '0:00:00';
+}
+
+function updatePresenterClock() {
+    const clock = document.getElementById('presenter-clock-display');
+    if (clock) {
+        const now = new Date();
+        clock.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+}
+
+function changePresenterNotesFont(delta) {
+    presenterNotesFontSize = Math.max(12, Math.min(32, presenterNotesFontSize + delta));
+    const notesText = document.getElementById('presenter-notes-text');
+    if (notesText) notesText.style.fontSize = `${presenterNotesFontSize}px`;
+}
+
+/* ==========================================================================
+   СЕТКА ВСЕХ СЛАЙДОВ (SLIDE GRID MODAL)
+   ========================================================================== */
+function openSlideGridModal() {
+    const modal = document.getElementById('slide-grid-modal');
+    const container = document.getElementById('slide-grid-container');
+    const deck = getCurrentDeck();
+
+    if (!modal || !container || !deck) return;
+
+    container.innerHTML = '';
+    deck.slides.forEach((slide, idx) => {
+        const card = document.createElement('div');
+        card.className = `slide-grid-item ${idx === currentSlideIndex ? 'active' : ''}`;
+        card.onclick = () => goToSlide(idx);
+        card.innerHTML = `
+            <div class="slide-grid-preview">${generateSlideHTML(slide)}</div>
+            <div class="slide-grid-number">${idx + 1}</div>
+        `;
+        container.appendChild(card);
+    });
+
+    modal.classList.add('active');
+}
+
+function closeSlideGridModal() {
+    const modal = document.getElementById('slide-grid-modal');
+    if (modal) modal.classList.remove('active');
 }
 
 /* ==========================================================================
@@ -531,11 +813,9 @@ function generateShareLink() {
     const deck = getCurrentDeck();
     if (!deck) return;
 
-    // Формируем URL с параметром deckId
     const shareUrl = new URL(window.location.href);
     shareUrl.searchParams.set('deckId', deck.id);
 
-    // Копируем ссылку в буфер обмена
     navigator.clipboard.writeText(shareUrl.toString()).then(() => {
         showAlert(
             'Ссылка скопирована! 🔗', 
@@ -555,47 +835,14 @@ function printCurrentDeck() {
         return;
     }
 
-    // Открываем чистое окно about:blank
     const printWindow = window.open('about:blank', '_blank');
     if (!printWindow) {
         showAlert('Ошибка', 'Запрещены всплывающие окна! Разрешите их для печати.');
         return;
     }
 
-    // Собираем HTML всех слайдов
     const slidesHtml = deck.slides.map((slide, index) => {
-        let contentHtml = '';
-
-        switch (slide.type) {
-            case 'title-slide':
-                contentHtml = `
-                    <div style="text-align: center; margin-top: 20%;">
-                        <h1 style="font-size: 32px; margin-bottom: 12px;">${escapeHtml(slide.title || '')}</h1>
-                        <p style="font-size: 18px; color: #555;">${escapeHtml(slide.subtitle || '')}</p>
-                    </div>`;
-                break;
-
-            case 'content':
-                const bullets = (slide.bullets || '').split('\n').filter(b => b.trim());
-                const listItems = bullets.map(b => `<li style="margin-bottom: 8px;">${escapeHtml(b)}</li>`).join('');
-                contentHtml = `
-                    <h2 style="font-size: 24px; margin-bottom: 16px;">${escapeHtml(slide.title || '')}</h2>
-                    <ul style="font-size: 16px; padding-left: 20px;">${listItems}</ul>`;
-                break;
-
-            case 'quote':
-                contentHtml = `
-                    <div style="text-align: center; font-style: italic; margin-top: 15%;">
-                        <blockquote style="font-size: 22px;">“${escapeHtml(slide.title || slide.subtitle || '')}”</blockquote>
-                        ${slide.quoteAuthor ? `<p style="margin-top: 10px; font-style: normal; color: #555;">— ${escapeHtml(slide.quoteAuthor)}</p>` : ''}
-                    </div>`;
-                break;
-
-            default:
-                contentHtml = `
-                    <h2 style="font-size: 24px; margin-bottom: 12px;">${escapeHtml(slide.title || '')}</h2>
-                    <p style="font-size: 16px;">${escapeHtml(slide.subtitle || '')}</p>`;
-        }
+        let contentHtml = generateSlideHTML(slide);
 
         return `
             <div class="print-page">
@@ -945,7 +1192,6 @@ function closeDetailsModal() {
     document.getElementById('slide-details-modal').classList.remove('active');
 }
 
-// Экранирование HTML от XSS
 function escapeHtml(str) {
     return String(str)
         .replace(/&/g, '&amp;')
