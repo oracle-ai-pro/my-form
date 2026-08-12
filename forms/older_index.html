@@ -4,21 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Easy Form | Prestige HQ</title>
-    <link rel="icon" type="image/png" href="forms.png">
     <link rel="stylesheet" href="older_style.css">
 </head>
 <body>
+
+<!-- Всплывающее красное предупреждение об обновлении -->
+<div id="update-banner" class="update-banner hidden">
+    <div class="update-banner-header">
+        <span>⚠️ <strong>Доступна новая версия Forms!</strong> Старая версия может работать некорректно.</span>
+    </div>
+    <div class="update-banner-actions">
+        <a href="index.html" class="btn-banner btn-banner-main" style="text-decoration: none; display: inline-block; text-align: center;">
+    Перейти на новую версию
+</a>
+        <button class="btn-banner btn-banner-sub" onclick="snoozeUpdateNotice(2)">Напомнить через 2 дня</button>
+        <button class="btn-banner btn-banner-sub" onclick="openUpdateModal()">Подробнее об обновлении</button>
+    </div>
+</div>
 
 <div id="quiz-screen" class="quiz-container">
     <div class="tools-dropdown">
         <button class="tools-btn" onclick="toggleToolsMenu()">Tools ▼</button>
         <div id="tools-menu" class="tools-menu hidden">
-    <div class="tools-item" onclick="setTheme('light')">☀️ Светлая</div>
-    <div class="tools-item" onclick="setTheme('dark')">🌙 Темная</div>
-    <div class="tools-item" onclick="generateShareLink()">🔗 Ссылка (zip)</div>
-    <a href="index.html" class="tools-item">🔄 Update</a>
-</div>
-            
+            <div class="tools-item" onclick="setTheme('light')">☀️ Светлая</div>
+            <div class="tools-item" onclick="setTheme('dark')">🌙 Темная</div>
+            <div class="tools-item" onclick="generateShareLink()">🔗 Ссылка (zip)</div>
         </div>
     </div>
 
@@ -52,11 +62,13 @@
 <div id="admin-screen" class="admin-box hidden">
     <h2>Панель администратора 😎</h2>
     <button onclick="changeAdminCreds()" class="btn-secondary">🔑 Изменить логин/пароль</button>
-    <hr>
+    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
     <h3>Добавить/Редактировать вопрос:</h3>
-    <select id="new-type" onchange="toggleAdminFields()">
-        <option value="radio">Radio</option><option value="checkbox">Checkbox</option>
-        <option value="select">Select</option><option value="text">Text</option>
+    <select id="new-type" class="admin-input" onchange="toggleAdminFields()">
+        <option value="radio">Radio</option>
+        <option value="checkbox">Checkbox</option>
+        <option value="select">Select</option>
+        <option value="text">Text</option>
     </select>
     <input type="text" id="new-title" class="admin-input" placeholder="Текст вопроса...">
     <div id="admin-choices-fields">
@@ -73,9 +85,34 @@
     <button class="btn-secondary" onclick="switchScreen('quiz')">Выйти из админки</button>
 </div>
 
+<!-- Модальное окно "Подробнее об обновлении" -->
+<div id="update-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>🚀 Подробнее об обновлении V2</h3>
+            <span class="modal-close" onclick="closeUpdateModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>Вы используете устаревшую версию Easy Form. Перейдите на новую версию, чтобы получить следующие возможности:</p>
+            <ul>
+                <li><strong>Улучшенная стабильность:</strong> исправлены ошибки сохранения ответов.</li>
+                <li><strong>Новые типы вопросов:</strong> поддержка файлов и шкал оценивания.</li>
+                <li><strong>Обновленный дизайн:</strong> адаптирован под мобильные устройства и планшеты.</li>
+                <li><strong>Безопасность:</strong> защищенный протокол отправки результатов.</li>
+            </ul>
+        </div>
+        <div class="modal-footer">
+            <a href="index.html" style="text-decoration: none; flex: 1;">
+    <button type="button">Перейти на новую версию</button>
+</a>
+            <button class="btn-secondary" onclick="closeUpdateModal()">Позже</button>
+        </div>
+    </div>
+</div>
+
 <div class="footer-nav" id="footer-link"><a onclick="switchScreen('login')">🔒 Admin</a></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
-<script src="script.js"></script>
+<script src="older_script.js"></script>
 </body>
 </html>
