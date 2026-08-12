@@ -25,7 +25,7 @@ const defaultQuestions = [
 ];
 
 // ==========================================
-// 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ СОСТОЯНИЯ
+// 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ СОСТОЯНИЯ И АДМИНКА
 // ==========================================
 let questions = [];
 let currentIndex = 0;
@@ -34,8 +34,8 @@ let currentTimerInterval = null;
 let timeLeft = 0;
 let isExplanationState = false;
 let currentTheme = 'light';
+let adminCreds = { user: 'admin', pass: '1234' };
 
-// Надежная загрузка из локальной памяти
 function loadQuestions() {
     let saved = localStorage.getItem('quiz_questions');
     if (!saved) {
@@ -44,9 +44,7 @@ function loadQuestions() {
     }
     try {
         let parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-        }
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     } catch(e) {
         console.error("Ошибка парсинга localStorage", e);
     }
@@ -54,7 +52,40 @@ function loadQuestions() {
 }
 
 // ==========================================
-// 3. ДВИЖОК ЭКРАНОВ И ИНТЕРФЕЙСА
+// 3. УПРАВЛЕНИЕ УВЕДОМЛЕНИЯМИ И МОДАЛКОЙ
+// ==========================================
+function checkUpdateNotice() {
+    const snoozedUntil = localStorage.getItem('update_snoozed_until');
+    const banner = document.getElementById('update-banner');
+    if (snoozedUntil && Date.now() < parseInt(snoozedUntil, 10)) {
+        if (banner) banner.classList.add('hidden');
+    } else {
+        if (banner) banner.classList.remove('hidden');
+    }
+}
+
+function snoozeUpdateNotice(days) {
+    const until = Date.now() + days * 24 * 60 * 60 * 1000;
+    localStorage.setItem('update_snoozed_until', until.toString());
+    const banner = document.getElementById('update-banner');
+    if (banner) banner.classList.add('hidden');
+}
+
+function openUpdateModal() {
+    document.getElementById('update-modal').classList.remove('hidden');
+}
+
+function closeUpdateModal() {
+    document.getElementById('update-modal').classList.add('hidden');
+}
+
+function goToNewVersion() {
+    alert("Переход на новую версию Forms V2...");
+    // window.location.href = "https://your-new-version-url.com";
+}
+
+// ==========================================
+// 4. ДВИЖОК ЭКРАНОВ И ИНТЕРФЕЙСА
 // ==========================================
 function switchScreen(screenName) {
     if (screenName !== 'quiz') clearInterval(currentTimerInterval);
@@ -80,63 +111,42 @@ function switchScreen(screenName) {
         document.getElementById('admin-screen').classList.remove('hidden');
         renderAdminQuestions();
     }
-    
-    // Принудительно обновляем цвета при смене экранов
-    applyThemeStyles(currentTheme);
 }
 
 function toggleToolsMenu() {
     document.getElementById('tools-menu').classList.toggle('hidden');
 }
 
-// Фикс тёмной темы для карточек
 function setTheme(theme) {
     currentTheme = theme;
-    applyThemeStyles(theme);
+    if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+    } else {
+        document.body.classList.remove('dark-theme');
+    }
     toggleToolsMenu();
 }
 
-function applyThemeStyles(theme) {
-    const containers = document.querySelectorAll('.quiz-container, .quiz-box, .result-card, .admin-box');
-    if (theme === 'dark') {
-        document.body.style.backgroundColor = '#121214';
-        document.body.style.color = '#ffffff';
-        containers.forEach(el => {
-            el.style.backgroundColor = '#1e1e22';
-            el.style.color = '#ffffff';
-            el.style.borderColor = '#333338';
-        });
-    } else {
-        document.body.style.backgroundColor = '#f4f4f9';
-        document.body.style.color = '#333333';
-        containers.forEach(el => {
-            el.style.backgroundColor = '#ffffff';
-            el.style.color = '#333333';
-            el.style.borderColor = '#eeeeee';
-        });
-    }
-}
-
-// Полноценная генерация ссылки
 function generateShareLink() {
     try {
         const currentQuestions = localStorage.getItem('quiz_questions') || JSON.stringify(defaultQuestions);
-        // Сжимаем данные
         const compressed = LZString.compressToEncodedURIComponent(currentQuestions);
         const cleanUrl = window.location.href.split('?')[0];
         const shareUrl = `${cleanUrl}?zip=${compressed}`;
         
-        // ... (код копирования остается прежним)
-        navigator.clipboard.writeText(shareUrl).then(() => {
-            alert("Короткая ссылка скопирована! 🚀");
-        });
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                alert("Короткая ссылка скопирована! 🚀");
+            }).catch(() => fallbackCopy(shareUrl));
+        } else {
+            fallbackCopy(shareUrl);
+        }
     } catch (e) {
         alert("Ошибка сжатия данных.");
     }
     toggleToolsMenu();
 }
 
-// Неубиваемый метод копирования для file:///
 function fallbackCopy(text) {
     const textArea = document.createElement("textarea");
     textArea.value = text;
@@ -147,7 +157,7 @@ function fallbackCopy(text) {
     textArea.select();
     try {
         if (document.execCommand('copy')) {
-            alert("Ссылка успешно скопирована в буфер обмена! 🚀");
+            alert("Ссылка успешно скопирована! 🚀");
         } else {
             prompt("Скопируй вручную:", text);
         }
@@ -158,13 +168,13 @@ function fallbackCopy(text) {
 }
 
 // ==========================================
-// 4. АВТОРИЗАЦИЯ
+// 5. АВТОРИЗАЦИЯ
 // ==========================================
 function tryLogin() {
     const user = document.getElementById('login-user').value;
     const pass = document.getElementById('login-pass').value;
 
-    if (user === 'admin' && pass === '1234') {
+    if (user === adminCreds.user && pass === adminCreds.pass) {
         document.getElementById('login-user').value = '';
         document.getElementById('login-pass').value = '';
         switchScreen('admin');
@@ -173,12 +183,19 @@ function tryLogin() {
     }
 }
 
-function logout() {
-    switchScreen('quiz');
+function changeAdminCreds() {
+    const newLogin = prompt("Введите новый логин:", adminCreds.user);
+    if (!newLogin) return;
+    const newPass = prompt("Введите новый пароль:", adminCreds.pass);
+    if (!newPass) return;
+
+    adminCreds.user = newLogin;
+    adminCreds.pass = newPass;
+    alert("Данные для входа успешно обновлены!");
 }
 
 // ==========================================
-// 5. ДВИЖОК ТЕСТИРОВАНИЯ
+// 6. ДВИЖОК ТЕСТИРОВАНИЯ
 // ==========================================
 function renderQuestion() {
     clearInterval(currentTimerInterval);
@@ -201,24 +218,24 @@ function renderQuestion() {
     nextBtn.innerText = "Далее";
     nextBtn.disabled = false;
 
-    let html = `<h3>${q.title} ${q.required ? '<span style="color:red">*</span>' : ''}</h3>`;
+    let html = `<h3 class="q-title">${q.title} ${q.required ? '<span class="required-star">*</span>' : ''}</h3>`;
     
     if (q.type === 'radio') {
         q.options.forEach((opt, idx) => {
-            html += `<label class="option-label" style="display:block; margin: 8px 0;"><input type="radio" name="quiz_ans" value="${idx}"> ${opt}</label>`;
+            html += `<label class="option-label"><input type="radio" name="quiz_ans" value="${idx}"> ${opt}</label>`;
         });
     } else if (q.type === 'checkbox') {
         q.options.forEach((opt, idx) => {
-            html += `<label class="option-label" style="display:block; margin: 8px 0;"><input type="checkbox" name="quiz_ans" value="${idx}"> ${opt}</label>`;
+            html += `<label class="option-label"><input type="checkbox" name="quiz_ans" value="${idx}"> ${opt}</label>`;
         });
     } else if (q.type === 'select') {
-        html += `<select id="quiz_select" class="admin-input" style="width:100%; padding:8px; margin-top:10px;"><option value="">-- Выберите ответ --</option>`;
+        html += `<select id="quiz_select" class="admin-input"><option value="">-- Выберите ответ --</option>`;
         q.options.forEach((opt, idx) => {
             html += `<option value="${idx}">${opt}</option>`;
         });
         html += `</select>`;
     } else if (q.type === 'text') {
-        html += `<input type="text" id="quiz_text" class="admin-input" style="width:100%; padding:8px; margin-top:10px;" placeholder="Введите ваш ответ...">`;
+        html += `<input type="text" id="quiz_text" class="admin-input" placeholder="Введите ваш ответ...">`;
     }
 
     html += `<div id="explanation-container" class="hidden" style="margin-top:15px; padding:15px; border-radius:6px; background:#fff3cd; color:#333;"></div>`;
@@ -249,11 +266,8 @@ function nextStep(isTimeout = false) {
 
     if (isExplanationState) {
         currentIndex++;
-        if (currentIndex < questions.length) {
-            renderQuestion();
-        } else {
-            showResults();
-        }
+        if (currentIndex < questions.length) renderQuestion();
+        else showResults();
         return;
     }
 
@@ -304,7 +318,6 @@ function nextStep(isTimeout = false) {
         correctInfo: q.type === 'text' ? q.correctText?.join(' / ') : q.correct?.map(i => q.options[i]).join(', ')
     });
 
-    // Блок объяснения
     if (q.exp && q.exp.desc && !isTimeout) {
         isExplanationState = true;
         const expBox = document.getElementById('explanation-container');
@@ -333,16 +346,10 @@ function nextStep(isTimeout = false) {
     }
 
     currentIndex++;
-    if (currentIndex < questions.length) {
-        renderQuestion();
-    } else {
-        showResults();
-    }
+    if (currentIndex < questions.length) renderQuestion();
+    else showResults();
 }
 
-// ==========================================
-// 6. СБОР РЕЗУЛЬТАТОВ (НОВОВВЕДЕНИЯ)
-// ==========================================
 function showResults() {
     document.getElementById('quiz-box').classList.add('hidden');
     const resultBox = document.getElementById('result-box');
@@ -364,14 +371,13 @@ function showResults() {
         reviewHtml += `
             <div style="border-left: 4px solid ${ans.isCorrect ? '#28a745' : '#dc3545'}; padding-left:10px; margin-bottom:10px; text-align:left;">
                 <p><strong>${idx + 1}. ${ans.title}</strong></p>
-                <p>Ваш ответ: <span style="color:${ans.isCorrect ? 'green' : 'red'}">${ans.userAns || '[Нет ответа]'}</span></p>
-                ${!ans.isCorrect ? `<p style="color:#6c757d; font-size:14px;">Правильный: ${ans.correctInfo || '—'}</p>` : ''}
+                <p>Ваш ответ: <span style="color:${ans.isCorrect ? '#28a745' : '#dc3545'}">${ans.userAns || '[Нет ответа]'}</span></p>
+                ${!ans.isCorrect ? `<p style="color:var(--text-muted); font-size:14px;">Правильный: ${ans.correctInfo || '—'}</p>` : ''}
             </div>
         `;
     });
     document.getElementById('review-box').innerHTML = reviewHtml;
 
-    // Сбор результатов для учителя
     let oldForm = document.getElementById('teacher-submission-block');
     if (oldForm) oldForm.remove();
 
@@ -399,14 +405,9 @@ function showResults() {
 
     resultBox.appendChild(shareResultsDiv);
 
-    // ВОТ ЗДЕСЬ ТЫ ЗАСТРЯЛ: ПОЛНАЯ ЛОГИКА КНОПОК
     document.getElementById('copy-code-btn').addEventListener('click', () => {
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(encodedResults).then(() => {
-                alert('Код ответов скопирован! Отправь его учителю.');
-            }).catch(() => {
-                fallbackCopy(encodedResults);
-            });
+            navigator.clipboard.writeText(encodedResults).then(() => alert('Код ответов скопирован!')).catch(() => fallbackCopy(encodedResults));
         } else {
             fallbackCopy(encodedResults);
         }
@@ -449,26 +450,13 @@ function toggleAdminFields() {
     }
 }
 
-function addQuestion() {
+function saveAdminQuestion() {
     const type = document.getElementById('new-type').value;
     const title = document.getElementById('new-title').value.trim();
-    const required = document.getElementById('new-required').checked;
-    const editable = document.getElementById('new-editable').checked;
-    const useTimer = document.getElementById('toggle-timer-input').checked;
-    const timer = parseInt(document.getElementById('new-timer').value) || 20;
-
-    const useExp = document.getElementById('toggle-exp-input').checked;
-    const expTitle = document.getElementById('new-exp-title').value.trim();
-    const expDesc = document.getElementById('new-exp-desc').value.trim();
-    const expHold = parseInt(document.getElementById('new-exp-timer').value) || 0;
 
     if (!title) { alert("Заполните текст вопроса!"); return; }
 
-    let newQ = { type, title, required, editable, useTimer, timer };
-
-    if (useExp && expDesc) {
-        newQ.exp = { title: expTitle, desc: expDesc, hold: expHold };
-    }
+    let newQ = { type, title, required: true, editable: true, useTimer: false };
 
     if (type === 'text') {
         const correctTextRaw = document.getElementById('new-correct-text').value;
@@ -491,8 +479,6 @@ function addQuestion() {
     document.getElementById('new-options').value = '';
     document.getElementById('new-correct-choices').value = '';
     document.getElementById('new-correct-text').value = '';
-    document.getElementById('new-exp-title').value = '';
-    document.getElementById('new-exp-desc').value = '';
 
     renderAdminQuestions();
     alert("Вопрос сохранен!");
@@ -511,7 +497,7 @@ function renderAdminQuestions() {
     listContainer.innerHTML = '';
     questions.forEach((q, index) => {
         const item = document.createElement('div');
-        item.style = "background:rgba(0,0,0,0.03); padding:10px; margin-bottom:10px; border-radius:6px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; text-align:left; color:inherit;";
+        item.style = "background:rgba(0,0,0,0.03); padding:10px; margin-bottom:10px; border-radius:6px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; text-align:left;";
         item.innerHTML = `
             <div>
                 <strong>${index + 1}. [${q.type.toUpperCase()}]</strong> ${q.title} 
@@ -524,28 +510,27 @@ function renderAdminQuestions() {
 }
 
 // ==========================================
-// 8. ЗАЩИЩЕННЫЙ ЗАПУСК ПРИЛОЖЕНИЯ
+// 8. ЗАПУСК ПРИЛОЖЕНИЯ
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
+    checkUpdateNotice();
+
     const urlParams = new URLSearchParams(window.location.search);
-    const zipData = urlParams.get('zip'); // Ищем именно zip
+    const zipData = urlParams.get('zip');
 
     currentIndex = 0;
     userAnswers = [];
 
     if (zipData) {
         try {
-            // Распаковываем данные
             const decompressed = LZString.decompressFromEncodedURIComponent(zipData);
             const parsedQuestions = JSON.parse(decompressed);
-            
             if (Array.isArray(parsedQuestions) && parsedQuestions.length > 0) {
                 questions = parsedQuestions;
             } else {
-                throw new Error("Пустые данные");
+                questions = loadQuestions();
             }
         } catch (e) {
-            console.error("Ошибка при распаковке, загрузка локальной базы", e);
             questions = loadQuestions();
         }
     } else {
