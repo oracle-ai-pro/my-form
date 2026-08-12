@@ -7,6 +7,7 @@ if (!allForms[currentFormId]) currentFormId = Object.keys(allForms)[0] || "def";
 
 let questions = allForms[currentFormId].questions;
 let currentIndex = 0, userAnswers = [], currentTimerInterval = null, timeLeft = 0, isExplanationState = false, currentVoiceAnswer = null;
+let editingIndex = null; // Индекс редактируемого вопроса
 
 const save = () => {
     localStorage.setItem('q_forms', JSON.stringify(allForms));
@@ -21,18 +22,15 @@ window.onload = async () => {
     
     if (zipData) {
         try {
-            // Восстанавливаем стандартный Base64 из URL-безопасного вида
             let base64 = zipData.replace(/-/g, "+").replace(/_/g, "/");
             while (base64.length % 4) base64 += "=";
             
-            // Переводим строку в двоичные байты
             const binaryStr = atob(base64);
             const byteArray = new Uint8Array(binaryStr.length);
             for (let i = 0; i < binaryStr.length; i++) {
                 byteArray[i] = binaryStr.charCodeAt(i);
             }
             
-            // Распаковываем данные алгоритмом Deflate обратно в текст
             const stream = new Response(byteArray).body.pipeThrough(new DecompressionStream("deflate"));
             const jsonStr = await new Response(stream).text();
             const importedForm = JSON.parse(jsonStr);
@@ -60,7 +58,6 @@ window.onload = async () => {
         }
     }
 
-    // Загрузка темы и запуск
     const savedTheme = localStorage.getItem('quiz_theme') || 'light';
     setTheme(savedTheme);
     save(); 
@@ -73,7 +70,12 @@ function renderTabs() {
     box.innerHTML = Object.keys(allForms).map(id => `
         <div class="form-tab ${id === currentFormId ? 'active-tab' : ''}" onclick="switchForm('${id}')">
             <span>${allForms[id].name}</span>
-            <button class="close-tab-btn" onclick="deleteForm(event, '${id}')"><span class="material-symbols-rounded">close</span></button>
+            <button class="edit-tab-btn" onclick="renameForm(event, '${id}')" title="Переименовать форму">
+                <span class="material-symbols-rounded">edit</span>
+            </button>
+            <button class="close-tab-btn" onclick="deleteForm(event, '${id}')" title="Удалить форму">
+                <span class="material-symbols-rounded">close</span>
+            </button>
         </div>
     `).join('');
 }
@@ -92,6 +94,16 @@ function createNewFormPrompt() {
     currentFormId = id; currentIndex = 0; userAnswers = []; save(); renderQuestion();
 }
 
+function renameForm(e, id) {
+    e.stopPropagation();
+    let oldName = allForms[id]?.name || "";
+    let newName = prompt("Введите новое название формы:", oldName);
+    if (newName !== null && newName.trim() !== "") {
+        allForms[id].name = newName.trim();
+        save();
+    }
+}
+
 function deleteForm(e, id) {
     e.stopPropagation();
     if (!confirm(`Удалить форму "${allForms[id].name}" и все её вопросы?`)) return;
@@ -106,14 +118,15 @@ function deleteForm(e, id) {
 // ==========================================
 function renderQuestion() {
     clearInterval(currentTimerInterval);
-    isExplanationState = currentVoiceAnswer = null;
+    isExplanationState = false;
+    currentVoiceAnswer = null;
     const nextBtn = document.getElementById('next-btn');
     if (nextBtn) { nextBtn.innerText = "Далее"; nextBtn.disabled = false; nextBtn.classList.remove('hidden'); }
 
     if (!questions?.length) {
         document.getElementById('question-body').innerHTML = `
             <div style="text-align:center; padding:20px;">
-                <h3>У вас нет форм 🤷‍♂️</h3><p style="color:var(--text-muted);">Создайте их через админку.</p>
+                <h3>У вас нет вопросов в этой форме 🤷‍♂️</h3><p style="color:var(--text-muted);">Создайте их через админку.</p>
                 <button onclick="switchScreen('login')" style="width:auto; display:inline-block; padding:10px 20px;">Перейти в админку</button>
             </div>`;
         if (nextBtn) nextBtn.classList.add('hidden');
@@ -172,6 +185,7 @@ function nextStep(isTimeout = false) {
     const q = questions[currentIndex];
 
     if (isExplanationState) {
+        isExplanationState = false;
         currentIndex++;
         if (currentIndex < questions.length) renderQuestion(); else showResults();
         return;
@@ -279,21 +293,19 @@ function restartQuiz() {
 function handleVoiceCardFail(reason = "Подсмотрел(-а)") {
     const status = document.getElementById('voice-status');
     const q = questions[currentIndex];
-    const firstCorrectAnswer = q.correctText ? q.correctText[0] : ''; // Берем первый синоним
+    const firstCorrectAnswer = q.correctText ? q.correctText[0] : '';
     const correctAnswersText = q.correctText ? q.correctText.join(' / ') : '';
     
     if (status) status.innerHTML = `⚠️ <strong>${reason}:</strong> За картой было слово: "${correctAnswersText}"`;
     
-    // Автоматически проговариваем правильное слово!
     if (firstCorrectAnswer) speakText(firstCorrectAnswer);
     
     currentVoiceAnswer = { text: `[${reason}]`, status: "skipped" };
     const card = document.querySelector('.voice-card');
     if (card) card.style.borderColor = 'var(--gray)';
     
-    setTimeout(() => nextStep(), 1800); // Чуть увеличили таймер, чтобы успело договорить
+    setTimeout(() => nextStep(), 1800);
 }
-
 
 function startVoiceRecognition(event, correctAnswersStr) {
     event.stopPropagation();
@@ -332,13 +344,6 @@ function startVoiceRecognition(event, correctAnswersStr) {
     
     recognition.onend = () => resetMic(btn);
 }
-function restartQuiz() {
-    currentIndex = 0; 
-    userAnswers = [];
-    document.getElementById('result-box').classList.add('hidden');
-    document.getElementById('quiz-box').classList.remove('hidden');
-    renderQuestion();
-}
 
 const resetMic = btn => { 
     if (btn) { 
@@ -350,14 +355,6 @@ const resetMic = btn => {
 // ==========================================
 // 4. ОПЦИИ И ИНТЕРФЕЙС (ТЕМЫ И МЕНЮ)
 // ==========================================
-document.addEventListener('click', e => {
-    const m = document.getElementById('tools-menu');
-    const b = document.querySelector('.tools-btn');
-    if (m && !m.classList.contains('hidden') && e.target !== m && e.target !== b && !b?.contains(e.target)) {
-        m.classList.add('hidden');
-    }
-});
-
 function setTheme(theme) {
     if (theme === 'dark') document.body.classList.add('dark-theme'); 
     else document.body.classList.remove('dark-theme');
@@ -380,6 +377,7 @@ function tryLogin() {
 }
 
 function logout() { switchScreen('quiz'); }
+
 // ==========================================
 // 5. ПАНЕЛЬ АДМИНИСТРАТОРА И ЭКСПОРТ
 // ==========================================
@@ -398,6 +396,25 @@ function toggleAdminFields() {
             document.getElementById('new-correct-text').placeholder = 'ответ1, ответ2';
         }
     }
+}
+
+function resetAdminForm() {
+    editingIndex = null;
+    document.getElementById('new-title').value = '';
+    document.getElementById('new-required').checked = true;
+    document.getElementById('toggle-timer-input').checked = false;
+    document.getElementById('timer-val-box').classList.add('hidden');
+    document.getElementById('toggle-exp-input').checked = false;
+    document.getElementById('exp-fields-box').classList.add('hidden');
+    document.getElementById('new-exp-title').value = '';
+    document.getElementById('new-exp-desc').value = '';
+    document.getElementById('new-exp-timer').value = '0';
+    document.getElementById('new-options').value = '';
+    document.getElementById('new-correct-choices').value = '';
+    document.getElementById('new-correct-text').value = '';
+    
+    const saveBtn = document.getElementById('save-question-btn');
+    if (saveBtn) saveBtn.innerText = "Сохранить вопрос";
 }
 
 function addQuestion() {
@@ -427,10 +444,17 @@ function addQuestion() {
         q.correct = codes.split(',').map(s => parseInt(s.trim()));
     }
 
-    allForms[currentFormId].questions.push(q);
+    if (editingIndex !== null) {
+        allForms[currentFormId].questions[editingIndex] = q;
+        alert("Изменения в вопросе сохранены!");
+    } else {
+        allForms[currentFormId].questions.push(q);
+        alert("Вопрос сохранен в текущую форму!");
+    }
+
     save(); 
+    resetAdminForm();
     renderAdminQuestions(); 
-    alert("Вопрос сохранен в текущую форму!");
 }
 
 function renderAdminQuestions() {
@@ -449,6 +473,7 @@ function renderAdminQuestions() {
 }
 
 function editQuestion(i) {
+    editingIndex = i;
     const q = allForms[currentFormId].questions[i];
     
     document.getElementById('new-type').value = q.type;
@@ -478,18 +503,19 @@ function editQuestion(i) {
     }
 
     toggleAdminFields();
-    allForms[currentFormId].questions.splice(i, 1);
-    save();
-    renderAdminQuestions();
+    
+    const saveBtn = document.getElementById('save-question-btn');
+    if (saveBtn) saveBtn.innerText = "Сохранить изменения";
     
     document.querySelector('.admin-box').scrollTop = 0;
 }
-function deleteQuestion(i) {
-    allForms[currentFormId].questions.splice(i, 1);
-    save(); // Сохраняем изменения в localStorage
-    renderAdminQuestions(); // Обновляем список на экране
-}
 
+function deleteQuestion(i) {
+    if (!confirm("Удалить этот вопрос?")) return;
+    allForms[currentFormId].questions.splice(i, 1);
+    save(); 
+    renderAdminQuestions(); 
+}
 
 function exportFormToJSON() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allForms[currentFormId]));
@@ -602,20 +628,15 @@ async function generateShareLink() {
         alert("Ошибка сжатия. Используйте скачивание .json файла!");
     }
 }
-// Функция озвучки текста голосом
+
 function speakText(text) {
     if (!('speechSynthesis' in window)) {
         alert("Ваш браузер не поддерживает озвучку текста.");
         return;
     }
-    // Останавливаем прошлую озвучку, если она еще говорит
     window.speechSynthesis.cancel();
-
     const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Автоматически определяем язык: если есть английские буквы — читаем по-английски
     utterance.lang = /[a-zA-Z]/.test(text) ? 'en-US' : 'ru-RU';
-    utterance.rate = 1.0; // Скорость речи
-    
+    utterance.rate = 1.0;
     window.speechSynthesis.speak(utterance);
 }
