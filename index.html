@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Work | Prestige HQ </title>
+    <title>Prestige HQ | Выбор сервиса</title>
     <link rel="icon" type="image/png" href="MY Work.png">
     <!-- Google Fonts & Material Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,23 +18,26 @@
             --card-hover-bg: #334155;
             --text-color: #f8fafc;
             --text-muted: #94a3b8;
-            --border-color: rgba(255, 255, 255, 0.08);
+            --border-color: rgba(255, 255, 255, 0.1);
             --accent-color: #6366f1;
             --accent-glow: rgba(99, 102, 241, 0.25);
+            --modal-bg: #1e293b;
+            --code-bg: #0f172a;
             --card-radius: 16px;
             --transition-speed: 0.25s;
         }
 
-        @media (prefers-color-scheme: light) {
-            :root {
-                --bg-color: #f8fafc;
-                --card-bg: #ffffff;
-                --card-hover-bg: #f1f5f9;
-                --text-color: #0f172a;
-                --text-muted: #64748b;
-                --border-color: rgba(0, 0, 0, 0.08);
-                --accent-glow: rgba(99, 102, 241, 0.15);
-            }
+        /* Светлая тема */
+        body.light-theme {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --card-hover-bg: #f1f5f9;
+            --text-color: #0f172a;
+            --text-muted: #64748b;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --modal-bg: #ffffff;
+            --code-bg: #f1f5f9;
         }
 
         * {
@@ -53,12 +56,43 @@
             justify-content: center;
             align-items: center;
             padding: 24px;
+            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
         }
 
         .container {
             width: 100%;
             max-width: 960px;
             text-align: center;
+            position: relative;
+        }
+
+        /* Верхняя панель управления */
+        .top-nav {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .icon-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .icon-btn:hover {
+            background: var(--card-hover-bg);
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
         }
 
         /* Баннер одноразового уведомления */
@@ -78,9 +112,7 @@
             animation: fadeIn 0.3s ease;
         }
 
-        .notice-banner.hidden {
-            display: none;
-        }
+        .notice-banner.hidden { display: none; }
 
         .notice-content {
             display: flex;
@@ -103,17 +135,12 @@
             align-items: center;
             padding: 4px;
             border-radius: 6px;
-            transition: color 0.2s ease;
         }
 
-        .notice-close-btn:hover {
-            color: var(--text-color);
-        }
+        .notice-close-btn:hover { color: var(--text-color); }
 
         /* Шапка */
-        .header {
-            margin-bottom: 40px;
-        }
+        .header { margin-bottom: 40px; }
 
         .badge {
             display: inline-flex;
@@ -171,7 +198,6 @@
             border-color: var(--accent-color);
         }
 
-        /* Иконка сервиса */
         .icon-wrapper {
             width: 56px;
             height: 56px;
@@ -183,15 +209,9 @@
             transition: transform var(--transition-speed) ease;
         }
 
-        .service-card:hover .icon-wrapper {
-            transform: scale(1.1);
-        }
+        .service-card:hover .icon-wrapper { transform: scale(1.1); }
+        .icon-wrapper .material-symbols-rounded { font-size: 32px; }
 
-        .icon-wrapper .material-symbols-rounded {
-            font-size: 32px;
-        }
-
-        /* Цветовые акценты */
         .card-doc .icon-wrapper { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
         .card-slides .icon-wrapper { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
         .card-forms .icon-wrapper { background: rgba(16, 185, 129, 0.15); color: #10b981; }
@@ -227,7 +247,177 @@
             transform: translateY(0);
         }
 
-        /* Подвал */
+        /* Модальные окна */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: var(--modal-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 540px;
+            padding: 28px;
+            text-align: left;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active .modal-card { transform: scale(1); }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 4px;
+            border-radius: 6px;
+        }
+
+        .modal-close:hover { color: var(--text-color); }
+
+        /* Элементы настроек внутри модалки */
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .theme-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .theme-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn:hover, .theme-btn.active {
+            border-color: var(--accent-color);
+            background: var(--card-hover-bg);
+            color: var(--accent-color);
+        }
+
+        .info-link-btn {
+            width: 100%;
+            background: var(--accent-glow);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .info-link-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Информационный блок про API */
+        .api-explain-box {
+            font-size: 0.92rem;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        .api-explain-box p {
+            margin-bottom: 14px;
+        }
+
+        .api-card-section {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 12px;
+            margin-bottom: 14px;
+        }
+
+        .api-card-section h4 {
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent-color);
+        }
+
+        .code-inline {
+            background: var(--border-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
         .footer {
             margin-top: 50px;
             font-size: 0.8rem;
@@ -243,7 +433,13 @@
 <body>
 
     <div class="container">
-        
+        <!-- Верхняя кнопка вызова Опций -->
+        <div class="top-nav">
+            <button class="icon-btn" onclick="openModal('settings-modal')">
+                <span class="material-symbols-rounded">settings</span>
+            </button>
+        </div>
+
         <!-- ОДНОРАЗОВОЕ УВЕДОМЛЕНИЕ О СМЕНЕ ИМЕНИ РЕПОЗИТОРИЯ -->
         <div id="repo-notice" class="notice-banner hidden">
             <div class="notice-content">
@@ -323,19 +519,161 @@
         </footer>
     </div>
 
+    <!-- МОДАЛЬНОЕ ОКНО: ОПЦИИ -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>
+                    <span class="material-symbols-rounded" style="color:var(--accent-color);">tune</span>
+                    Опции и Настройки
+                </h3>
+                <button class="modal-close" onclick="closeModal('settings-modal')">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <!-- Переключатель тем -->
+            <div class="setting-group">
+                <label class="setting-label">Тема оформления</label>
+                <div class="theme-buttons">
+                    <button class="theme-btn" id="theme-dark" onclick="setTheme('dark')">
+                        <span class="material-symbols-rounded">dark_mode</span> Тёмная
+                    </button>
+                    <button class="theme-btn" id="theme-light" onclick="setTheme('light')">
+                        <span class="material-symbols-rounded">light_mode</span> Светлая
+                    </button>
+                    <button class="theme-btn" id="theme-system" onclick="setTheme('system')">
+                        <span class="material-symbols-rounded">desktop_windows</span> Авто
+                    </button>
+                </div>
+            </div>
+
+            <!-- Раздел базы знаний ИИ -->
+            <div class="setting-group" style="margin-top: 24px;">
+                <label class="setting-label">Интеграции и ИИ</label>
+                <button class="info-link-btn" onclick="openApiInfo()">
+                    <span class="material-symbols-rounded">help_center</span>
+                    Что такое API для ИИ?
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО: ЧТО ТАКОЕ API ДЛЯ ИИ -->
+    <div id="api-info-modal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>
+                    <span class="material-symbols-rounded" style="color:var(--accent-color);">auto_awesome</span>
+                    Что такое API для ИИ?
+                </h3>
+                <button class="modal-close" onclick="closeModal('api-info-modal')">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <div class="api-explain-box">
+                <p>
+                    <strong>API (Application Programming Interface)</strong> — это «цифровой мост» или официант в ресторане. 
+                    Наш сайт не содержит внутри себя гигантскую нейросеть, а отправляет ваш запрос к мощным серверам ИИ и получает готовый ответ за секунды.
+                </p>
+
+                <div class="api-card-section">
+                    <h4>
+                        <span class="material-symbols-rounded" style="font-size:18px;">smart_toy</span>
+                        OpenAI API (ChatGPT)
+                    </h4>
+                    <p style="margin:0; font-size:0.88rem; color:var(--text-muted);">
+                        Использует секретные ключи формата <span class="code-inline">sk-proj-...</span>. Ключ связывает ваше приложение напрямую с моделями GPT-4o или GPT-3.5, позволяя генерировать тексты и слайды без посещения веб-сайта ChatGPT.
+                    </p>
+                </div>
+
+                <div class="api-card-section">
+                    <h4>
+                        <span class="material-symbols-rounded" style="font-size:18px;">cloud_sync</span>
+                        Google API & Google Apps Script (GAS)
+                    </h4>
+                    <p style="margin:0; font-size:0.88rem; color:var(--text-muted);">
+                        Google позволяет подключаться к <strong>Gemini API</strong> через ключ Google AI Studio или использовать бесплатный шлюз <strong>Google Apps Script (Webhooks)</strong>. Это даёт возможность автоматически связывать презентации, формы и таблицы с вашим Google Диском.
+                    </p>
+                </div>
+
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom:0;">
+                    💡 <em>API-ключи хранятся исключительно в памяти вашего браузера и никогда не передаются посторонним лицам.</em>
+                </p>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Проверка: показывалось ли баннер-уведомление ранее
         document.addEventListener('DOMContentLoaded', () => {
+            // Проверка уведомления о переименовании репозитория
             const isNoticeDismissed = localStorage.getItem('repo_rename_notice_dismissed');
             if (!isNoticeDismissed) {
                 document.getElementById('repo-notice').classList.remove('hidden');
             }
+
+            // Инициализация сохраненной темы
+            initTheme();
         });
 
-        // Закрытие и сохранение в localStorage
+        // Закрытие баннера
         function dismissNotice() {
             localStorage.setItem('repo_rename_notice_dismissed', 'true');
             document.getElementById('repo-notice').classList.add('hidden');
+        }
+
+        // Управление модальными окнами
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function openApiInfo() {
+            closeModal('settings-modal');
+            openModal('api-info-modal');
+        }
+
+        // Закрытие модальных окон при клике на фон
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.remove('active');
+            });
+        });
+
+        // ЛОГИКА ТЕМ ОФОРМЛЕНИЯ
+        function setTheme(theme) {
+            localStorage.setItem('app_theme', theme);
+            applyTheme(theme);
+        }
+
+        function applyTheme(theme) {
+            const body = document.body;
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+
+            if (theme === 'light') {
+                body.classList.add('light-theme');
+                document.getElementById('theme-light').classList.add('active');
+            } else if (theme === 'dark') {
+                body.classList.remove('light-theme');
+                document.getElementById('theme-dark').classList.add('active');
+            } else {
+                // Системная тема
+                document.getElementById('theme-system').classList.add('active');
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                    body.classList.add('light-theme');
+                } else {
+                    body.classList.remove('light-theme');
+                }
+            }
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('app_theme') || 'system';
+            applyTheme(savedTheme);
         }
     </script>
 </body>
