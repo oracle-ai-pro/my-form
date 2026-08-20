@@ -22,12 +22,12 @@
 
 /* 🌙 Тёмная тема */
 body.dark-theme {
-    --bg-color: #121212;
+    --bg-color: #000000;
     --card-bg: #050505;
     --text-color: #e3e3e3;
     --text-muted: #a0a0a0;
-    --accent-color: #8ab4f8;
-    --accent-hover: #aecbfa;
+    --accent-color: #1A73E8;
+    --accent-hover: #1557B0;
     --border-color: #2a2a2a;
     --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
@@ -44,7 +44,7 @@ body[data-radius="sharp"] {
     --radius-pill: 4px;
 }
 
-/* 2. Стандартные / Умеренные (Rounded) - подхватывается по умолчанию */
+/* 2. Стандартные / Умеренные (Rounded) */
 body[data-radius="rounded"] {
     --radius-lg: 16px;
     --radius-md: 12px;
@@ -125,7 +125,7 @@ body {
     white-space: nowrap;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     color: var(--text-color);
     user-select: none;
 }
@@ -136,7 +136,6 @@ body {
     border-color: var(--accent-color);
 }
 
-/* Кнопки переименования и удаления внутри вкладок */
 .edit-tab-btn,
 .delete-tab-btn {
     background: transparent;
@@ -291,6 +290,12 @@ body {
     transform: scale(0.98);
 }
 
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .admin-input {
     width: 100%;
     padding: 12px;
@@ -442,7 +447,7 @@ input:checked + .slider:before {
 }
 
 /* ==========================================
-   5. ИНТЕРАКТИВНЫЕ ЭЛЕМЕНТЫ (ПАЗЛЫ, ФЛЕШКАРТЫ, ТАЙМЕР)
+   5. ИНТЕРАКТИВНЫЕ ЭЛЕМЕНТЫ (ПАЗЛЫ, ФЛЕШКАРТЫ, ОБЪЯСНЕНИЯ)
    ========================================== */
 .puzzle-item {
     user-select: none;
@@ -455,6 +460,7 @@ input:checked + .slider:before {
     cursor: grab;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
     transition: transform 0.15s ease, opacity 0.15s ease;
 }
@@ -465,7 +471,17 @@ input:checked + .slider:before {
     transform: scale(0.98);
 }
 
-/* 3D-Переворот Флешкарт */
+.puzzle-item-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.puzzle-controls {
+    display: flex;
+    gap: 4px;
+}
+
 .flashcard-container {
     perspective: 1000px;
     width: 100%;
@@ -507,14 +523,41 @@ input:checked + .slider:before {
     box-shadow: var(--shadow);
 }
 
-.flashcard-front {
-    z-index: 2;
-}
+.flashcard-front { z-index: 2; }
 
 .flashcard-back {
     transform: rotateY(180deg);
     background: var(--bg-color);
     border-color: var(--accent-color);
+}
+
+.explanation-card {
+    background: rgba(26, 115, 232, 0.08);
+    border: 1px solid var(--accent-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-top: 18px;
+    animation: fadeIn 0.3s ease;
+}
+
+.explanation-title {
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.explanation-body {
+    font-size: 0.93rem;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .timer-box {
@@ -542,7 +585,7 @@ input:checked + .slider:before {
 }
 
 /* ==========================================
-   6. СТАТУСЫ РЕЗУЛЬТАТОВ, АДМИНКА И МОДАЛКИ
+   6. МОДАЛЬНЫЕ ОКНА И МИГРАЦИЯ
    ========================================== */
 .review-item {
     padding: 14px;
@@ -559,7 +602,7 @@ input:checked + .slider:before {
 .text-success { color: #2e7d32; font-weight: 600; }
 .text-danger { color: #d32f2f; font-weight: 600; }
 
-.custom-alert-overlay {
+.custom-alert-overlay, .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0, 0, 0, 0.5);
@@ -573,18 +616,18 @@ input:checked + .slider:before {
     transition: opacity 0.2s ease;
 }
 
-.custom-alert-overlay.active {
+.custom-alert-overlay.active, .modal-overlay.active {
     opacity: 1;
     pointer-events: auto;
 }
 
-.custom-alert-card {
+.custom-alert-card, .modal-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 24px;
     width: 90%;
-    max-width: 380px;
+    max-width: 420px;
     box-shadow: var(--shadow);
     text-align: center;
 }
@@ -638,9 +681,7 @@ input:checked + .slider:before {
 .detail-row:last-child {
     border-bottom: none;
 }
-/* ==========================================
-   ИНЛАЙН-ПОЛЕ ВВОДА (ВНУТРИ ТЕКСТА)
-   ========================================== */
+
 .inline-quiz-input {
     display: inline-block;
     padding: 6px 12px;
@@ -657,14 +698,87 @@ input:checked + .slider:before {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Эффект при фокусе (клике) */
 .inline-quiz-input:focus {
     border-color: var(--accent-color);
     box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
 }
 
-/* Плейсхолдер */
 .inline-quiz-input::placeholder {
     color: var(--text-muted);
     opacity: 0.7;
 }
+/* Анимация и стили подсветки переставленных карточек */
+.card {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.card-highlight {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+  background-color: #eff6ff;
+}
+
+/* Всплывающее уведомление снизу */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 20px);
+}
+
+.toast-btn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.toast-btn:hover {
+  background: #2563eb;
+}
+/* Liquid Анимация для тумблеров */
+.liquid-slider {
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), background-color 0.3s ease !important;
+}
+
+input:checked + .liquid-slider.active-liquid:before {
+    animation: liquidBounce 0.5s forwards;
+}
+
+@keyframes liquidBounce {
+    0% { transform: translateX(0) scaleX(1); }
+    50% { transform: translateX(10px) scaleX(1.4); }
+    100% { transform: translateX(20px) scaleX(1); }
+}
+
+/* Стили для WYSIWYG */
+.rich-text-editor {
+    min-height: 80px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    background: var(--card-bg);
+    outline: none;
+}
+.rich-text-editor:focus { border-color: var(--accent-color); }
