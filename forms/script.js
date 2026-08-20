@@ -50,33 +50,26 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAllFormsUI();
     loadCurrentForm();
     checkOldDataMigration();
-
-    // Контекстное меню для компактного селекта форм
-    const selectEl = document.getElementById('forms-tabs-select');
-    if (selectEl) {
-        selectEl.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            const index = selectEl.value;
-            showFormContextMenu(e.clientX, e.clientY, index);
-        });
-    }
 });
-
 // Проверка наличия старых данных при входе
 function checkOldDataMigration() {
+    // Допустим, в старой версии ключи назывались иначе или лежал общий массив 'forms' / 'my_forms_old'
+    // Проверим типичные ключи старого localStorage (подставь свои ключи, если они отличались)
     const oldData = localStorage.getItem('forms') || localStorage.getItem('quiz_data_old');
+    
+    // Также проверяем, не мигрировали ли мы уже раньше
     const alreadyMigrated = localStorage.getItem('is_migrated_to_new');
 
     if (oldData && !alreadyMigrated) {
         try {
             const parsedForms = JSON.parse(oldData);
             if (Array.isArray(parsedForms) && parsedForms.length > 0) {
+                // Выводим список найденных старых форм в модалку
                 const listContainer = document.getElementById('migrationFormsList');
-                if (listContainer) {
-                    listContainer.innerHTML = parsedForms.map(f => `• ${f.title || 'Без названия'}`).join('<br>');
-                }
-                const migrationModal = document.getElementById('migrationModal');
-                if (migrationModal) migrationModal.style.display = 'flex';
+                listContainer.innerHTML = parsedForms.map(f => `• ${f.title || 'Без названия'}`).join('<br>');
+                
+                // Показываем модальное окно
+                document.getElementById('migrationModal').style.display = 'flex';
             }
         } catch (e) {
             console.error('Ошибка при чтении старых данных:', e);
@@ -84,35 +77,47 @@ function checkOldDataMigration() {
     }
 }
 
+// Кнопка подтверждения миграции
 function performMigration() {
     try {
         const oldData = localStorage.getItem('forms') || localStorage.getItem('quiz_data_old');
         if (oldData) {
             const parsedForms = JSON.parse(oldData);
+            
+            // Получаем текущие формы новой версии
             let currentNewForms = JSON.parse(localStorage.getItem('app_forms') || '[]');
+            
+            // Объединяем (или добавляем старые к новым)
             const mergedForms = [...currentNewForms, ...parsedForms];
+            
+            // Сохраняем в новый формат
             localStorage.setItem('app_forms', JSON.stringify(mergedForms));
+            
+            // Помечаем, что миграция прошла успешно
             localStorage.setItem('is_migrated_to_new', 'true');
+            
+            // Закрываем модалку и обновляем интерфейс
             closeMigrationModal();
-            showAlert('Формы успешно перенесены в новую версию!', 'check_circle');
-            location.reload();
+            alert('Формы успешно перенесены в новую версию!');
+            location.reload(); // Перезагружаем страницу для применения
         }
     } catch (e) {
-        showAlert('Ошибка при импорте: ' + e.message, 'error');
+        alert('Ошибка при импорте: ' + e.message);
     }
 }
 
 function closeMigrationModal() {
-    const migrationModal = document.getElementById('migrationModal');
-    if (migrationModal) migrationModal.style.display = 'none';
+    document.getElementById('migrationModal').style.display = 'none';
+    // Помечаем флаг, чтобы больше не надоедать, если пользователь нажал «Позже»
     localStorage.setItem('is_migrated_to_new', 'true');
 }
+
 
 /* ==========================================
    2. УПРАВЛЕНИЕ ХРАНИЛИЩЕМ (LOCALSTORAGE)
    ========================================== */
 function loadFormsFromStorage() {
-    const saved = localStorage.getItem('my_forms_data') || localStorage.getItem('app_forms');
+    const saved = localStorage.getItem('my_forms_data');
     if (saved) {
         try {
             allForms = JSON.parse(saved);
@@ -152,13 +157,13 @@ function setTheme(themeName, save = true) {
     if (save) localStorage.setItem('app_theme', themeName);
 }
 
-function openFormSettingsModal() {
-    const modal = document.getElementById('form-settings-modal');
+function openSettingsModal() {
+    const modal = document.getElementById('settings-modal');
     if (modal) modal.classList.add('active');
 }
 
-function closeFormSettingsModal() {
-    const modal = document.getElementById('form-settings-modal');
+function closeSettingsModal() {
+    const modal = document.getElementById('settings-modal');
     if (modal) modal.classList.remove('active');
 }
 
@@ -308,35 +313,6 @@ function switchFormFromSelect(index) {
     switchForm(index);
 }
 
-// Контекстное меню для селекта форм
-function showFormContextMenu(x, y, index) {
-    const existing = document.getElementById('custom-context-menu');
-    if (existing) existing.remove();
-
-    const menu = document.createElement('div');
-    menu.id = 'custom-context-menu';
-    menu.className = 'context-menu';
-    menu.style.left = `${x}px`;
-    menu.style.top = `${y}px`;
-
-    menu.innerHTML = `
-        <div class="context-menu-item" onclick="renameForm(${index}); document.getElementById('custom-context-menu').remove();">
-            <span class="material-symbols-rounded" style="font-size:16px;">edit</span> Переименовать
-        </div>
-        <div class="context-menu-item danger" onclick="deleteForm(${index}); document.getElementById('custom-context-menu').remove();">
-            <span class="material-symbols-rounded" style="font-size:16px;">delete</span> Удалить
-        </div>
-    `;
-
-    document.body.appendChild(menu);
-
-    document.addEventListener('click', () => {
-        const m = document.getElementById('custom-context-menu');
-        if (m) m.remove();
-    }, { once: true });
-}
-
-
 /* ==========================================
    4. РЕНДЕР ВКЛАДОК И ВЫБОР ФОРМ
    ========================================== */
@@ -432,7 +408,6 @@ function switchForm(index) {
     renderAllFormsUI();
     loadCurrentForm();
 }
-
 function createNewFormPrompt() {
     showPrompt("Введите название новой формы:", "", (title) => {
         if (title && title.trim()) {
@@ -449,9 +424,8 @@ function createNewFormPrompt() {
     });
 }
 
-
 /* ==========================================
-   5. ДВИЖОК ТЕСТИРОВАНИЯ (RENDER QUESTION)
+   5. ДВИЖОК ТЕСТИРОВАНИЯ
    ========================================== */
 function loadCurrentForm() {
     currentQuestionIndex = 0;
@@ -461,8 +435,7 @@ function loadCurrentForm() {
     document.getElementById('quiz-box').classList.remove('hidden');
     document.getElementById('result-box').classList.add('hidden');
     document.getElementById('admin-screen').classList.add('hidden');
-    const loginScreen = document.getElementById('login-screen');
-    if (loginScreen) loginScreen.classList.add('hidden');
+    document.getElementById('login-screen').classList.add('hidden');
 
     renderQuestion();
 }
@@ -609,13 +582,7 @@ function renderQuestion() {
 
         case 'info-slide':
             if (q.mediaUrl) {
-                if (q.mediaUrl.startsWith('data:video') || q.mediaUrl.endsWith('.mp4') || q.mediaUrl.endsWith('.webm')) {
-                    body.innerHTML += `<div style="text-align:center; margin-bottom:15px;"><video src="${q.mediaUrl}" controls style="max-width:100%; border-radius:12px;"></video></div>`;
-                } else if (q.mediaUrl.startsWith('data:audio') || q.mediaUrl.endsWith('.mp3') || q.mediaUrl.endsWith('.wav')) {
-                    body.innerHTML += `<div style="text-align:center; margin-bottom:15px;"><audio src="${q.mediaUrl}" controls style="width:100%;"></audio></div>`;
-                } else {
-                    body.innerHTML += `<div style="text-align:center; margin-bottom:15px;"><img src="${q.mediaUrl}" style="max-width:100%; border-radius:12px;"></div>`;
-                }
+                body.innerHTML += `<div style="text-align:center; margin-bottom:15px;"><img src="${q.mediaUrl}" style="max-width:100%; border-radius:12px;"></div>`;
             }
             saveAnswer('viewed');
             break;
@@ -754,7 +721,6 @@ function startTimer(seconds) {
 function stopTimer() { if (timerInterval) clearInterval(timerInterval); }
 function toggleHintModal() { document.getElementById('hint-box').classList.toggle('hidden'); }
 
-
 /* ==========================================
    6. ЭКСПОРТ И ИМПОРТ JSON
    ========================================== */
@@ -803,53 +769,28 @@ function importFormFromJSON(input) {
         input.value = '';
     };
     reader.readAsText(file);
-}
-
-
+        }
 /* ==========================================
-   7. ПАНЕЛЬ АДМИНИСТРАТОРА
+   7. ПАНЕЛЬ АДМИНИСТРАТОРА (СОЗДАНИЕ & РЕДАКТИРОВАНИЕ)
    ========================================== */
 function switchScreen(screen) {
     if (screen === 'login') {
-        openAdminLoginModal();
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('admin-screen').classList.add('hidden');
+        document.getElementById('login-screen').classList.remove('hidden');
     } else if (screen === 'admin') {
-        const quizScreen = document.getElementById('quiz-screen');
-        const loginScreen = document.getElementById('login-screen');
-        const adminScreen = document.getElementById('admin-screen');
-
-        if (quizScreen) quizScreen.classList.add('hidden');
-        if (loginScreen) loginScreen.classList.add('hidden');
-        if (adminScreen) adminScreen.classList.remove('hidden');
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('admin-screen').classList.remove('hidden');
         renderAdminQuestionsList();
     }
-}
-
-// Модальный вход админа
-function openAdminLoginModal() {
-    const modal = document.getElementById('admin-login-modal');
-    if (modal) {
-        modal.classList.add('active');
-        setTimeout(() => {
-            const userInp = document.getElementById('login-user');
-            if (userInp) userInp.focus();
-        }, 100);
-    }
-}
-
-function closeAdminLoginModal() {
-    const modal = document.getElementById('admin-login-modal');
-    if (modal) modal.classList.remove('active');
 }
 
 function tryLogin() {
     const u = document.getElementById('login-user').value;
     const p = document.getElementById('login-pass').value;
-    if (u === 'admin' && p === '1234') {
-        closeAdminLoginModal();
-        switchScreen('admin');
-    } else {
-        showAlert('Неверный логин или пароль!', 'lock');
-    }
+    if (u === 'admin' && p === '1234') switchScreen('admin');
+    else showAlert('Неверный логин или пароль!', 'lock');
 }
 
 function logout() { loadCurrentForm(); }
@@ -1175,8 +1116,6 @@ function moveQuestionUp(idx) {
     form.questions[idx] = temp;
     saveFormsToStorage();
     renderAdminQuestionsList();
-    
-    highlightMovedCard(idx - 1);
 }
 
 function moveQuestionDown(idx) {
@@ -1187,18 +1126,6 @@ function moveQuestionDown(idx) {
     form.questions[idx] = temp;
     saveFormsToStorage();
     renderAdminQuestionsList();
-    
-    highlightMovedCard(idx + 1);
-}
-
-function highlightMovedCard(index) {
-    const cards = document.querySelectorAll('#admin-questions-list .gcard');
-    if (cards[index]) {
-        cards[index].classList.add('highlight-moved');
-        setTimeout(() => {
-            cards[index].classList.remove('highlight-moved');
-        }, 3000);
-    }
 }
 
 function deleteQuestion(idx) {
@@ -1221,7 +1148,6 @@ function handleMediaUploadPreview(input) {
         reader.readAsDataURL(file);
     }
 }
-
 
 /* ==========================================
    8. ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ
@@ -1248,7 +1174,9 @@ function printCurrentForm() {
     let questionsHtml = '';
 
     form.questions.forEach((q, idx) => {
-        questionsHtml += `<div class="question-block">`;
+        questionsHtml += `
+            <div class="question-block">
+        `;
 
         if (q.type === 'text' && q.useInlineInput && q.title.includes('[input]')) {
             const printTitle = q.title.replace('[input]', '____________________');
@@ -1325,7 +1253,7 @@ function printCurrentForm() {
         questionsHtml += `</div>`;
     });
 
-    const printContent = `
+   const printContent = `
         <!DOCTYPE html>
         <html lang="ru">
         <head>
@@ -1368,7 +1296,6 @@ function printCurrentForm() {
     printWin.document.write(printContent);
     printWin.document.close();
 }
-
 function toggleExplanationFields(checkbox) {
     const container = document.getElementById('explanationFieldsContainer');
     if (container) {
