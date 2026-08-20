@@ -9,11 +9,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="stylesheet" href="style.css">
     
-    <!-- Дополнительные стили для кастомных селектов и единообразия переключателей -->
     <style>
         .custom-select-wrapper {
             position: relative;
-            display: width: 100%;
+            width: 100%;
             margin-bottom: 12px;
         }
         .custom-select-wrapper select {
@@ -180,6 +179,11 @@
                 <button onclick="document.getElementById('import-file').click()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Импорт JSON</button>
                 <input type="file" id="import-file" style="display:none;" onchange="importFormFromJSON(this)" accept=".json">
             </div>
+<!-- КНОПКА НАСТРОЕК ФОРМЫ (добавить в .forms-toolbar-container) -->
+<button class="tools-btn" onclick="openFormSettings()" title="Настройки текущей формы">
+    <span class="material-symbols-rounded">tune</span>
+</button>
+
 
             <!-- ФОРМА СОЗДАНИЯ / РЕДАКТИРОВАНИЯ ВОПРОСА -->
             <div id="admin-add-form" class="gcard hidden" style="margin-bottom:20px;">
@@ -224,8 +228,12 @@
                 <div id="admin-text-fields" class="hidden" style="margin-top:10px;">
                     <label style="font-size:13px; color:var(--text-muted); display:block; margin-bottom:4px;">Правильные варианты текстового ответа (через запятую):</label>
                     <input type="text" id="new-correct-text" class="admin-input" placeholder="ответ1, ответ2">
-                    
-                    <!-- Кастомный тумблер -->
+                    <!-- ПАНЕЛЬ ФОРМАТИРОВАНИЯ ТЕКСТА (Добавить в admin-add-form) -->
+<div id="rich-text-toolbar" class="hidden" style="display: flex; gap: 5px; margin-bottom: 10px;">
+    <button type="button" class="q-action-btn" onclick="formatText('bold')"><b>B</b></button>
+    <button type="button" class="q-action-btn" onclick="formatText('italic')"><i>I</i></button>
+    <button type="button" class="q-action-btn" onclick="formatText('underline')"><u>U</u></button>
+</div>
                     <label class="switch-label" style="margin-top: 12px; margin-bottom: 12px;">
                         <span class="switch">
                             <input type="checkbox" id="new-inline-input">
@@ -233,6 +241,15 @@
                         </span>
                         <span class="switch-text">Поле Input вместо нижнего текстового поля</span>
                     </label>
+<!-- НОВЫЕ ТУМБЛЕРЫ В ТИПЕ "ТЕКСТ" (Добавить в #admin-text-fields) -->
+<label class="switch-label" style="margin-top: 10px;">
+    <span class="switch"><input type="checkbox" id="new-multiline-input" onchange="toggleTextInputs('multiline')"><span class="slider liquid-slider"></span></span>
+    <span class="switch-text">Многострочное поле</span>
+</label>
+<label class="switch-label" style="margin-top: 10px;">
+    <span class="switch"><input type="checkbox" id="new-allow-format"><span class="slider liquid-slider"></span></span>
+    <span class="switch-text">Разрешить пользователю форматирование (B, I, U)</span>
+</label>
                 </div>
 
                 <!-- Ответ для карточек -->
@@ -248,7 +265,7 @@
                     <div id="media-preview-container"></div>
                 </div>
 
-                <!-- Настройки вопроса (Кастомные тумблеры) -->
+                <!-- Настройки вопроса -->
                 <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 12px;">
                     <label class="switch-label">
                         <span class="switch">
@@ -281,7 +298,7 @@
 
                         <div id="explanationFieldsContainer" style="display: none; margin-top: 15px; margin-left: 50px;">
                             <label style="font-size:13px; color:var(--text-muted); display:block; margin-bottom:4px;">Заголовок объяснения (необязательно):</label>
-                            <input type="text" id="questionExplanationTitle" class="admin-input" placeholder="Например: А вы знали?">
+                            <input type="text" id="questionExplanationTitle" class="admin-input" placeholder="Например: Разбор ответа">
 
                             <label style="font-size:13px; color:var(--text-muted); display:block; margin-top: 10px; margin-bottom:4px;">Текст объяснения / Описание:</label>
                             <textarea id="questionExplanationText" class="admin-input" placeholder="Подробный разбор правильного ответа..." style="min-height: 80px; resize: vertical;"></textarea>
@@ -326,7 +343,6 @@
                     </button>
                 </div>
                 <div id="question-details-content" style="font-size:14px; line-height:1.6; max-height:60vh; overflow-y:auto; padding-right:4px;">
-                    <!-- Заполняется через JS -->
                 </div>
                 <button class="btn" onclick="closeDetailsModal()" style="width:100%; margin-top:20px;">Понятно</button>
             </div>
@@ -352,6 +368,16 @@
                     <button class="btn" onclick="setTheme('dark')" style="flex:1; padding:8px; font-size:13px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; gap:6px;">
                         <span class="material-symbols-rounded" style="font-size:18px;">dark_mode</span> Тёмная
                     </button>
+                </div>
+
+                <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Скругление углов</label>
+                <div class="custom-select-wrapper" style="margin-bottom:20px;">
+                    <select id="settings-radius-select" class="admin-input" onchange="setRadius(this.value)">
+                        <option value="rounded">Умеренное (Rounded)</option>
+                        <option value="sharp">Острые углы (Sharp)</option>
+                        <option value="full">Максимальное (Full)</option>
+                    </select>
+                    <span class="material-symbols-rounded select-icon">expand_more</span>
                 </div>
 
                 <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Интерфейс</label>
@@ -390,6 +416,21 @@
             </div>
         </div>
 
+        <!-- МОДАЛЬНОЕ ОКНО МИГРАЦИИ СО СТАРОЙ ВЕРСИИ -->
+        <div id="migrationModal" class="modal-overlay">
+            <div class="modal-card">
+                <h3 style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px;">
+                    <span class="material-symbols-rounded" style="color:var(--accent-color);">auto_awesome</span> Обнаружены старые данные!
+                </h3>
+                <p style="font-size:14px; color:var(--text-muted); margin-bottom:15px;">Мы нашли сохраненные формы из предыдущей версии приложения. Хотите автоматически импортировать их?</p>
+                <div id="migrationFormsList" style="margin: 15px 0; max-height: 150px; overflow-y: auto; text-align: left; font-size: 14px; opacity: 0.9;"></div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top:15px;">
+                    <button onclick="closeMigrationModal()" class="q-action-btn" style="padding: 8px 16px;">Позже</button>
+                    <button onclick="performMigration()" class="btn" style="padding: 8px 16px;">Импортировать всё</button>
+                </div>
+            </div>
+        </div>
+
         <!-- ПОДВАЛ -->
         <div class="footer-nav" id="footer-link" style="text-align:center; margin-top:30px;">
             <a onclick="switchScreen('login')" style="cursor:pointer; color:var(--text-muted); font-size:14px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
@@ -397,19 +438,61 @@
             </a>
         </div>
     </div>
+<div id="toast" class="toast hidden">
+  <span id="toast-text"></span>
+  <button id="toast-undo-btn" class="toast-btn">Назад</button>
+</div>
 
-    <!-- Модальное окно миграции со старой версии -->
-    <div id="migrationModal" class="modal-overlay" style="display: none;">
-        <div class="modal-card">
-            <h3><span class="material-symbols-rounded">snowing</span> Обнаружены данные старой версии!</h3>
-            <p>Мы нашли ваши сохраненные формы из предыдущей версии приложения. Хотите автоматически импортировать их в новый формат?</p>
-            <div id="migrationFormsList" class="migration-list" style="margin: 15px 0; max-height: 150px; overflow-y: auto; text-align: left; font-size: 14px; opacity: 0.9;"></div>
-            <div class="modal-buttons" style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button onclick="closeMigrationModal()" class="btn-secondary">Позже</button>
-                <button onclick="performMigration()" class="btn-primary">Импортировать всё</button>
+<!-- МОДАЛЬНОЕ ОКНО: НАСТРОЙКИ ФОРМЫ -->
+<div id="form-settings-modal" class="custom-alert-overlay">
+    <div class="custom-alert-card" style="max-width: 500px; text-align: left;">
+        <h3 style="margin-bottom: 15px; color: var(--accent-color);">Настройки Формы</h3>
+        
+        <label class="switch-label" style="margin-bottom: 15px;">
+            <span class="switch">
+                <input type="checkbox" id="fs-test-mode" onchange="toggleTestModeSettings()">
+                <span class="slider liquid-slider"></span>
+            </span>
+            <span class="switch-text"><strong>Режим Теста</strong> (начисление баллов)</span>
+        </label>
+
+        <div id="fs-test-settings" class="hidden" style="background: var(--bg-color); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <h4 style="margin-bottom: 10px;">Настройки Теста</h4>
+            <label class="switch-label" style="margin-bottom: 10px;">
+                <span class="switch"><input type="checkbox" id="fs-show-wrong" checked><span class="slider liquid-slider"></span></span>
+                <span class="switch-text">Показывать неверные ответы</span>
+            </label>
+            <label class="switch-label" style="margin-bottom: 10px;">
+                <span class="switch"><input type="checkbox" id="fs-show-correct" checked><span class="slider liquid-slider"></span></span>
+                <span class="switch-text">Показывать правильные ответы</span>
+            </label>
+            <label class="switch-label" style="margin-bottom: 10px;">
+                <span class="switch"><input type="checkbox" id="fs-show-points" checked><span class="slider liquid-slider"></span></span>
+                <span class="switch-text">Показ баллов для учеников</span>
+            </label>
+            
+            <h4 style="margin-top: 15px; margin-bottom: 10px;">Публикация оценок</h4>
+            <div class="custom-select-wrapper">
+                <select id="fs-publish-type" class="admin-input">
+                    <option value="immediate">Сразу после отправки</option>
+                    <option value="teacher">После проверки преподавателем (Zip-ответ)</option>
+                </select>
+                <span class="material-symbols-rounded select-icon">expand_more</span>
             </div>
+            
+            <label style="font-size:13px; color:var(--text-muted);">Макс. балл за вопрос по умолчанию:</label>
+            <input type="number" id="fs-default-points" class="admin-input" value="10">
         </div>
+
+        <h4 style="margin-bottom: 10px;">Обычные вопросы</h4>
+        <label class="switch-label">
+            <span class="switch"><input type="checkbox" id="fs-default-required"><span class="slider liquid-slider"></span></span>
+            <span class="switch-text">Помечать новые вопросы обязательными</span>
+        </label>
+
+        <button class="btn" onclick="saveFormSettings()" style="width: 100%; margin-top: 20px;">Сохранить настройки</button>
     </div>
+</div>
 
     <script src="script.js"></script>
 </body>
