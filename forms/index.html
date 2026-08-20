@@ -156,37 +156,30 @@
             </div>
         </div>
 
-        <!-- МОДАЛЬНОЕ ОКНО ВХОДА В АДМИНКУ -->
-<div id="admin-login-modal" class="custom-alert-overlay">
-    <div class="custom-alert-card" style="max-width: 380px; text-align: left;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
-                <span class="material-symbols-rounded" style="color:var(--accent-color);">lock</span> Вход для администратора
-            </h3>
-            <button onclick="closeAdminLoginModal()" style="background:transparent; border:none; cursor:pointer; color:var(--text-color); display:flex;">
-                <span class="material-symbols-rounded">close</span>
-            </button>
+        <!-- 2. ЭКРАН ВХОДА В АДМИНКУ (LOGIN SCREEN) -->
+        <div id="login-screen" class="quiz-container gcard hidden">
+            <h2 style="text-align:center; margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <span class="material-symbols-rounded">lock</span> Вход для администратора
+            </h2>
+            <input type="text" id="login-user" class="admin-input" placeholder="Логин (admin)">
+            <input type="password" id="login-pass" class="admin-input" placeholder="Пароль (1234)">
+            <button class="btn" onclick="tryLogin()" style="width:100%;">Войти</button>
+            <button class="btn" onclick="logout()" style="margin-top:10px; width:100%; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Назад к тесту</button>
         </div>
-        <input type="text" id="login-user" class="admin-input" placeholder="Логин (admin)">
-        <input type="password" id="login-pass" class="admin-input" placeholder="Пароль (1234)">
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn" onclick="tryLogin()" style="flex:1;">Войти</button>
-            <button class="btn" onclick="closeAdminLoginModal()" style="background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Отмена</button>
-        </div>
-    </div>
-</div>
 
         <!-- 3. ПАНЕЛЬ АДМИНИСТРАТОРА (ADMIN SCREEN) -->
         <div id="admin-screen" class="admin-box hidden">
-            <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center;">
-    <button onclick="toggleAddQuestionForm()" class="btn" style="width:auto; flex-grow:1;">+ Создать вопрос</button>
-    <button onclick="openFormSettingsModal()" class="btn" style="width:auto; background: var(--card-bg); color: var(--accent-color); border: 1px solid var(--accent-color); position: relative;">
-        Настройки формы <span style="background: var(--accent-color); color: #fff; font-size: 10px; padding: 1px 5px; border-radius: 4px; margin-left: 6px; font-weight: bold;">NEW</span>
-    </button>
-    <button onclick="exportFormToJSON()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Экспорт JSON</button>
-    <button onclick="document.getElementById('import-file').click()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Импорт JSON</button>
-    <input type="file" id="import-file" style="display:none;" onchange="importFormFromJSON(this)" accept=".json">
-</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0;">Редактор вопросов</h2>
+                <button onclick="logout()" class="btn" style="width:auto; padding:8px 16px; margin:0; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Выйти</button>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                <button onclick="toggleAddQuestionForm()" class="btn" style="width:auto; flex-grow:1;">+ Создать вопрос</button>
+                <button onclick="exportFormToJSON()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Экспорт JSON</button>
+                <button onclick="document.getElementById('import-file').click()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Импорт JSON</button>
+                <input type="file" id="import-file" style="display:none;" onchange="importFormFromJSON(this)" accept=".json">
+            </div>
 
             <!-- ФОРМА СОЗДАНИЯ / РЕДАКТИРОВАНИЯ ВОПРОСА -->
             <div id="admin-add-form" class="gcard hidden" style="margin-bottom:20px;">
@@ -417,59 +410,7 @@
             </div>
         </div>
     </div>
-<div id="form-settings-modal" class="custom-alert-overlay">
-    <div class="custom-alert-card" style="max-width: 480px; text-align: left;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
-                <span class="material-symbols-rounded" style="color:var(--accent-color);">tune</span> Настройки формы
-            </h3>
-            <button onclick="closeFormSettingsModal()" style="background:transparent; border:none; cursor:pointer; color:var(--text-color); display:flex;">
-                <span class="material-symbols-rounded">close</span>
-            </button>
-        </div>
-        
-        <div style="max-height: 60vh; overflow-y: auto; padding-right: 6px; display: flex; flex-direction: column; gap: 14px;">
-            <label class="switch-label">
-                <span class="switch">
-                    <input type="checkbox" id="fs-auto-fill">
-                    <span class="slider"></span>
-                </span>
-                <span class="switch-text">Автозаполнение значений вопросов</span>
-            </label>
-            <div style="margin-left: 28px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--text-muted);">
-                <label><input type="checkbox" id="fs-def-required"> Обязательный вопрос по умолчанию</label>
-                <label><input type="checkbox" id="fs-def-timer"> Ограничивать время по умолчанию</label>
-                <label><input type="checkbox" id="fs-def-expl"> Добавлять блок объяснения</label>
-                <label><input type="checkbox" id="fs-def-hint"> Добавлять подсказку</label>
-            </div>
 
-            <hr style="border:none; border-top:1px solid var(--border-color);">
-
-            <label class="switch-label">
-                <span class="switch">
-                    <input type="checkbox" id="fs-show-correct-wrong">
-                    <span class="slider"></span>
-                </span>
-                <span class="switch-text">Показывать правильные ответы, если они неверные</span>
-            </label>
-
-            <label class="switch-label">
-                <span class="switch">
-                    <input type="checkbox" id="fs-highlight-dark">
-                    <span class="slider"></span>
-                </span>
-                <span class="switch-text">Подсвечивать карточки цветом результата в темной теме</span>
-            </label>
-
-            <div>
-                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 4px;">Текст после получения результата:</label>
-                <textarea id="fs-result-text" class="admin-input" placeholder="Будет показан под вашим результатом..."></textarea>
-            </div>
-        </div>
-
-        <button class="btn" onclick="saveFormSettings()" style="width:100%; margin-top:20px;">Сохранить настройки</button>
-    </div>
-</div>
     <script src="script.js"></script>
 </body>
 </html>
