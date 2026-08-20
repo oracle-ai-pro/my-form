@@ -7,9 +7,11 @@ let currentQuestionIndex = 0;
 let userAnswers = {};
 let timerInterval = null;
 let currentTimerSeconds = 0;
+let holdTimerInterval = null;
 let uploadedMediaBase64 = null;
 let promptCallback = null;
 let editingQuestionIndex = null; 
+let isExplanationShowing = false;
 
 const defaultForm = {
     title: "Тестовая форма",
@@ -20,7 +22,10 @@ const defaultForm = {
             description: "Выберите один наиболее точный вариант из предложенных.",
             options: ["HTML", "CSS", "JavaScript", "Python"],
             correctChoices: [1],
-            required: true
+            required: true,
+            hasExplanation: true,
+            explanationTitle: "Справка по веб-разработке",
+            explanationText: "CSS (Cascading Style Sheets) отвечает за оформление и стилизацию HTML-документов."
         },
         {
             type: "text",
@@ -51,25 +56,22 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCurrentForm();
     checkOldDataMigration();
 });
-// Проверка наличия старых данных при входе
+
+/* Проверка наличия старых данных при входе */
 function checkOldDataMigration() {
-    // Допустим, в старой версии ключи назывались иначе или лежал общий массив 'forms' / 'my_forms_old'
-    // Проверим типичные ключи старого localStorage (подставь свои ключи, если они отличались)
-    const oldData = localStorage.getItem('forms') || localStorage.getItem('quiz_data_old');
-    
-    // Также проверяем, не мигрировали ли мы уже раньше
+    const oldData = localStorage.getItem('forms') || localStorage.getItem('quiz_data_old') || localStorage.getItem('app_forms');
     const alreadyMigrated = localStorage.getItem('is_migrated_to_new');
 
     if (oldData && !alreadyMigrated) {
         try {
             const parsedForms = JSON.parse(oldData);
             if (Array.isArray(parsedForms) && parsedForms.length > 0) {
-                // Выводим список найденных старых форм в модалку
                 const listContainer = document.getElementById('migrationFormsList');
-                listContainer.innerHTML = parsedForms.map(f => `• ${f.title || 'Без названия'}`).join('<br>');
-                
-                // Показываем модальное окно
-                document.getElementById('migrationModal').style.display = 'flex';
+                if (listContainer) {
+                    listContainer.innerHTML = parsedForms.map(f => `• ${f.title || 'Без названия'}`).join('<br>');
+                }
+                const modal = document.getElementById('migrationModal');
+                if (modal) modal.classList.add('active');
             }
         } catch (e) {
             console.error('Ошибка при чтении старых данных:', e);
@@ -77,41 +79,32 @@ function checkOldDataMigration() {
     }
 }
 
-// Кнопка подтверждения миграции
 function performMigration() {
     try {
-        const oldData = localStorage.getItem('forms') || localStorage.getItem('quiz_data_old');
+        const oldData = localStorage.getItem('forms') || localStorage.getItem('quiz_data_old') || localStorage.getItem('app_forms');
         if (oldData) {
             const parsedForms = JSON.parse(oldData);
+            const mergedForms = [...allForms, ...parsedForms];
             
-            // Получаем текущие формы новой версии
-            let currentNewForms = JSON.parse(localStorage.getItem('app_forms') || '[]');
-            
-            // Объединяем (или добавляем старые к новым)
-            const mergedForms = [...currentNewForms, ...parsedForms];
-            
-            // Сохраняем в новый формат
-            localStorage.setItem('app_forms', JSON.stringify(mergedForms));
-            
-            // Помечаем, что миграция прошла успешно
+            allForms = mergedForms;
+            saveFormsToStorage();
             localStorage.setItem('is_migrated_to_new', 'true');
             
-            // Закрываем модалку и обновляем интерфейс
             closeMigrationModal();
-            alert('Формы успешно перенесены в новую версию!');
-            location.reload(); // Перезагружаем страницу для применения
+            renderAllFormsUI();
+            loadCurrentForm();
+            showAlert('Формы успешно перенесены в новую версию!', 'check_circle');
         }
     } catch (e) {
-        alert('Ошибка при импорте: ' + e.message);
+        showAlert('Ошибка при импорте: ' + e.message, 'error');
     }
 }
 
 function closeMigrationModal() {
-    document.getElementById('migrationModal').style.display = 'none';
-    // Помечаем флаг, чтобы больше не надоедать, если пользователь нажал «Позже»
+    const modal = document.getElementById('migrationModal');
+    if (modal) modal.classList.remove('active');
     localStorage.setItem('is_migrated_to_new', 'true');
 }
-
 
 /* ==========================================
    2. УПРАВЛЕНИЕ ХРАНИЛИЩЕМ (LOCALSTORAGE)
@@ -142,6 +135,9 @@ function initSettings() {
     const savedTheme = localStorage.getItem('app_theme') || 'light';
     setTheme(savedTheme, false);
 
+    const savedRadius = localStorage.getItem('app_radius') || 'rounded';
+    setRadius(savedRadius, false);
+
     const isCompact = localStorage.getItem('compact_forms_mode') === 'true';
     const toggleInput = document.getElementById('toggle-compact-forms');
     if (toggleInput) toggleInput.checked = isCompact;
@@ -155,6 +151,13 @@ function setTheme(themeName, save = true) {
         document.body.classList.remove('dark-theme');
     }
     if (save) localStorage.setItem('app_theme', themeName);
+}
+
+function setRadius(radiusName, save = true) {
+    document.body.setAttribute('data-radius', radiusName);
+    const radiusSelect = document.getElementById('settings-radius-select');
+    if (radiusSelect) radiusSelect.value = radiusName;
+    if (save) localStorage.setItem('app_radius', radiusName);
 }
 
 function openSettingsModal() {
@@ -173,7 +176,7 @@ function toggleFormsLayout(isCompact) {
 }
 
 function applyFormsLayout(isCompact) {
-    const selectEl = document.getElementById('forms-tabs-select');
+    const selectEl = document.getElementById('forms-select-wrapper');
     const listEl = document.getElementById('forms-tabs-list');
 
     if (isCompact) {
@@ -188,6 +191,13 @@ function applyFormsLayout(isCompact) {
 function toggleToolsMenu() {
     const menu = document.getElementById('tools-menu');
     if (menu) menu.classList.toggle('hidden');
+}
+
+function toggleExplanationFields(checkbox) {
+    const container = document.getElementById('explanationFieldsContainer');
+    if (container) {
+        container.style.display = checkbox.checked ? 'block' : 'none';
+    }
 }
 
 function showAlert(message, icon = 'info') {
@@ -309,9 +319,7 @@ function closePrompt(isConfirm) {
     }
 }
 
-function switchFormFromSelect(index) {
-    switchForm(index);
-}
+function switchFormFromSelect(index) { switchForm(index); }
 
 /* ==========================================
    4. РЕНДЕР ВКЛАДОК И ВЫБОР ФОРМ
@@ -408,6 +416,7 @@ function switchForm(index) {
     renderAllFormsUI();
     loadCurrentForm();
 }
+
 function createNewFormPrompt() {
     showPrompt("Введите название новой формы:", "", (title) => {
         if (title && title.trim()) {
@@ -430,6 +439,7 @@ function createNewFormPrompt() {
 function loadCurrentForm() {
     currentQuestionIndex = 0;
     userAnswers = {};
+    isExplanationShowing = false;
     
     document.getElementById('quiz-screen').classList.remove('hidden');
     document.getElementById('quiz-box').classList.remove('hidden');
@@ -440,19 +450,39 @@ function loadCurrentForm() {
     renderQuestion();
 }
 
+function renderMediaHTML(url) {
+    if (!url) return '';
+    if (url.startsWith('data:video') || url.match(/\.(mp4|webm|ogv)$/i)) {
+        return `<div style="text-align:center; margin-bottom:15px;"><video src="${url}" controls style="max-width:100%; border-radius:12px;"></video></div>`;
+    } else if (url.startsWith('data:audio') || url.match(/\.(mp3|wav|ogg)$/i)) {
+        return `<div style="text-align:center; margin-bottom:15px;"><audio src="${url}" controls style="width:100%;"></audio></div>`;
+    } else {
+        return `<div style="text-align:center; margin-bottom:15px;"><img src="${url}" style="max-width:100%; border-radius:12px;"></div>`;
+    }
+}
+
 function renderQuestion() {
     stopTimer();
+    stopHoldTimer();
+    isExplanationShowing = false;
+
+    const nextBtn = document.getElementById('next-btn');
+    if (nextBtn) {
+        nextBtn.disabled = false;
+        nextBtn.textContent = 'Далее';
+    }
+
     const form = allForms[currentFormIndex];
     if (!form || !form.questions || form.questions.length === 0) {
         document.getElementById('question-body').innerHTML = '<p style="text-align:center; color:var(--text-muted);">В этой форме пока нет вопросов. Войдите в Панель Админа, чтобы добавить их.</p>';
         document.getElementById('current-number').textContent = '0';
         document.getElementById('total-number').textContent = '0';
         document.getElementById('progress').style.width = '0%';
-        document.getElementById('next-btn').classList.add('hidden');
+        if (nextBtn) nextBtn.classList.add('hidden');
         return;
     }
 
-    document.getElementById('next-btn').classList.remove('hidden');
+    if (nextBtn) nextBtn.classList.remove('hidden');
     const q = form.questions[currentQuestionIndex];
     
     document.getElementById('current-number').textContent = currentQuestionIndex + 1;
@@ -571,8 +601,14 @@ function renderQuestion() {
             order.forEach((idx) => {
                 pList.innerHTML += `
                     <div class="puzzle-item" data-idx="${idx}">
-                        <span class="material-symbols-rounded" style="color:var(--text-muted);">drag_indicator</span>
-                        <span>${q.options[idx]}</span>
+                        <div class="puzzle-item-content">
+                            <span class="material-symbols-rounded" style="color:var(--text-muted);">drag_indicator</span>
+                            <span>${q.options[idx]}</span>
+                        </div>
+                        <div class="puzzle-controls">
+                            <button type="button" class="tools-icon-btn" onclick="movePuzzleItem(this, -1)"><span class="material-symbols-rounded">arrow_upward</span></button>
+                            <button type="button" class="tools-icon-btn" onclick="movePuzzleItem(this, 1)"><span class="material-symbols-rounded">arrow_downward</span></button>
+                        </div>
                     </div>
                 `;
             });
@@ -582,7 +618,7 @@ function renderQuestion() {
 
         case 'info-slide':
             if (q.mediaUrl) {
-                body.innerHTML += `<div style="text-align:center; margin-bottom:15px;"><img src="${q.mediaUrl}" style="max-width:100%; border-radius:12px;"></div>`;
+                body.innerHTML += renderMediaHTML(q.mediaUrl);
             }
             saveAnswer('viewed');
             break;
@@ -603,6 +639,17 @@ function saveCheckboxAnswer() {
 function savePuzzleAnswer() {
     const items = Array.from(document.querySelectorAll('.puzzle-item')).map(el => parseInt(el.getAttribute('data-idx')));
     userAnswers[currentQuestionIndex] = items;
+}
+
+function movePuzzleItem(btn, direction) {
+    const item = btn.closest('.puzzle-item');
+    if (!item) return;
+    if (direction === -1 && item.previousElementSibling) {
+        item.parentNode.insertBefore(item, item.previousElementSibling);
+    } else if (direction === 1 && item.nextElementSibling) {
+        item.parentNode.insertBefore(item.nextElementSibling, item);
+    }
+    savePuzzleAnswer();
 }
 
 function initPuzzleEvents() {
@@ -628,8 +675,51 @@ function nextStep() {
     const form = allForms[currentFormIndex];
     const q = form.questions[currentQuestionIndex];
 
-    if (q.required && (userAnswers[currentQuestionIndex] === undefined || userAnswers[currentQuestionIndex] === '')) {
+    if (!isExplanationShowing && q.required && (userAnswers[currentQuestionIndex] === undefined || userAnswers[currentQuestionIndex] === '')) {
         showAlert('Пожалуйста, ответьте на обязательный вопрос!', 'warning');
+        return;
+    }
+
+    if (!isExplanationShowing && q.hasExplanation && q.explanationText) {
+        isExplanationShowing = true;
+        stopTimer();
+        
+        const inputs = document.querySelectorAll('#question-body input, #question-body select, #question-body button');
+        inputs.forEach(el => el.disabled = true);
+
+        const body = document.getElementById('question-body');
+        const expTitle = q.explanationTitle ? q.explanationTitle : 'Разбор ответа';
+        
+        body.innerHTML += `
+            <div class="explanation-card">
+                <div class="explanation-title">
+                    <span class="material-symbols-rounded">lightbulb</span> ${expTitle}
+                </div>
+                <div class="explanation-body">${q.explanationText}</div>
+            </div>
+        `;
+
+        const holdSeconds = parseInt(q.holdTimer) || 0;
+        const nextBtn = document.getElementById('next-btn');
+
+        if (holdSeconds > 0 && nextBtn) {
+            nextBtn.disabled = true;
+            let secondsLeft = holdSeconds;
+            nextBtn.textContent = `Продолжить (${secondsLeft}s)`;
+
+            holdTimerInterval = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft > 0) {
+                    nextBtn.textContent = `Продолжить (${secondsLeft}s)`;
+                } else {
+                    stopHoldTimer();
+                    nextBtn.disabled = false;
+                    nextBtn.textContent = 'Продолжить';
+                }
+            }, 1000);
+        } else if (nextBtn) {
+            nextBtn.textContent = 'Продолжить';
+        }
         return;
     }
 
@@ -641,8 +731,16 @@ function nextStep() {
     }
 }
 
+function stopHoldTimer() {
+    if (holdTimerInterval) {
+        clearInterval(holdTimerInterval);
+        holdTimerInterval = null;
+    }
+}
+
 function calculateResults() {
     stopTimer();
+    stopHoldTimer();
     document.getElementById('quiz-box').classList.add('hidden');
     document.getElementById('result-box').classList.remove('hidden');
 
@@ -681,19 +779,21 @@ function calculateResults() {
             if (Array.isArray(userAns) && q.correctChoices && JSON.stringify(userAns) === JSON.stringify(q.correctChoices)) isCorrect = true;
         }
 
+        const displayTitle = q.title.includes('[input]') ? q.title.replace('[input]', `<u>${userAns || '...'}</u>`) : q.title;
+
         if (isCorrect) {
             score++;
             reviewHTML += `
                 <div class="review-item correct-item">
-                    <strong>${q.title.replace('[input]', `<u>${userAns || '...'}</u>`)}</strong>
+                    <strong>${displayTitle}</strong>
                     <p class="text-success" style="font-size:13px; margin-top:4px;">✓ Верно</p>
                 </div>
             `;
         } else {
             reviewHTML += `
                 <div class="review-item incorrect-item">
-                    <strong>${q.title.replace('[input]', `<u>${userAns || '...'}</u>`)}</strong>
-                    <p class="text-danger" style="font-size:13px; margin-top:4px;">✗ Неверно (Ваш ответ: "${userAns || 'пусто'}")</p>
+                    <strong>${displayTitle}</strong>
+                    <p class="text-danger" style="font-size:13px; margin-top:4px;">✗ Неверно (Ваш ответ: "${userAns !== undefined ? userAns : 'пусто'}")</p>
                 </div>
             `;
         }
@@ -769,7 +869,8 @@ function importFormFromJSON(input) {
         input.value = '';
     };
     reader.readAsText(file);
-        }
+}
+
 /* ==========================================
    7. ПАНЕЛЬ АДМИНИСТРАТОРА (СОЗДАНИЕ & РЕДАКТИРОВАНИЕ)
    ========================================== */
@@ -886,6 +987,14 @@ function processSaveQuestion(type, title, useInline) {
         newQ.timer = parseInt(document.getElementById('new-timer').value) || 20;
     }
 
+    const hasExpCheck = document.getElementById('questionHasExplanation');
+    if (hasExpCheck && hasExpCheck.checked) {
+        newQ.hasExplanation = true;
+        newQ.explanationTitle = document.getElementById('questionExplanationTitle').value.trim();
+        newQ.explanationText = document.getElementById('questionExplanationText').value.trim();
+        newQ.holdTimer = parseInt(document.getElementById('questionHoldTimer').value) || 0;
+    }
+
     if (editingQuestionIndex !== null) {
         form.questions[editingQuestionIndex] = newQ;
         showAlert('Вопрос успешно обновлён!', 'check_circle');
@@ -898,7 +1007,73 @@ function processSaveQuestion(type, title, useInline) {
     cancelEditQuestion();
     renderAdminQuestionsList();
 }
+// Глобальный объект формы теперь должен поддерживать настройки
+// В функцию addQuestion() добавлено:
+function toggleTextInputs(source) {
+    const inline = document.getElementById('new-inline-input');
+    const multiline = document.getElementById('new-multiline-input');
+    
+    if (source === 'inline' && inline.checked) multiline.checked = false;
+    if (source === 'multiline' && multiline.checked) inline.checked = false;
+    
+    // Блокируем тумблеры визуально
+    multiline.disabled = inline.checked;
+    inline.disabled = multiline.checked;
+}
 
+// Настройки Формы
+function openFormSettings() {
+    const form = allForms[currentFormIndex];
+    if (!form.settings) form.settings = { isTestMode: false, publishType: 'immediate', defaultPoints: 10 };
+    
+    document.getElementById('fs-test-mode').checked = form.settings.isTestMode;
+    document.getElementById('fs-publish-type').value = form.settings.publishType || 'immediate';
+    document.getElementById('fs-default-points').value = form.settings.defaultPoints || 10;
+    
+    toggleTestModeSettings();
+    document.getElementById('form-settings-modal').classList.add('active');
+}
+
+function toggleTestModeSettings() {
+    const isTest = document.getElementById('fs-test-mode').checked;
+    document.getElementById('fs-test-settings').classList.toggle('hidden', !isTest);
+}
+
+function saveFormSettings() {
+    allForms[currentFormIndex].settings = {
+        isTestMode: document.getElementById('fs-test-mode').checked,
+        publishType: document.getElementById('fs-publish-type').value,
+        showWrong: document.getElementById('fs-show-wrong').checked,
+        showCorrect: document.getElementById('fs-show-correct').checked,
+        showPoints: document.getElementById('fs-show-points').checked,
+        defaultPoints: parseInt(document.getElementById('fs-default-points').value) || 10,
+        defaultRequired: document.getElementById('fs-default-required').checked
+    };
+    saveFormsToStorage();
+    document.getElementById('form-settings-modal').classList.remove('active');
+    showAlert('Настройки формы применены!', 'check_circle');
+}
+
+// Глобальная функция для F12 (Zip-ответы)
+window['zip-answer'] = function() {
+    showPrompt("Введите Zip-код ответа ученика:", "", (code) => {
+        if (!code) return;
+        try {
+            const data = JSON.parse(atob(code));
+            let html = `<h4>Результаты: ${data.name}</h4><br>`;
+            html += `Счет: ${data.score} / ${data.maxScore}<br><hr>`;
+            document.getElementById('question-details-content').innerHTML = html;
+            document.getElementById('question-details-modal').classList.add('active');
+        } catch (e) {
+            showAlert("Неверный формат Zip-кода", "error");
+        }
+    });
+};
+
+// Функция форматирования (WYSIWYG)
+function formatText(command) {
+    document.execCommand(command, false, null);
+}
 function editQuestion(idx) {
     const q = allForms[currentFormIndex].questions[idx];
     if (!q) return;
@@ -930,6 +1105,8 @@ function editQuestion(idx) {
         if (inlineCheck) inlineCheck.checked = !!q.useInlineInput;
     } else if (q.type === 'flashcard') {
         document.getElementById('new-flashcard-answer').value = q.flashcardAnswer || '';
+    } else if (q.type === 'info-slide' && q.mediaUrl) {
+        document.getElementById('media-preview-container').innerHTML = renderMediaHTML(q.mediaUrl);
     }
 
     const timerToggle = document.getElementById('toggle-timer-input');
@@ -950,6 +1127,18 @@ function editQuestion(idx) {
     } else {
         hintToggle.checked = false;
         document.getElementById('hint-config').classList.add('hidden');
+    }
+
+    const hasExpCheck = document.getElementById('questionHasExplanation');
+    if (q.hasExplanation) {
+        if (hasExpCheck) hasExpCheck.checked = true;
+        toggleExplanationFields(hasExpCheck);
+        document.getElementById('questionExplanationTitle').value = q.explanationTitle || '';
+        document.getElementById('questionExplanationText').value = q.explanationText || '';
+        document.getElementById('questionHoldTimer').value = q.holdTimer || 0;
+    } else {
+        if (hasExpCheck) hasExpCheck.checked = false;
+        toggleExplanationFields(hasExpCheck);
     }
 
     formEl.scrollIntoView({ behavior: 'smooth' });
@@ -982,6 +1171,14 @@ function cancelEditQuestion() {
     document.getElementById('timer-config').classList.add('hidden');
     document.getElementById('toggle-hint-input').checked = false;
     document.getElementById('hint-config').classList.add('hidden');
+    
+    const hasExpCheck = document.getElementById('questionHasExplanation');
+    if (hasExpCheck) hasExpCheck.checked = false;
+    toggleExplanationFields(hasExpCheck);
+    document.getElementById('questionExplanationTitle').value = '';
+    document.getElementById('questionExplanationText').value = '';
+    document.getElementById('questionHoldTimer').value = 0;
+
     document.getElementById('media-preview-container').innerHTML = '';
 
     document.getElementById('new-type').value = 'radio';
@@ -1050,15 +1247,20 @@ function viewQuestionDetails(idx) {
         `;
     }
 
-    if (q.timer) {
-        html += `<div class="detail-row"><strong>Таймер:</strong> ⏱️ ${q.timer} секунд</div>`;
+    if (q.hasExplanation) {
+        html += `
+            <div class="detail-row">
+                <strong>Разбор ответа (Объяснение):</strong>
+                <div style="margin-top:4px; font-weight:600;">${q.explanationTitle || 'Без заголовка'}</div>
+                <div style="margin-top:2px; color:var(--text-muted);">${q.explanationText || 'Текст отсутствует'}</div>
+                <div style="margin-top:2px; font-size:12px;">Удержание кнопки: ${q.holdTimer || 0} сек</div>
+            </div>
+        `;
     }
-    if (q.hintText) {
-        html += `<div class="detail-row"><strong>Подсказка:</strong> 💡 ${q.hintText}</div>`;
-    }
-    if (q.mediaUrl) {
-        html += `<div class="detail-row"><strong>Прикреплённое медиа:</strong> <br><img src="${q.mediaUrl}" style="max-width:100%; border-radius:8px; margin-top:6px;"></div>`;
-    }
+
+    if (q.timer) html += `<div class="detail-row"><strong>Таймер:</strong> ⏱️ ${q.timer} секунд</div>`;
+    if (q.hintText) html += `<div class="detail-row"><strong>Подсказка:</strong> 💡 ${q.hintText}</div>`;
+    if (q.mediaUrl) html += `<div class="detail-row"><strong>Прикреплённое медиа:</strong> <br>${renderMediaHTML(q.mediaUrl)}</div>`;
 
     content.innerHTML = html;
     modal.classList.add('active');
@@ -1073,7 +1275,7 @@ function renderAdminQuestionsList() {
     const form = allForms[currentFormIndex];
     if (!list || !form) return;
 
-    list.innerHTML = `<h3>Вопросы формы "${form.title}" (${form.questions.length}):</h3>`;
+    list.innerHTML = `<h3 style="margin-bottom: 12px;">Вопросы формы "${form.title}" (${form.questions.length}):</h3>`;
 
     form.questions.forEach((q, idx) => {
         const isFirst = idx === 0;
@@ -1084,7 +1286,9 @@ function renderAdminQuestionsList() {
                 <div>
                     <strong>${idx + 1}. ${q.title}</strong>
                     ${q.description ? `<span style="font-size:12px; color:var(--text-muted); display:block; font-style: italic;">${q.description}</span>` : ''}
-                    <span style="font-size:11px; color:var(--accent-color); display:block; margin-top:2px;">Тип: ${q.type} ${q.useInlineInput ? '(Inline Input)' : ''}</span>
+                    <span style="font-size:11px; color:var(--accent-color); display:block; margin-top:2px;">
+                        Тип: ${q.type} ${q.useInlineInput ? '(Inline)' : ''} ${q.hasExplanation ? '(с Объяснением)' : ''}
+                    </span>
                 </div>
                 <div style="display:flex; gap:6px;">
                     <button onclick="moveQuestionUp(${idx})" class="q-action-btn" title="Переместить вверх" ${isFirst ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
@@ -1143,7 +1347,7 @@ function handleMediaUploadPreview(input) {
         const reader = new FileReader();
         reader.onload = function(e) {
             uploadedMediaBase64 = e.target.result;
-            document.getElementById('media-preview-container').innerHTML = `<img src="${uploadedMediaBase64}" style="max-width:100px; margin-top:10px; border-radius:8px;">`;
+            document.getElementById('media-preview-container').innerHTML = renderMediaHTML(uploadedMediaBase64);
         };
         reader.readAsDataURL(file);
     }
@@ -1159,7 +1363,6 @@ function generateShareLink() {
 
 function printCurrentForm() {
     const form = allForms[currentFormIndex];
-    
     if (!form || !form.questions || form.questions.length === 0) {
         showAlert('В этой форме нет вопросов для печати!', 'warning');
         return;
@@ -1174,9 +1377,7 @@ function printCurrentForm() {
     let questionsHtml = '';
 
     form.questions.forEach((q, idx) => {
-        questionsHtml += `
-            <div class="question-block">
-        `;
+        questionsHtml += `<div class="question-block">`;
 
         if (q.type === 'text' && q.useInlineInput && q.title.includes('[input]')) {
             const printTitle = q.title.replace('[input]', '____________________');
@@ -1218,11 +1419,7 @@ function printCurrentForm() {
             }
         } 
         else if (q.type === 'text' && (!q.useInlineInput || !q.title.includes('[input]'))) {
-            questionsHtml += `
-                <div class="text-answer-line">
-                    Ответ: __________________________________________________________________________________
-                </div>
-            `;
+            questionsHtml += `<div class="text-answer-line">Ответ: __________________________________________________________________________________</div>`;
         } 
         else if (q.type === 'puzzle-drag') {
             questionsHtml += `<div style="font-size: 13px; color: #555; margin-bottom: 6px;">Укажите правильный порядок цифрами в скобках:</div>`;
@@ -1241,19 +1438,15 @@ function printCurrentForm() {
         } 
         else if (q.type === 'flashcard' || q.type === 'info-slide') {
             if (q.mediaUrl) {
-                questionsHtml += `<div style="margin: 8px 0;"><img src="${q.mediaUrl}" style="max-height: 180px; border-radius: 4px;"></div>`;
+                questionsHtml += `<div style="margin: 8px 0;">${renderMediaHTML(q.mediaUrl)}</div>`;
             }
-            questionsHtml += `
-                <div class="text-answer-line">
-                    Заметки / Ответ: _________________________________________________________________________
-                </div>
-            `;
+            questionsHtml += `<div class="text-answer-line">Заметки / Ответ: _________________________________________________________________________</div>`;
         }
 
         questionsHtml += `</div>`;
     });
 
-   const printContent = `
+    const printContent = `
         <!DOCTYPE html>
         <html lang="ru">
         <head>
@@ -1282,9 +1475,7 @@ function printCurrentForm() {
                     <span>Дата: _______________</span>
                 </div>
             </div>
-
             ${questionsHtml}
-
             <script>
                 window.onload = function() { window.print(); };
             </script>
@@ -1296,9 +1487,103 @@ function printCurrentForm() {
     printWin.document.write(printContent);
     printWin.document.close();
 }
-function toggleExplanationFields(checkbox) {
-    const container = document.getElementById('explanationFieldsContainer');
-    if (container) {
-        container.style.display = checkbox.checked ? 'block' : 'none';
-    }
+const historyStack = [];
+const redoStack = [];
+let toastTimeout = null;
+
+// Вызывать эту функцию при перестановке слайдов/карточек
+function swapCards(index1, index2, isUndoRedo = false) {
+  const cards = document.querySelectorAll('.card');
+  const card1 = cards[index1];
+  const card2 = cards[index2];
+
+  if (!card1 || !card2) return;
+
+  // 1. Меняем местами в DOM (или обнови свой state макроса/реактора)
+  const parent = card1.parentNode;
+  const card1Next = card1.nextSibling === card2 ? card1 : card1.nextSibling;
+  parent.insertBefore(card1, card2);
+  parent.insertBefore(card2, card1Next);
+
+  // 2. Включаем подсветку карточек на 3 секунды
+  highlightElement(card1);
+  highlightElement(card2);
+
+  // Запоминаем шаг для отмены
+  if (!isUndoRedo) {
+    historyStack.push({ index1, index2 });
+    redoStack.length = 0;
+  }
+
+  // 3. Всплывающее уведомление на 3 секунды
+  const num1 = index1 + 1;
+  const num2 = index2 + 1;
+  showToast(`Событие: "Вы переместили ${num1} вопрос и ${num2} вопрос местами"`, () => {
+    undoLastSwap();
+  });
 }
+
+function highlightElement(element) {
+  element.classList.add('card-highlight');
+
+  if (element._highlightTimer) clearTimeout(element._highlightTimer);
+
+  element._highlightTimer = setTimeout(() => {
+    element.classList.remove('card-highlight');
+  }, 3000);
+}
+
+function showToast(message, onUndo) {
+  const toast = document.getElementById('toast');
+  const toastText = document.getElementById('toast-text');
+  const undoBtn = document.getElementById('toast-undo-btn');
+
+  toastText.textContent = message;
+  toast.classList.remove('hidden');
+
+  undoBtn.onclick = () => {
+    if (onUndo) onUndo();
+  };
+
+  if (toastTimeout) clearTimeout(toastTimeout);
+
+  toastTimeout = setTimeout(() => {
+    hideToast();
+  }, 3000);
+}
+
+function hideToast() {
+  const toast = document.getElementById('toast');
+  toast.classList.add('hidden');
+}
+
+function undoLastSwap() {
+  if (historyStack.length === 0) return;
+  const lastAction = historyStack.pop();
+  redoStack.push(lastAction);
+  swapCards(lastAction.index1, lastAction.index2, true);
+}
+
+function redoLastSwap() {
+  if (redoStack.length === 0) return;
+  const nextAction = redoStack.pop();
+  historyStack.push(nextAction);
+  swapCards(nextAction.index1, nextAction.index2, true);
+}
+
+// 4. Слушатель горячих клавиш (CTRL+Z / CTRL+Y)
+document.addEventListener('keydown', (e) => {
+  const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+
+  if (isCtrlOrCmd && e.key.toLowerCase() === 'z') {
+    e.preventDefault();
+    if (e.shiftKey) {
+      redoLastSwap(); // Ctrl + Shift + Z
+    } else {
+      undoLastSwap(); // Ctrl + Z
+    }
+  } else if (isCtrlOrCmd && e.key.toLowerCase() === 'y') {
+    e.preventDefault();
+    redoLastSwap(); // Ctrl + Y
+  }
+});
