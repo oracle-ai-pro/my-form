@@ -22,13 +22,13 @@
 
 /* 🌙 Тёмная тема */
 body.dark-theme {
-    --bg-color: #121212;
-    --card-bg: #1e1e1e;
+    --bg-color: #000000;
+    --card-bg: #050505;
     --text-color: #e3e3e3;
     --text-muted: #a0a0a0;
-    --accent-color: #8ab4f8;
-    --accent-hover: #aecbfa;
-    --border-color: #2a2a2a;
+    --accent-color: #1a73e8;
+    --accent-hover: #1557b0;
+    --border-color: #dcdcdc;
     --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
