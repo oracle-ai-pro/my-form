@@ -170,7 +170,7 @@
         /* Сетка карточек */
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 20px;
             width: 100%;
         }
@@ -189,6 +189,7 @@
             transition: all var(--transition-speed) ease;
             position: relative;
             overflow: hidden;
+            cursor: pointer;
         }
 
         .service-card:hover {
@@ -216,6 +217,7 @@
         .card-slides .icon-wrapper { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
         .card-forms .icon-wrapper { background: rgba(16, 185, 129, 0.15); color: #10b981; }
         .card-sheets .icon-wrapper { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+        .card-keeps .icon-wrapper { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
 
         .service-card h2 {
             font-size: 1.15rem;
@@ -316,10 +318,37 @@
 
         .modal-close:hover { color: var(--text-color); }
 
-        /* Элементы настроек внутри модалки */
-        .setting-group {
-            margin-bottom: 20px;
+        /* Анимация печати Keeps */
+        .typing-container {
+            font-family: monospace;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ec4899;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--code-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin: 20px 0;
         }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.8rem;
+            background-color: #ec4899;
+            margin-left: 4px;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .setting-group { margin-bottom: 20px; }
 
         .setting-label {
             font-size: 0.85rem;
@@ -381,16 +410,13 @@
             transform: translateY(-1px);
         }
 
-        /* Информационный блок про API */
         .api-explain-box {
             font-size: 0.92rem;
             line-height: 1.6;
             color: var(--text-color);
         }
 
-        .api-explain-box p {
-            margin-bottom: 14px;
-        }
+        .api-explain-box p { margin-bottom: 14px; }
 
         .api-card-section {
             background: var(--code-bg);
@@ -512,11 +538,50 @@
                 </div>
             </a>
 
+            <!-- Keeps (Заглушка) -->
+            <div class="service-card card-keeps" onclick="openKeepsModal()">
+                <div class="icon-wrapper">
+                    <span class="material-symbols-rounded">keep</span>
+                </div>
+                <h2>Keeps</h2>
+                <p>Быстрые заметки, списки задач и фрагменты.</p>
+                <div class="card-action">
+                    Подробнее <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span>
+                </div>
+            </div>
+
         </div>
 
         <footer class="footer">
             &copy; Prestige HQ Hub. Все права защищены.
         </footer>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО: KEEPS В РАЗРАБОТКЕ -->
+    <div id="keeps-modal" class="modal-overlay">
+        <div class="modal-card" style="text-align: center;">
+            <div class="modal-header">
+                <h3>
+                    <span class="material-symbols-rounded" style="color:#ec4899;">keep</span>
+                    Проект в разработке
+                </h3>
+                <button class="modal-close" onclick="closeModal('keeps-modal')">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <p style="color: var(--text-muted); font-size: 0.95rem;">
+                Мы активно работаем над новым удобным сервисом заметок:
+            </p>
+
+            <div class="typing-container">
+                <span id="typing-text"></span><span class="typing-cursor"></span>
+            </div>
+
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 15px;">
+                Совсем скоро здесь появится продвинутый менеджер заметок с умным ИИ-помощником!
+            </p>
+        </div>
     </div>
 
     <!-- МОДАЛЬНОЕ ОКНО: ОПЦИИ -->
@@ -607,23 +672,19 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Проверка уведомления о переименовании репозитория
             const isNoticeDismissed = localStorage.getItem('repo_rename_notice_dismissed');
             if (!isNoticeDismissed) {
                 document.getElementById('repo-notice').classList.remove('hidden');
             }
 
-            // Инициализация сохраненной темы
             initTheme();
         });
 
-        // Закрытие баннера
         function dismissNotice() {
             localStorage.setItem('repo_rename_notice_dismissed', 'true');
             document.getElementById('repo-notice').classList.add('hidden');
         }
 
-        // Управление модальными окнами
         function openModal(id) {
             document.getElementById(id).classList.add('active');
         }
@@ -637,14 +698,46 @@
             openModal('api-info-modal');
         }
 
-        // Закрытие модальных окон при клике на фон
+        // Логика печатания текста в модалке Keeps
+        let typingTimeout;
+        function openKeepsModal() {
+            openModal('keeps-modal');
+            startTypingAnimation();
+        }
+
+        function startTypingAnimation() {
+            const el = document.getElementById('typing-text');
+            el.innerText = '';
+            clearTimeout(typingTimeout);
+
+            const sequence = [
+                { text: 'K', delay: 200 },
+                { text: 'Ke', delay: 200 },
+                { text: 'Kep', delay: 200 },
+                { text: 'Keps', delay: 300 },
+                { text: 'Kep', delay: 200 }, // стирание опечатки
+                { text: 'Keep', delay: 250 },
+                { text: 'Keeps', delay: 300 }
+            ];
+
+            let step = 0;
+            function runStep() {
+                if (step < sequence.length) {
+                    el.innerText = sequence[step].text;
+                    const delay = sequence[step].delay;
+                    step++;
+                    typingTimeout = setTimeout(runStep, delay);
+                }
+            }
+            runStep();
+        }
+
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', (e) => {
                 if (e.target === overlay) overlay.classList.remove('active');
             });
         });
 
-        // ЛОГИКА ТЕМ ОФОРМЛЕНИЯ
         function setTheme(theme) {
             localStorage.setItem('app_theme', theme);
             applyTheme(theme);
@@ -661,7 +754,6 @@
                 body.classList.remove('light-theme');
                 document.getElementById('theme-dark').classList.add('active');
             } else {
-                // Системная тема
                 document.getElementById('theme-system').classList.add('active');
                 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
                     body.classList.add('light-theme');
