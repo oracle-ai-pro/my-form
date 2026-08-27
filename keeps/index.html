@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keeps | Prestige HQ</title>
+    <link rel="icon" type="image/png" href="Keeps.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ШАПКА -->
+    <header class="header">
+        <div class="header-left">
+            <div class="tools-dropdown">
+                <button class="tools-btn" onclick="toggleToolsMenu(event)" title="Опции и сервисы">
+                    <span class="material-symbols-rounded">menu</span>
+                </button>
+                
+                <div id="tools-menu" class="tools-menu hidden">
+                    <div class="tools-item" onclick="checkAI()">
+                        <span class="material-symbols-rounded" style="color: var(--accent-color);">smart_toy</span> Ask AI (ИИ)
+                    </div>
+                    <label class="tools-item" style="cursor: pointer;">
+                        <span class="material-symbols-rounded">upload_file</span> Загрузить Txt, Md
+                        <input type="file" accept=".txt,.md" class="hidden" onchange="handleImportFile(event)">
+                    </label>
+
+                    <div class="tools-section-title">Справка</div>
+                    <div class="tools-item" onclick="openTutorialModal()">
+                        <span class="material-symbols-rounded" style="color: #f59e0b;">help</span> Как пользоваться?
+                    </div>
+
+                    <div class="tools-section-title">Наши сервисы</div>
+                    <a href="../my-document/" class="tools-item"><span class="material-symbols-rounded">description</span> Документы</a>
+                    <a href="../my-table/" class="tools-item"><span class="material-symbols-rounded">table_chart</span> Таблицы</a>
+                    <a href="../my-form/" class="tools-item"><span class="material-symbols-rounded">quiz</span> Формы</a>
+                    <a href="../my-slides/" class="tools-item"><span class="material-symbols-rounded">slideshow</span> Слайды</a>
+
+                    <div style="border-top: 1px solid var(--border-color); margin: 4px 0;"></div>
+                    <div class="tools-item" onclick="openSettingsModal()">
+                        <span class="material-symbols-rounded">settings</span> Настройки
+                    </div>
+                </div>
+            </div>
+
+            <div class="brand-title">
+<span>My Keeps</span>
+            </div>
+        </div>
+
+        <div class="search-box">
+            <span class="material-symbols-rounded">search</span>
+            <input type="text" id="search-input" placeholder="Поиск заметок..." oninput="renderNotes()">
+        </div>
+    </header>
+
+    <!-- ОСНОВНАЯ ОБЛАСТЬ -->
+    <main class="container">
+        <!-- Создание заметки с обновленной панелью -->
+        <div class="create-note-card" id="create-note-card">
+            <input type="text" id="note-title-input" class="admin-input" style="font-weight: 600;" placeholder="Заголовок">
+            
+            <!-- ПАНЕЛЬ ФОРМАТИРОВАНИЯ В СОЗДАНИИ -->
+            <div class="formatting-toolbar">
+                <button class="fmt-btn" onclick="execFormat('formatBlock', '<h1>')" title="Заголовок 1">H1</button>
+                <button class="fmt-btn" onclick="execFormat('formatBlock', '<h2>')" title="Заголовок 2">H2</button>
+                <button class="fmt-btn" onclick="execFormat('formatBlock', '<h3>')" title="Заголовок 3">H3</button>
+                <button class="fmt-btn" onclick="execFormat('formatBlock', '<p>')" title="Обычный текст">Текст</button>
+                <div class="fmt-divider"></div>
+                <button class="fmt-btn" onclick="execFormat('bold')" title="Жирный"><b>B</b></button>
+                <button class="fmt-btn" onclick="execFormat('italic')" title="Курсив"><i>I</i></button>
+                <button class="fmt-btn" onclick="execFormat('underline')" title="Подчеркнутый"><u>U</u></button>
+                <div class="fmt-divider"></div>
+                <!-- СПИСКИ И ЧЕКБОКСЫ -->
+                <button class="fmt-btn" onclick="execFormat('insertUnorderedList')" title="Маркированный список">
+                    <span class="material-symbols-rounded" style="font-size: 16px;">format_list_bulleted</span>
+                </button>
+                <button class="fmt-btn" onclick="insertCheckbox('note-text-input')" title="Флажок (Чекбокс)">
+                    <span class="material-symbols-rounded" style="font-size: 16px;">check_box</span>
+                </button>
+                <div class="fmt-divider"></div>
+                <!-- ПАЛИТРА ЦВЕТА -->
+                <!-- МАТОВАЯ ПАЛИТРА ЦВЕТОВ -->
+<div class="color-picker-palette" id="create-color-palette"></div>
+                <button class="fmt-btn" onclick="execFormat('removeFormat')" title="Очистить форматирование">
+                    <span class="material-symbols-rounded" style="font-size: 16px;">format_clear</span>
+                </button>
+            </div>
+
+            <div id="note-text-input" class="rich-editor" contenteditable="true" data-placeholder="Заметка..."></div>
+            
+            <div style="display: flex; justify-content: flex-end;">
+                <button class="btn" onclick="createNote()">Добавить</button>
+            </div>
+        </div>
+
+        <!-- Сетка заметок -->
+        <div id="notes-grid" class="notes-grid"></div>
+
+        <!-- Заглушка -->
+        <div id="empty-state" class="gcard hidden" style="text-align: center; padding: 40px 24px;">
+            <span class="material-symbols-rounded" style="font-size: 64px; color: var(--text-muted); margin-bottom: 16px; display: inline-block;">
+                sticky_note_2
+            </span>
+            <h2 style="font-size: 1.3rem; font-weight: 600; margin-bottom: 8px;">Заметок пока нет</h2>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">Создайте заметку выше или восстановите обучающие материалы.</p>
+            <button class="q-action-btn" onclick="restoreDemoNotes()">
+                <span class="material-symbols-rounded" style="font-size: 16px;">history</span> Вернуть обучающие заметки
+            </button>
+        </div>
+    </main>
+
+    <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ -->
+    <div id="view-note-modal" class="custom-alert-overlay">
+        <div class="custom-alert-card" id="edit-modal-card" style="max-width: 580px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <input type="text" id="edit-note-title" class="admin-input" style="font-weight: 700; font-size: 1.1rem; border: none; background: transparent; padding: 0;" placeholder="Заголовок...">
+                <button class="tools-icon-btn" onclick="closeNoteModal()"><span class="material-symbols-rounded">close</span></button>
+            </div>
+
+            <!-- ПАНЕЛЬ ФОРМАТИРОВАНИЯ В МОДАЛКЕ -->
+            <div class="formatting-toolbar">
+                <button class="fmt-btn" onclick="execFormat('formatBlock', '<h1>')" title="Заголовок 1">H1</button>
+                <button class="fmt-btn" onclick="execFormat('formatBlock', '<h2>')" title="Заголовок 2">H2</button>
+                <button class="fmt-btn" onclick="execFormat('formatBlock', '<h3>')" title="Заголовок 3">H3</button>
+                <button class="fmt-btn" onclick="execFormat('formatBlock', '<p>')" title="Обычный текст">Текст</button>
+                <div class="fmt-divider"></div>
+                <button class="fmt-btn" onclick="execFormat('bold')" title="Жирный"><b>B</b></button>
+                <button class="fmt-btn" onclick="execFormat('italic')" title="Курсив"><i>I</i></button>
+                <button class="fmt-btn" onclick="execFormat('underline')" title="Подчеркнутый"><u>U</u></button>
+                <div class="fmt-divider"></div>
+                <button class="fmt-btn" onclick="execFormat('insertUnorderedList')" title="Маркированный список">
+                    <span class="material-symbols-rounded" style="font-size: 16px;">format_list_bulleted</span>
+                </button>
+                <button class="fmt-btn" onclick="insertCheckbox('edit-note-content')" title="Флажок (Чекбокс)">
+                    <span class="material-symbols-rounded" style="font-size: 16px;">check_box</span>
+                </button>
+                <div class="fmt-divider"></div>
+                <!-- МАТОВАЯ ПАЛИТРА ЦВЕТОВ -->
+<div class="color-picker-palette" id="edit-color-palette"></div>
+                <button class="fmt-btn" onclick="execFormat('removeFormat')" title="Очистить форматирование">
+                    <span class="material-symbols-rounded" style="font-size: 16px;">format_clear</span>
+                </button>
+            </div>
+
+            <div id="edit-note-content" class="rich-editor" contenteditable="true" style="min-height: 200px; margin-bottom: 16px;" data-placeholder="Текст заметки..."></div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn" onclick="saveActiveNote()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО НАПОМИНАНИЯ -->
+    <div id="reminder-modal" class="custom-alert-overlay">
+        <div class="custom-alert-card" style="max-width: 360px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="display: flex; align-items: center; gap: 8px; font-size: 1.05rem;">
+                    <span class="material-symbols-rounded" style="color: var(--accent-color);">notifications</span> Напоминание
+                </h3>
+                <button class="tools-icon-btn" onclick="closeReminderModal()"><span class="material-symbols-rounded">close</span></button>
+            </div>
+
+            <div style="margin-bottom: 16px; text-align: left;">
+                <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">Выберите дату и время</label>
+                <input type="datetime-local" id="reminder-datetime" class="admin-input">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; gap: 8px;">
+                <button class="q-action-btn delete-btn" onclick="clearReminder()">Убрать</button>
+                <button class="btn" onclick="saveReminder()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ТАЙМЕР ОТМЕНЫ УДАЛЕНИЯ -->
+    <div id="undo-toast" class="undo-toast hidden">
+        <span id="undo-toast-text">Заметка удалена</span>
+        <button class="undo-btn" onclick="undoDelete()">Отмена (<span id="undo-timer">5</span>s)</button>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ОБУЧЕНИЯ -->
+    <div id="tutorial-modal" class="custom-alert-overlay">
+        <div class="custom-alert-card" style="max-width: 500px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-rounded" style="color: #f59e0b;">help</span> Инструкция по My Keeps
+                </h3>
+                <button class="tools-icon-btn" onclick="closeTutorialModal()"><span class="material-symbols-rounded">close</span></button>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.9rem; line-height: 1.5; max-height: 360px; overflow-y: auto; padding-right: 4px;">
+                <div class="tutorial-block">
+                    <b><span class="material-symbols-rounded">keep</span> Закрепление и Напоминания</b>
+                    <p style="color: var(--text-muted);">Нажмите на иконку булавки на карточке, чтобы закрепить заметку наверху.</p>
+                </div>
+                <div class="tutorial-block">
+                    <b><span class="material-symbols-rounded">palette</span> Персональные цвета и Списки</b>
+                    <p style="color: var(--text-muted);">Используйте палитру для индивидуального окрашивания заметки, добавления точек и чекбоксов.</p>
+                </div>
+                <div class="tutorial-block">
+                    <b><span class="material-symbols-rounded">delete</span> Безопасное удаление</b>
+                    <p style="color: var(--text-muted);">Удалить заметку можно через меню «три точки». У вас есть 5 секунд для отмены.</p>
+                </div>
+            </div>
+
+            <button class="btn" style="width: 100%; margin-top: 16px;" onclick="closeTutorialModal()">Всё понятно</button>
+        </div>
+    </div>
+
+    <!-- НАСТРОЙКИ -->
+    <div id="settings-modal" class="custom-alert-overlay">
+        <div class="custom-alert-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-rounded">settings</span> Настройки
+                </h3>
+                <button class="tools-icon-btn" onclick="closeSettingsModal()"><span class="material-symbols-rounded">close</span></button>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 14px;">
+                <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Тема оформления</label>
+                <select id="theme-select" class="forms-select">
+                    <option value="dark">Тёмная</option>
+                    <option value="light">Светлая</option>
+                </select>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 14px;">
+                <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Тип скруглений</label>
+                <select id="radius-select" class="forms-select">
+                    <option value="sharp">Sharp (Острые)</option>
+                    <option value="rounded">Rounded (Обычные)</option>
+                    <option value="full">Full (Овальные)</option>
+                </select>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Привязать ИИ ключ (заканчивается на ")")</label>
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                    <input type="password" id="ai-key-input" class="admin-input" style="margin: 0;" placeholder="Введите ключ...">
+                    <button class="btn" onclick="saveAiKey()">Привязать</button>
+                </div>
+            </div>
+
+            <button class="btn" style="width: 100%;" onclick="saveSettings()">Сохранить изменения</button>
+        </div>
+    </div>
+
+    <!-- УВЕДОМЛЕНИЕ -->
+    <div id="custom-alert" class="custom-alert-overlay">
+        <div class="custom-alert-card" style="text-align: center;">
+            <span id="custom-alert-icon" class="material-symbols-rounded" style="font-size: 44px; color: var(--accent-color); margin-bottom: 8px;">info</span>
+            <p id="custom-alert-msg" style="font-size: 0.95rem; color: var(--text-color); margin-bottom: 20px; line-height: 1.4;"></p>
+            <button class="btn" style="padding: 8px 24px;" onclick="closeAlert()">Понятно</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
