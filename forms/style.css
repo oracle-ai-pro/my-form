@@ -446,6 +446,21 @@ input:checked + .slider:before {
     transform: translateX(20px);
 }
 
+/* Liquid Анимация для тумблеров */
+.liquid-slider {
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), background-color 0.3s ease !important;
+}
+
+input:checked + .liquid-slider:before {
+    animation: liquidBounce 0.5s forwards;
+}
+
+@keyframes liquidBounce {
+    0% { transform: translateX(0) scaleX(1); }
+    50% { transform: translateX(10px) scaleX(1.4); }
+    100% { transform: translateX(20px) scaleX(1); }
+}
+
 /* ==========================================
    5. ИНТЕРАКТИВНЫЕ ЭЛЕМЕНТЫ (ПАЗЛЫ, ФЛЕШКАРТЫ, ОБЪЯСНЕНИЯ)
    ========================================== */
@@ -585,7 +600,7 @@ input:checked + .slider:before {
 }
 
 /* ==========================================
-   6. МОДАЛЬНЫЕ ОКНА И МИГРАЦИЯ
+   6. МОДАЛЬНЫЕ ОКНА, УВЕДОМЛЕНИЯ И МИГРАЦИЯ
    ========================================== */
 .review-item {
     padding: 14px;
@@ -602,7 +617,7 @@ input:checked + .slider:before {
 .text-success { color: #2e7d32; font-weight: 600; }
 .text-danger { color: #d32f2f; font-weight: 600; }
 
-.custom-alert-overlay, .modal-overlay {
+.custom-alert-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0, 0, 0, 0.5);
@@ -616,12 +631,12 @@ input:checked + .slider:before {
     transition: opacity 0.2s ease;
 }
 
-.custom-alert-overlay.active, .modal-overlay.active {
+.custom-alert-overlay.active {
     opacity: 1;
     pointer-events: auto;
 }
 
-.custom-alert-card, .modal-card {
+.custom-alert-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -707,69 +722,56 @@ input:checked + .slider:before {
     color: var(--text-muted);
     opacity: 0.7;
 }
+
 /* Анимация и стили подсветки переставленных карточек */
 .card {
-  transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
 }
 
 .card-highlight {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
-  background-color: #eff6ff;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+    background-color: #eff6ff;
 }
 
 /* Всплывающее уведомление снизу */
 .toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1e293b;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-  z-index: 9999;
-  opacity: 1;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #ffffff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .toast.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, 20px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 20px);
 }
 
 .toast-btn {
-  background: #3b82f6;
-  color: #fff;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 13px;
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
 }
 
 .toast-btn:hover {
-  background: #2563eb;
-}
-/* Liquid Анимация для тумблеров */
-.liquid-slider {
-    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), background-color 0.3s ease !important;
-}
-
-input:checked + .liquid-slider.active-liquid:before {
-    animation: liquidBounce 0.5s forwards;
-}
-
-@keyframes liquidBounce {
-    0% { transform: translateX(0) scaleX(1); }
-    50% { transform: translateX(10px) scaleX(1.4); }
-    100% { transform: translateX(20px) scaleX(1); }
+    background: #2563eb;
 }
 
 /* Стили для WYSIWYG */
@@ -782,3 +784,11 @@ input:checked + .liquid-slider.active-liquid:before {
     outline: none;
 }
 .rich-text-editor:focus { border-color: var(--accent-color); }
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.15);
+    border-left: 4px solid #ffc107;
+    color: var(--text-color);
+    padding: 10px 14px;
+    border-radius: 6px;
+}
