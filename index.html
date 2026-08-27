@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prestige HQ | Выбор сервиса</title>
     <link rel="icon" type="image/png" href="MY Work.png">
+    
     <!-- Google Fonts & Material Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,13 +14,13 @@
 
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --card-hover-bg: #334155;
+            --bg-color: #000000;
+            --card-bg: #050505;
+            --card-hover-bg: #121212;
             --text-color: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: rgba(255, 255, 255, 0.1);
-            --accent-color: #6366f1;
+            --accent-color: #1a73e8;
             --accent-glow: rgba(99, 102, 241, 0.25);
             --modal-bg: #1e293b;
             --code-bg: #0f172a;
@@ -29,14 +30,14 @@
 
         /* Светлая тема */
         body.light-theme {
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
+            --bg-color: #ffffff;
+            --card-bg: #f3f3f3;
             --card-hover-bg: #f1f5f9;
             --text-color: #0f172a;
             --text-muted: #64748b;
             --border-color: rgba(0, 0, 0, 0.08);
             --accent-glow: rgba(99, 102, 241, 0.15);
-            --modal-bg: #ffffff;
+            --modal-bg: #f3f3f3;
             --code-bg: #f1f5f9;
         }
 
@@ -199,19 +200,27 @@
             border-color: var(--accent-color);
         }
 
+        /* Обертка для иконок (теперь умещает и Material Icon, и вашу иконку) */
         .icon-wrapper {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
+            padding: 10px 16px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 10px;
             margin-bottom: 16px;
             transition: transform var(--transition-speed) ease;
         }
 
-        .service-card:hover .icon-wrapper { transform: scale(1.1); }
-        .icon-wrapper .material-symbols-rounded { font-size: 32px; }
+        /* Стили для вашей личной иконки */
+        .custom-card-icon {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+        }
+
+        .service-card:hover .icon-wrapper { transform: scale(1.08); }
+        .icon-wrapper .material-symbols-rounded { font-size: 30px; }
 
         .card-doc .icon-wrapper { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
         .card-slides .icon-wrapper { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
@@ -247,6 +256,73 @@
         .service-card:hover .card-action {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        /* ОВЕРЛЕЙ ПЕРЕХОДА */
+        .transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .transition-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .loader-card-preview {
+            width: 140px;
+            height: 160px;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: pulseCard 1s infinite alternate ease-in-out;
+            margin-bottom: 20px;
+        }
+
+        .loader-card-preview .material-symbols-rounded {
+            font-size: 48px;
+        }
+
+        .loader-spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        .loader-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        @keyframes pulseCard {
+            0% { transform: scale(0.95); }
+            100% { transform: scale(1.05); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         /* Модальные окна */
@@ -317,36 +393,6 @@
         }
 
         .modal-close:hover { color: var(--text-color); }
-
-        /* Анимация печати Keeps */
-        .typing-container {
-            font-family: monospace;
-            font-size: 2rem;
-            font-weight: bold;
-            color: #ec4899;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--code-bg);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            margin: 20px 0;
-        }
-
-        .typing-cursor {
-            display: inline-block;
-            width: 10px;
-            height: 1.8rem;
-            background-color: #ec4899;
-            margin-left: 4px;
-            animation: blink 0.8s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
 
         .setting-group { margin-bottom: 20px; }
 
@@ -466,7 +512,7 @@
             </button>
         </div>
 
-        <!-- ОДНОРАЗОВОЕ УВЕДОМЛЕНИЕ О СМЕНЕ ИМЕНИ РЕПОЗИТОРИЯ -->
+        <!-- Уведомление -->
         <div id="repo-notice" class="notice-banner hidden">
             <div class="notice-content">
                 <span class="material-symbols-rounded">info</span>
@@ -487,12 +533,13 @@
             <p>Единый рабочий центр для ваших документов, презентаций и данных</p>
         </header>
 
-        <!-- Карточки вариантов -->
+        <!-- Сетка карточек -->
         <div class="services-grid">
             
             <!-- Документы -->
-            <a href="./document/" class="service-card card-doc">
+            <a href="./document/" class="service-card card-doc" onclick="navigateWithAnimation(event, './document/', 'Документы', 'article', '#3b82f6')">
                 <div class="icon-wrapper">
+                    <img src="../document/Document.png" alt="Icon" class="custom-card-icon">
                     <span class="material-symbols-rounded">article</span>
                 </div>
                 <h2>Документы</h2>
@@ -503,8 +550,9 @@
             </a>
 
             <!-- Презентации -->
-            <a href="./slides/" class="service-card card-slides">
+            <a href="./slides/" class="service-card card-slides" onclick="navigateWithAnimation(event, './slides/', 'Презентации', 'slideshow', '#f59e0b')">
                 <div class="icon-wrapper">
+                    <img src="../slides/Slides.png" alt="Icon" class="custom-card-icon">
                     <span class="material-symbols-rounded">slideshow</span>
                 </div>
                 <h2>Презентации</h2>
@@ -515,8 +563,9 @@
             </a>
 
             <!-- Формы -->
-            <a href="./forms/" class="service-card card-forms">
+            <a href="./forms/" class="service-card card-forms" onclick="navigateWithAnimation(event, './forms/', 'Формы', 'assignment', '#10b981')">
                 <div class="icon-wrapper">
+                    <img src="../forms/forms.png" alt="Icon" class="custom-card-icon">
                     <span class="material-symbols-rounded">assignment</span>
                 </div>
                 <h2>Формы</h2>
@@ -527,8 +576,9 @@
             </a>
 
             <!-- Таблицы -->
-            <a href="./spreadsheets/" class="service-card card-sheets">
+            <a href="./spreadsheets/" class="service-card card-sheets" onclick="navigateWithAnimation(event, './spreadsheets/', 'Таблицы', 'table_chart', '#a855f7')">
                 <div class="icon-wrapper">
+                    <img src="../spreadsheets/spreadsheets.png" alt="Icon" class="custom-card-icon">
                     <span class="material-symbols-rounded">table_chart</span>
                 </div>
                 <h2>Таблицы</h2>
@@ -538,17 +588,18 @@
                 </div>
             </a>
 
-            <!-- Keeps (Заглушка) -->
-            <div class="service-card card-keeps" onclick="openKeepsModal()">
+            <!-- Keeps -->
+            <a href="./keeps/" class="service-card card-keeps" onclick="navigateWithAnimation(event, './keeps/', 'Keeps', 'keep', '#ec4899')">
                 <div class="icon-wrapper">
+                    <img src="../keeps/keeps.png" alt="Icon" class="custom-card-icon">
                     <span class="material-symbols-rounded">keep</span>
                 </div>
                 <h2>Keeps</h2>
                 <p>Быстрые заметки, списки задач и фрагменты.</p>
                 <div class="card-action">
-                    Подробнее <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span>
+                    Открыть <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span>
                 </div>
-            </div>
+            </a>
 
         </div>
 
@@ -557,31 +608,13 @@
         </footer>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО: KEEPS В РАЗРАБОТКЕ -->
-    <div id="keeps-modal" class="modal-overlay">
-        <div class="modal-card" style="text-align: center;">
-            <div class="modal-header">
-                <h3>
-                    <span class="material-symbols-rounded" style="color:#ec4899;">keep</span>
-                    Проект в разработке
-                </h3>
-                <button class="modal-close" onclick="closeModal('keeps-modal')">
-                    <span class="material-symbols-rounded">close</span>
-                </button>
-            </div>
-
-            <p style="color: var(--text-muted); font-size: 0.95rem;">
-                Мы активно работаем над новым удобным сервисом заметок:
-            </p>
-
-            <div class="typing-container">
-                <span id="typing-text"></span><span class="typing-cursor"></span>
-            </div>
-
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 15px;">
-                Совсем скоро здесь появится продвинутый менеджер заметок с умным ИИ-помощником!
-            </p>
+    <!-- АНИМИРОВАННЫЙ ОВЕРЛЕЙ ПЕРЕХОДА -->
+    <div id="transition-overlay" class="transition-overlay">
+        <div id="loader-preview" class="loader-card-preview">
+            <span id="loader-icon" class="material-symbols-rounded">article</span>
+            <div class="loader-spinner"></div>
         </div>
+        <div id="loader-text" class="loader-text">Открываем сервис...</div>
     </div>
 
     <!-- МОДАЛЬНОЕ ОКНО: ОПЦИИ -->
@@ -597,7 +630,6 @@
                 </button>
             </div>
 
-            <!-- Переключатель тем -->
             <div class="setting-group">
                 <label class="setting-label">Тема оформления</label>
                 <div class="theme-buttons">
@@ -613,7 +645,6 @@
                 </div>
             </div>
 
-            <!-- Раздел базы знаний ИИ -->
             <div class="setting-group" style="margin-top: 24px;">
                 <label class="setting-label">Интеграции и ИИ</label>
                 <button class="info-link-btn" onclick="openApiInfo()">
@@ -698,38 +729,24 @@
             openModal('api-info-modal');
         }
 
-        // Логика печатания текста в модалке Keeps
-        let typingTimeout;
-        function openKeepsModal() {
-            openModal('keeps-modal');
-            startTypingAnimation();
-        }
+        function navigateWithAnimation(event, url, title, iconName, color) {
+            event.preventDefault();
 
-        function startTypingAnimation() {
-            const el = document.getElementById('typing-text');
-            el.innerText = '';
-            clearTimeout(typingTimeout);
+            const overlay = document.getElementById('transition-overlay');
+            const iconEl = document.getElementById('loader-icon');
+            const textEl = document.getElementById('loader-text');
+            const previewCard = document.getElementById('loader-preview');
 
-            const sequence = [
-                { text: 'K', delay: 200 },
-                { text: 'Ke', delay: 200 },
-                { text: 'Kep', delay: 200 },
-                { text: 'Keps', delay: 300 },
-                { text: 'Kep', delay: 200 }, // стирание опечатки
-                { text: 'Keep', delay: 250 },
-                { text: 'Keeps', delay: 300 }
-            ];
+            iconEl.innerText = iconName;
+            iconEl.style.color = color;
+            previewCard.style.borderColor = color;
+            textEl.innerText = `Загрузка «${title}»...`;
 
-            let step = 0;
-            function runStep() {
-                if (step < sequence.length) {
-                    el.innerText = sequence[step].text;
-                    const delay = sequence[step].delay;
-                    step++;
-                    typingTimeout = setTimeout(runStep, delay);
-                }
-            }
-            runStep();
+            overlay.classList.add('active');
+
+            setTimeout(() => {
+                window.location.href = url;
+            }, 300);
         }
 
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
