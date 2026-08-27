@@ -890,8 +890,13 @@ function switchScreen(screen) {
 function tryLogin() {
     const u = document.getElementById('login-user').value;
     const p = document.getElementById('login-pass').value;
-    if (u === 'admin' && p === '1234') switchScreen('admin');
-    else showAlert('Неверный логин или пароль!', 'lock');
+    const storedAuth = JSON.parse(localStorage.getItem('admin_auth') || '{"u":"admin","p":"1234"}');
+
+    if (u === storedAuth.u && p === storedAuth.p) {
+        switchScreen('admin');
+    } else {
+        showAlert('Неверный логин или пароль!', 'lock');
+    }
 }
 
 function logout() { loadCurrentForm(); }
@@ -911,14 +916,31 @@ function toggleAdminFields() {
     
     document.getElementById('admin-choices-fields').classList.toggle('hidden', !['radio', 'checkbox', 'select', 'puzzle-drag'].includes(type));
     document.getElementById('admin-text-fields').classList.toggle('hidden', type !== 'text');
-    
-    const inlineBox = document.getElementById('inline-input-box');
-    if (inlineBox) {
-        inlineBox.classList.toggle('hidden', type !== 'text');
-    }
-
     document.getElementById('flashcard-answer-box').classList.toggle('hidden', type !== 'flashcard');
     document.getElementById('media-upload-box').classList.toggle('hidden', type !== 'info-slide');
+}
+
+function toggleTextInputs(source) {
+    const inline = document.getElementById('new-inline-input');
+    const multiline = document.getElementById('new-multiline-input');
+    
+    if (source === 'inline' && inline.checked) multiline.checked = false;
+    if (source === 'multiline' && multiline.checked) inline.checked = false;
+    
+    multiline.disabled = inline.checked;
+    inline.disabled = multiline.checked;
+}
+
+function handleMediaUploadPreview(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        uploadedMediaBase64 = e.target.result;
+        document.getElementById('media-preview-container').innerHTML = renderMediaHTML(uploadedMediaBase64);
+    };
+    reader.readAsDataURL(file);
 }
 
 function addQuestion() {
@@ -1007,21 +1029,7 @@ function processSaveQuestion(type, title, useInline) {
     cancelEditQuestion();
     renderAdminQuestionsList();
 }
-// Глобальный объект формы теперь должен поддерживать настройки
-// В функцию addQuestion() добавлено:
-function toggleTextInputs(source) {
-    const inline = document.getElementById('new-inline-input');
-    const multiline = document.getElementById('new-multiline-input');
-    
-    if (source === 'inline' && inline.checked) multiline.checked = false;
-    if (source === 'multiline' && multiline.checked) inline.checked = false;
-    
-    // Блокируем тумблеры визуально
-    multiline.disabled = inline.checked;
-    inline.disabled = multiline.checked;
-}
 
-// Настройки Формы
 function openFormSettings() {
     const form = allForms[currentFormIndex];
     if (!form.settings) form.settings = { isTestMode: false, publishType: 'immediate', defaultPoints: 10 };
@@ -1054,26 +1062,6 @@ function saveFormSettings() {
     showAlert('Настройки формы применены!', 'check_circle');
 }
 
-// Глобальная функция для F12 (Zip-ответы)
-window['zip-answer'] = function() {
-    showPrompt("Введите Zip-код ответа ученика:", "", (code) => {
-        if (!code) return;
-        try {
-            const data = JSON.parse(atob(code));
-            let html = `<h4>Результаты: ${data.name}</h4><br>`;
-            html += `Счет: ${data.score} / ${data.maxScore}<br><hr>`;
-            document.getElementById('question-details-content').innerHTML = html;
-            document.getElementById('question-details-modal').classList.add('active');
-        } catch (e) {
-            showAlert("Неверный формат Zip-кода", "error");
-        }
-    });
-};
-
-// Функция форматирования (WYSIWYG)
-function formatText(command) {
-    document.execCommand(command, false, null);
-}
 function editQuestion(idx) {
     const q = allForms[currentFormIndex].questions[idx];
     if (!q) return;
@@ -1313,7 +1301,7 @@ function renderAdminQuestionsList() {
 }
 
 function moveQuestionUp(idx) {
-    if (idx === 0) return; 
+    if (idx <= 0) return;
     const form = allForms[currentFormIndex];
     const temp = form.questions[idx - 1];
     form.questions[idx - 1] = form.questions[idx];
@@ -1324,7 +1312,7 @@ function moveQuestionUp(idx) {
 
 function moveQuestionDown(idx) {
     const form = allForms[currentFormIndex];
-    if (idx === form.questions.length - 1) return; 
+    if (idx >= form.questions.length - 1) return;
     const temp = form.questions[idx + 1];
     form.questions[idx + 1] = form.questions[idx];
     form.questions[idx] = temp;
@@ -1333,257 +1321,56 @@ function moveQuestionDown(idx) {
 }
 
 function deleteQuestion(idx) {
-    showConfirm("Удалить вопрос?", "Вы уверены, что хотите удалить этот вопрос?", () => {
+    showConfirm('Удаление вопроса', 'Вы действительно хотите удалить этот вопрос?', () => {
         allForms[currentFormIndex].questions.splice(idx, 1);
         saveFormsToStorage();
         renderAdminQuestionsList();
-        showAlert('Вопрос успешно удален!', 'delete');
+        showAlert('Вопрос успешно удалён', 'delete');
     });
-}
-
-function handleMediaUploadPreview(input) {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            uploadedMediaBase64 = e.target.result;
-            document.getElementById('media-preview-container').innerHTML = renderMediaHTML(uploadedMediaBase64);
-        };
-        reader.readAsDataURL(file);
-    }
 }
 
 /* ==========================================
-   8. ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ
+   8. УПРАВЛЕНИЕ АВТОРИЗАЦИЕЙ И УТИЛИТЫ
    ========================================== */
+function openAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (modal) modal.classList.add('active');
+}
+
+function closeAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (modal) modal.classList.remove('active');
+}
+
+function saveAuthChange(e) {
+    e.preventDefault();
+    const login = document.getElementById('newAdminLogin').value.trim();
+    const pass = document.getElementById('newAdminPass').value;
+    const confirmPass = document.getElementById('confirmAdminPass').value;
+
+    if (pass !== confirmPass) {
+        showAlert('Пароли не совпадают!', 'warning');
+        return;
+    }
+
+    localStorage.setItem('admin_auth', JSON.stringify({ u: login, p: pass }));
+    closeAuthModal();
+    showAlert('Логин и пароль администратора успешно изменены!', 'check_circle');
+}
+
+function formatText(command) {
+    document.execCommand(command, false, null);
+}
+
 function generateShareLink() {
-    navigator.clipboard.writeText(window.location.href);
-    showAlert('Ссылка на форму скопирована в буфер обмена!', 'share');
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        showAlert('Ссылка на форму скопирована в буфер обмена!', 'share');
+    }).catch(() => {
+        showAlert('Не удалось скопировать ссылку', 'error');
+    });
 }
 
 function printCurrentForm() {
-    const form = allForms[currentFormIndex];
-    if (!form || !form.questions || form.questions.length === 0) {
-        showAlert('В этой форме нет вопросов для печати!', 'warning');
-        return;
-    }
-
-    const printWin = window.open('', '_blank');
-    if (!printWin) {
-        showAlert('Разрешите всплывающие окна в браузере, чтобы открыть форму для печати', 'error');
-        return;
-    }
-
-    let questionsHtml = '';
-
-    form.questions.forEach((q, idx) => {
-        questionsHtml += `<div class="question-block">`;
-
-        if (q.type === 'text' && q.useInlineInput && q.title.includes('[input]')) {
-            const printTitle = q.title.replace('[input]', '____________________');
-            questionsHtml += `<div class="question-title"><strong>${idx + 1}. ${printTitle}</strong></div>`;
-        } else {
-            questionsHtml += `<div class="question-title"><strong>${idx + 1}. ${q.title}</strong></div>`;
-        }
-
-        if (q.description) {
-            questionsHtml += `<div style="font-size: 13px; color: #555; margin-bottom: 8px; font-style: italic;">${q.description}</div>`;
-        }
-
-        if (['radio', 'select'].includes(q.type)) {
-            if (q.options && q.options.length > 0) {
-                questionsHtml += `<div class="options-group">`;
-                q.options.forEach(opt => {
-                    questionsHtml += `
-                        <div class="option-item">
-                            <span class="radio-circle"></span>
-                            <span>${opt}</span>
-                        </div>
-                    `;
-                });
-                questionsHtml += `</div>`;
-            }
-        } 
-        else if (q.type === 'checkbox') {
-            if (q.options && q.options.length > 0) {
-                questionsHtml += `<div class="options-group">`;
-                q.options.forEach(opt => {
-                    questionsHtml += `
-                        <div class="option-item">
-                            <span class="checkbox-square"></span>
-                            <span>${opt}</span>
-                        </div>
-                    `;
-                });
-                questionsHtml += `</div>`;
-            }
-        } 
-        else if (q.type === 'text' && (!q.useInlineInput || !q.title.includes('[input]'))) {
-            questionsHtml += `<div class="text-answer-line">Ответ: __________________________________________________________________________________</div>`;
-        } 
-        else if (q.type === 'puzzle-drag') {
-            questionsHtml += `<div style="font-size: 13px; color: #555; margin-bottom: 6px;">Укажите правильный порядок цифрами в скобках:</div>`;
-            if (q.options && q.options.length > 0) {
-                questionsHtml += `<div class="options-group">`;
-                q.options.forEach(opt => {
-                    questionsHtml += `
-                        <div class="option-item">
-                            <span style="font-family: monospace; font-size: 14px;">[ &nbsp; ]</span>
-                            <span>${opt}</span>
-                        </div>
-                    `;
-                });
-                questionsHtml += `</div>`;
-            }
-        } 
-        else if (q.type === 'flashcard' || q.type === 'info-slide') {
-            if (q.mediaUrl) {
-                questionsHtml += `<div style="margin: 8px 0;">${renderMediaHTML(q.mediaUrl)}</div>`;
-            }
-            questionsHtml += `<div class="text-answer-line">Заметки / Ответ: _________________________________________________________________________</div>`;
-        }
-
-        questionsHtml += `</div>`;
-    });
-
-    const printContent = `
-        <!DOCTYPE html>
-        <html lang="ru">
-        <head>
-            <meta charset="UTF-8">
-            <title>Печать: ${form.title || 'Форма'}</title>
-            <style>
-                @page { size: A4; margin: 15mm; }
-                body { font-family: 'Segoe UI', Arial, sans-serif; color: #000; background: #fff; line-height: 1.5; margin: 0; padding: 10px; }
-                .header-sheet { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 25px; }
-                .header-sheet h1 { margin: 0 0 15px 0; font-size: 22px; text-align: center; }
-                .student-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; }
-                .question-block { margin-bottom: 22px; page-break-inside: avoid; }
-                .question-title { font-size: 15px; margin-bottom: 8px; }
-                .options-group { margin-left: 10px; display: flex; flex-direction: column; gap: 6px; }
-                .option-item { font-size: 14px; display: flex; align-items: center; gap: 10px; }
-                .radio-circle { display: inline-block; width: 14px; height: 14px; border: 1.5px solid #000; border-radius: 50%; flex-shrink: 0; }
-                .checkbox-square { display: inline-block; width: 14px; height: 14px; border: 1.5px solid #000; border-radius: 2px; flex-shrink: 0; }
-                .text-answer-line { margin-top: 8px; font-size: 14px; color: #333; word-break: break-all; }
-            </style>
-        </head>
-        <body>
-            <div class="header-sheet">
-                <h1>${form.title || 'Тестовая форма'}</h1>
-                <div class="student-info">
-                    <span>Имя: ________________________________</span>
-                    <span>Дата: _______________</span>
-                </div>
-            </div>
-            ${questionsHtml}
-            <script>
-                window.onload = function() { window.print(); };
-            </script>
-        </body>
-        </html>
-    `;
-
-    printWin.document.open();
-    printWin.document.write(printContent);
-    printWin.document.close();
+    window.print();
 }
-const historyStack = [];
-const redoStack = [];
-let toastTimeout = null;
-
-// Вызывать эту функцию при перестановке слайдов/карточек
-function swapCards(index1, index2, isUndoRedo = false) {
-  const cards = document.querySelectorAll('.card');
-  const card1 = cards[index1];
-  const card2 = cards[index2];
-
-  if (!card1 || !card2) return;
-
-  // 1. Меняем местами в DOM (или обнови свой state макроса/реактора)
-  const parent = card1.parentNode;
-  const card1Next = card1.nextSibling === card2 ? card1 : card1.nextSibling;
-  parent.insertBefore(card1, card2);
-  parent.insertBefore(card2, card1Next);
-
-  // 2. Включаем подсветку карточек на 3 секунды
-  highlightElement(card1);
-  highlightElement(card2);
-
-  // Запоминаем шаг для отмены
-  if (!isUndoRedo) {
-    historyStack.push({ index1, index2 });
-    redoStack.length = 0;
-  }
-
-  // 3. Всплывающее уведомление на 3 секунды
-  const num1 = index1 + 1;
-  const num2 = index2 + 1;
-  showToast(`Событие: "Вы переместили ${num1} вопрос и ${num2} вопрос местами"`, () => {
-    undoLastSwap();
-  });
-}
-
-function highlightElement(element) {
-  element.classList.add('card-highlight');
-
-  if (element._highlightTimer) clearTimeout(element._highlightTimer);
-
-  element._highlightTimer = setTimeout(() => {
-    element.classList.remove('card-highlight');
-  }, 3000);
-}
-
-function showToast(message, onUndo) {
-  const toast = document.getElementById('toast');
-  const toastText = document.getElementById('toast-text');
-  const undoBtn = document.getElementById('toast-undo-btn');
-
-  toastText.textContent = message;
-  toast.classList.remove('hidden');
-
-  undoBtn.onclick = () => {
-    if (onUndo) onUndo();
-  };
-
-  if (toastTimeout) clearTimeout(toastTimeout);
-
-  toastTimeout = setTimeout(() => {
-    hideToast();
-  }, 3000);
-}
-
-function hideToast() {
-  const toast = document.getElementById('toast');
-  toast.classList.add('hidden');
-}
-
-function undoLastSwap() {
-  if (historyStack.length === 0) return;
-  const lastAction = historyStack.pop();
-  redoStack.push(lastAction);
-  swapCards(lastAction.index1, lastAction.index2, true);
-}
-
-function redoLastSwap() {
-  if (redoStack.length === 0) return;
-  const nextAction = redoStack.pop();
-  historyStack.push(nextAction);
-  swapCards(nextAction.index1, nextAction.index2, true);
-}
-
-// 4. Слушатель горячих клавиш (CTRL+Z / CTRL+Y)
-document.addEventListener('keydown', (e) => {
-  const isCtrlOrCmd = e.ctrlKey || e.metaKey;
-
-  if (isCtrlOrCmd && e.key.toLowerCase() === 'z') {
-    e.preventDefault();
-    if (e.shiftKey) {
-      redoLastSwap(); // Ctrl + Shift + Z
-    } else {
-      undoLastSwap(); // Ctrl + Z
-    }
-  } else if (isCtrlOrCmd && e.key.toLowerCase() === 'y') {
-    e.preventDefault();
-    redoLastSwap(); // Ctrl + Y
-  }
-});
