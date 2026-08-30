@@ -655,10 +655,53 @@ body.dark-theme .undo-toast {
     max-height: 100 % !important;
 }
 
-/* Если заметка редактируется в rich-editor внутри модалки */
-.custom-alert-card .rich-editor,
-.custom-alert-card .note-content {
-    max-height: 60vh !important;
+/* ИСПРАВЛЕНИЕ СКРОЛЛА И ВЫСОТЫ МОДАЛЬНЫХ ОКНО */
+.custom-alert-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    backdrop-filter: blur(4px) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 9999 !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
+}
+
+.custom-alert-card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 24px !important;
+    width: 100% !important;
+    max-width: 580px !important;
+    box-shadow: var(--shadow) !important;
+    
+    /* Жесткое ограничение высоты карточки */
+    max-height: 85vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+/* Фиксация шапки, тулбара и футера модалки от сжатия */
+.custom-alert-card > div:first-child,
+.custom-alert-card .formatting-toolbar,
+.custom-alert-card > div:last-child {
+    flex-shrink: 0 !important;
+}
+
+/* Принудительный внутренний скролл для редактора заметок */
+.custom-alert-card .rich-editor {
+    flex: 1 1 auto !important;
+    min-height: 120px !important;
+    max-height: 100% !important;
     overflow-y: auto !important;
     word-break: break-word !important;
+    margin-bottom: 16px !important;
 }
+
