@@ -586,3 +586,45 @@ body.dark-theme .undo-toast {
     transform: scale(1.15);
     border-color: var(--accent-color);
 }
+/* Обертка (Overlay) - держит окно по центру */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px; /* Внутренний отступ от краев экрана */
+    z-index: 1000;
+}
+
+/* Карточка всплывающего окна заметок */
+.modal-card {
+    background: #fff8c5; /* Твой цвет заметки */
+    width: 100%;
+    max-width: 600px;
+    
+    /* КЛЮЧЕВЫЕ ИСПРАВЛЕНИЯ: */
+    max-height: 85vh;        /* Окно никогда не будет выше 85% высоты экрана */
+    display: flex;
+    flex-direction: column;  /* Делаем флекс-контейнер для шапки и тела */
+    border-radius: 12px;
+    overflow: hidden;        /* Закругляет края модалки */
+}
+
+/* Шапка с кнопочками (H1, H2, B, I...) */
+.modal-header, .toolbar {
+    flex-shrink: 0;          /* Панель инструментов НЕ сжимается при скролле */
+}
+
+/* Текстовая область заметки / Текстовый редактор */
+.modal-body, 
+.note-editor-content {
+    flex: 1;                 /* Занимает все оставшееся место */
+    overflow-y: auto;        /* ВКЛЮЧАЕТ СКРОЛЛИНГ, если текст длинный */
+    padding: 16px;
+    word-break: break-word;  /* Предотвращает горизонтальный разрыв */
+}
