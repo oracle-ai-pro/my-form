@@ -175,6 +175,7 @@
         </div>
 
         <!-- 3. ПАНЕЛЬ АДМИНИСТРАТОРА (ADMIN SCREEN) -->
+        <!-- 3. ПАНЕЛЬ АДМИНИСТРАТОРА (ADMIN SCREEN) -->
         <div id="admin-screen" class="admin-box hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <h2 style="margin:0;">Редактор вопросов</h2>
@@ -183,8 +184,10 @@
 
             <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
                 <button onclick="toggleAddQuestionForm()" class="btn" style="width:auto; flex-grow:1;"><span class="material-symbols-rounded" style="font-size:32px;">add</span></button>
-                <button onclick="exportFormToJSON()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);"><span class="material-symbols-rounded" style="color:var(--accent-color); font-size:32px;">upload</span></button>
-                <button onclick="document.getElementById('import-file').click()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);"><span class="material-symbols-rounded" style="color:var(--accent-color); font-size:32px;">download</span></button>
+                <button onclick="exportFormToJSON()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);" title="Экспорт формы"><span class="material-symbols-rounded" style="color:var(--accent-color); font-size:32px;">upload</span></button>
+                <button onclick="document.getElementById('import-file').click()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);" title="Импорт формы"><span class="material-symbols-rounded" style="color:var(--accent-color); font-size:32px;">download</span></button>
+                <!-- Добавленная кнопка "Настройка Форм" -->
+                <button onclick="openFormSettings()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);" title="Настройки формы"><span class="material-symbols-rounded" style="color:var(--accent-color); font-size:32px;">tune</span></button>
                 <input type="file" id="import-file" style="display:none;" onchange="importFormFromJSON(this)" accept=".json">
             </div>
 
