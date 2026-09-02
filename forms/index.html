@@ -67,6 +67,11 @@
             <button class="add-form-btn" onclick="createNewFormPrompt()" title="Создать новую форму">
                 <span class="material-symbols-rounded">add</span>
             </button>
+
+            <!-- КНОПКА ПЕРЕХОДА В WORKGENS AI -->
+            <button class="tools-btn" onclick="window.location.href='../WorkGens/index.html'" title="ИИ Помощник WorkGens">
+                <img src="ai.png" alt="AI" style="width:20px; height:20px; object-fit:contain;">
+            </button>
             
             <!-- Выпадающее меню опций -->
             <div class="tools-dropdown">
@@ -74,6 +79,9 @@
                     <span class="material-symbols-rounded">more_vert</span>
                 </button>
                 <div id="tools-menu" class="tools-menu hidden">
+                    <div class="tools-item" onclick="window.location.href='../WorkGens/index.html'">
+                        <img src="../document/ai.png" alt="AI" style="width:18px; height:18px; object-fit:contain;"> <span>ИИ Помощник</span>
+                    </div>
                     <div class="tools-item" onclick="generateShareLink(); toggleToolsMenu();">
                         <span class="material-symbols-rounded">share</span> Поделиться ссылкой
                     </div>
@@ -170,7 +178,6 @@
             <button class="btn" onclick="logout()" style="margin-top:10px; width:100%; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Назад к тесту</button>
         </div>
 
-        <!-- 3. ПАНЕЛЬ АДМИНИСТРАТОРА (ADMIN SCREEN) -->
         <!-- 3. ПАНЕЛЬ АДМИНИСТРАТОРА (ADMIN SCREEN) -->
         <div id="admin-screen" class="admin-box hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
