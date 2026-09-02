@@ -1,0 +1,607 @@
+/* ==========================================
+   ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И ТЕМЫ
+   ========================================== */
+:root {
+    --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    
+    /* Скругления по умолчанию (Rounded) */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+}
+
+/* Переключатель скруглений */
+[data-radius="sharp"] {
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 0px;
+}
+
+[data-radius="rounded"] {
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+}
+
+[data-radius="full"] {
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 9999px;
+}
+
+/* --- Ультра-тёмная тема (#050505) --- */
+[data-theme="dark"] {
+    --bg-main: #050505;
+    --bg-surface: #0d0d0d;
+    --bg-header: #0a0a0a;
+    --bg-hover: #181818;
+    --bg-active: #222222;
+    --border-color: #222222;
+    --border-light: #181818;
+    --text-main: #ececec;
+    --text-muted: #888888;
+    --accent-primary: #3b82f6;
+    --accent-hover: #2563eb;
+    --selection-bg: rgba(59, 130, 246, 0.25);
+    --grid-header-bg: #111111;
+    --grid-header-text: #aaaaaa;
+    --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.8);
+}
+
+/* --- Светлая тема --- */
+[data-theme="light"] {
+    --bg-main: #ffffff;
+    --bg-surface: #f8f9fa;
+    --bg-header: #f1f3f4;
+    --bg-hover: #e8eaed;
+    --bg-active: #e2e5e9;
+    --border-color: #e0e0e0;
+    --border-light: #f0f0f0;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --accent-primary: #2563eb;
+    --accent-hover: #1d4ed8;
+    --selection-bg: rgba(37, 99, 235, 0.15);
+    --grid-header-bg: #f3f4f6;
+    --grid-header-text: #555555;
+    --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Автоматическая тема (системные настройки) --- */
+@media (prefers-color-scheme: dark) {
+    [data-theme="auto"] {
+        --bg-main: #050505;
+        --bg-surface: #0d0d0d;
+        --bg-header: #0a0a0a;
+        --bg-hover: #181818;
+        --bg-active: #222222;
+        --border-color: #222222;
+        --border-light: #181818;
+        --text-main: #ececec;
+        --text-muted: #888888;
+        --accent-primary: #3b82f6;
+        --accent-hover: #2563eb;
+        --selection-bg: rgba(59, 130, 246, 0.25);
+        --grid-header-bg: #111111;
+        --grid-header-text: #aaaaaa;
+        --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.8);
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    [data-theme="auto"] {
+        --bg-main: #ffffff;
+        --bg-surface: #f8f9fa;
+        --bg-header: #f1f3f4;
+        --bg-hover: #e8eaed;
+        --bg-active: #e2e5e9;
+        --border-color: #e0e0e0;
+        --border-light: #f0f0f0;
+        --text-main: #1f2937;
+        --text-muted: #6b7280;
+        --accent-primary: #2563eb;
+        --accent-hover: #1d4ed8;
+        --selection-bg: rgba(37, 99, 235, 0.15);
+        --grid-header-bg: #f3f4f6;
+        --grid-header-text: #555555;
+        --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+}
+
+/* ==========================================
+   БАЗОВЫЕ СТИЛИ И КАРКАС
+   ========================================== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* ==========================================
+   ШАПКА И МЕНЮ (Header)
+   ========================================== */
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 14px;
+    background-color: var(--bg-header);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.app-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+.app-title {
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge {
+    font-size: 10px;
+    background: var(--accent-primary);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.main-menu {
+    display: flex;
+    gap: 4px;
+}
+
+.menu-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    padding: 4px 10px;
+    font-size: 13px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.menu-btn:hover {
+    background-color: var(--bg-hover);
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ==========================================
+   ПАНЕЛЬ ИНСТРУМЕНТОВ (Toolbar)
+   ========================================== */
+.toolbar {
+    display: flex;
+    align-items: center;
+    padding: 4px 12px;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    gap: 4px;
+}
+
+.tool-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-main);
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.tool-btn:hover {
+    background-color: var(--bg-hover);
+}
+
+.separator {
+    width: 1px;
+    height: 18px;
+    background-color: var(--border-color);
+    margin: 0 4px;
+}
+
+.ai-sparkle-btn {
+    width: auto;
+    padding: 0 10px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: #fff;
+    font-weight: 500;
+}
+
+.ai-sparkle-btn:hover {
+    opacity: 0.9;
+}
+
+/* ==========================================
+   СТРОКА ФОРМУЛ (Formula Bar)
+   ========================================== */
+.formula-bar {
+    display: flex;
+    align-items: center;
+    padding: 4px 12px;
+    background-color: var(--bg-main);
+    border-bottom: 1px solid var(--border-color);
+    gap: 8px;
+}
+
+.cell-address-box {
+    width: 48px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.formula-fx {
+    font-weight: bold;
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.formula-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-main);
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+/* ==========================================
+   ОСНОВНАЯ СЕТКА (Grid Viewport)
+   ========================================== */
+.grid-container {
+    flex: 1;
+    position: relative;
+    overflow: auto;
+    background-color: var(--bg-main);
+}
+
+.spreadsheet-table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: max-content;
+}
+
+.spreadsheet-table th,
+.spreadsheet-table td {
+    border: 1px solid var(--border-color);
+    padding: 0 6px;
+    height: 26px;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.spreadsheet-table th {
+    background-color: var(--grid-header-bg);
+    color: var(--grid-header-text);
+    font-weight: 500;
+    text-align: center;
+    user-select: none;
+}
+
+.spreadsheet-table td {
+    background-color: var(--bg-main);
+}
+
+.spreadsheet-table td.selected {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: -2px;
+    background-color: var(--selection-bg);
+}
+
+/* ==========================================
+   КОМПАКТНЫЕ ВКЛАДКИ (Compact Form Tabs)
+   ========================================== */
+.bottom-bar {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-header);
+    border-top: 1px solid var(--border-color);
+    height: 32px;
+    padding: 0 8px;
+    gap: 6px;
+}
+
+.btn-add-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-add-tab:hover {
+    background-color: var(--bg-hover);
+}
+
+.tabs-scroll-container {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none; /* Скрытие скроллбара */
+    flex: 1;
+}
+
+.tabs-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Компактная вкладка */
+.tab-item {
+    padding: 3px 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.15s ease;
+}
+
+.tab-item:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-main);
+}
+
+.tab-item.active {
+    background-color: var(--bg-main);
+    color: var(--accent-primary);
+    border-color: var(--border-color);
+    font-weight: 600;
+}
+
+.compact-tab-select {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    border-radius: var(--radius-sm);
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+/* ==========================================
+   МОДАЛЬНЫЕ ОКНА И КОНТЕКСТНОЕ МЕНЮ
+   ========================================== */
+.hidden {
+    display: none !important;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    width: 460px;
+    max-width: 90vw;
+    box-shadow: var(--shadow-modal);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.btn-close-modal {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 18px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.settings-section h4 {
+    font-size: 13px;
+    color: var(--accent-primary);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.form-control {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    outline: none;
+}
+
+.form-control:focus {
+    border-color: var(--accent-primary);
+}
+
+.section-divider {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 16px 0;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 18px;
+    background-color: var(--bg-header);
+    border-top: 1px solid var(--border-color);
+}
+
+.btn {
+    padding: 6px 14px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    background-color: var(--accent-primary);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-hover);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+.btn-secondary:hover {
+    background-color: var(--bg-hover);
+}
+
+/* Контекстное меню */
+.context-menu {
+    position: fixed;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-modal);
+    padding: 4px 0;
+    z-index: 999;
+    min-width: 180px;
+}
+
+.menu-item {
+    padding: 6px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text-main);
+}
+
+.menu-item:hover {
+    background-color: var(--bg-hover);
+}
+
+.ctx-danger {
+    color: #ef4444;
+}
+
+.divider {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 4px 0;
+}
+.context-menu {
+    position: fixed;
+    z-index: 1000;
+    width: 180px;
+    background: var(--bg-card, #252529);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 4px 0;
+}
+
+.context-menu .menu-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-main, #fff);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.context-menu .menu-item:hover {
+    background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+.context-menu .menu-separator {
+    height: 1px;
+    background: var(--border-color, #333);
+    margin: 4px 0;
+}
