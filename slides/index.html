@@ -24,10 +24,10 @@
                 <span class="material-symbols-rounded">add</span>
             </button>
 
-            <!-- КНОПКА ОТКРЫТИЯ ИИ ПОМОЩНИКА -->
-            <button class="tools-btn" onclick="openAiModal()" title="ИИ Генератор и Чат">
-                <span class="material-symbols-rounded">auto_awesome</span>
-            </button>
+            <!-- ПЕРЕХОД В WORKGENS AI -->
+            <a href="../WorkGens/index.html" class="tools-btn" title="WorkGens AI" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                <img src="ai.png" alt="AI" style="width: 20px; height: 20px; object-fit: contain;">
+            </a>
 
             <!-- КНОПКА ОТКРЫТИЯ ОКНА ЯЗЫКОВ -->
             <button class="tools-btn" onclick="openLanguageModal()" title="Выбор языка">
@@ -40,9 +40,11 @@
                     <span class="material-symbols-rounded">more_vert</span>
                 </button>
                 <div id="tools-menu" class="tools-menu hidden">
-                    <div class="tools-item" onclick="openAiModal(); toggleToolsMenu();">
-                        <span class="material-symbols-rounded">auto_awesome</span> <span>ИИ Помощник</span>
-                    </div>
+                    <!-- ПЕРЕХОД В WORKGENS AI В ВЫПАДАЮЩЕМ МЕНЮ -->
+                    <a href="../WorkGens/index.html" class="tools-item" style="text-decoration: none; color: inherit;">
+                        <img src="ai.png" alt="AI" style="width: 20px; height: 20px; object-fit: contain;">
+                        <span>WorkGens AI</span>
+                    </a>
                     <div class="tools-item" onclick="startFullscreenPresentation(); toggleToolsMenu();">
                         <span class="material-symbols-rounded">slideshow</span> <span>Полноэкранный показ</span>
                     </div>
@@ -123,7 +125,7 @@
                 <!-- ТЕЛО СЛАЙДА -->
                 <div id="slide-body" style="margin: 20px 0; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; z-index: 2;"></div>
 
-                <!-- ПОДСКАЗКА ПО НАВИГАЦИИ (ВМЕСТО КНОПОК) -->
+                <!-- ПОДСКАЗКА ПО НАВИГАЦИИ -->
                 <div class="slide-navigation-hint" style="z-index: 2;">
                     <span class="material-symbols-rounded" style="font-size: 16px;">touch_app</span>
                     <span>ПК: <strong>← / →</strong> | Смартфон: <strong>Тап слева / справа</strong> или <strong>Свайп</strong></span>
@@ -139,9 +141,9 @@
             </div>
 
             <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-                <button onclick="toggleAddSlideForm()" class="btn" style="width:auto; flex-grow:1;">+ Создать слайд</button>
-                <button onclick="exportDeckToJSON()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Экспорт JSON</button>
-                <button onclick="document.getElementById('import-file').click()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);">Импорт JSON</button>
+                <button onclick="toggleAddSlideForm()" class="btn" style="width:auto; flex-grow:1;"><span class="material-symbols-rounded" style="font-size:18px;">add</span></button>
+                <button onclick="exportDeckToJSON()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);"><span class="material-symbols-rounded" style="font-size:18px;">upload</span></button>
+                <button onclick="document.getElementById('import-file').click()" class="btn" style="width:auto; background:transparent; color:var(--text-color); border:1px solid var(--border-color);"><span class="material-symbols-rounded" style="font-size:18px;">download</span></button>
                 <input type="file" id="import-file" style="display:none;" onchange="importDeckFromJSON(this)" accept=".json">
             </div>
 
@@ -230,61 +232,6 @@
             </div>
         </div>
 
-        <!-- МОДАЛЬНОЕ ОКНО ИИ ПОМОЩНИКА -->
-        <div id="ai-modal" class="custom-alert-overlay">
-            <div class="custom-alert-card" style="max-width:520px; text-align:left;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                    <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
-                        <span class="material-symbols-rounded" style="color:var(--accent-color);">auto_awesome</span> ИИ Генератор презентаций
-                    </h3>
-                    <button onclick="closeAiModal()" style="background:transparent; border:none; cursor:pointer; color:var(--text-color); display:flex;">
-                        <span class="material-symbols-rounded">close</span>
-                    </button>
-                </div>
-
-                <!-- Переключатель режимов ИИ -->
-                <div style="display:flex; gap:10px; margin-bottom:16px;">
-                    <button id="ai-tab-gen" class="btn active" onclick="switchAiMode('generate')" style="flex:1; font-size:13px; padding:8px;">Создать структуру</button>
-                    <button id="ai-tab-chat" class="btn" onclick="switchAiMode('chat')" style="flex:1; font-size:13px; padding:8px; background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);">Чат с ИИ</button>
-                </div>
-
-                <!-- Режим 1: Генерация слайдов -->
-                <div id="ai-mode-generate-container">
-                    <label style="font-size:13px; color:var(--text-muted);">Тема вашей презентации или доклад:</label>
-                    <input type="text" id="ai-prompt-input" class="admin-input" placeholder="Например: Введение в AI, Отчет по продажам..." style="margin-bottom:10px;">
-                    
-                    <div style="display:flex; gap:10px; margin-bottom:12px;">
-                        <div style="flex:1;">
-                            <label style="font-size:12px; color:var(--text-muted);">Кол-во слайдов:</label>
-                            <input type="number" id="ai-slides-count" class="admin-input" value="5" min="1" max="15">
-                        </div>
-                        <div style="flex:1;">
-                            <label style="font-size:12px; color:var(--text-muted);">Стиль изложения:</label>
-                            <select id="ai-slides-style" class="admin-input">
-                                <option value="business">Деловой / Бизнес</option>
-                                <option value="educational">Обучающий</option>
-                                <option value="creative">Творческий</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div id="ai-status-msg" class="hidden" style="font-size:13px; color:var(--accent-color); margin-bottom:10px;"></div>
-                    <button class="btn" onclick="generateAiSlides()" style="width:100%;">Сгенерировать слайды</button>
-                </div>
-
-                <!-- Режим 2: Чат -->
-                <div id="ai-mode-chat-container" class="hidden">
-                    <div id="ai-chat-history" style="height:200px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-bottom:10px; display:flex; flex-direction:column; gap:8px;"></div>
-                    <div style="display:flex; gap:8px;">
-                        <input type="text" id="ai-chat-input" class="admin-input" placeholder="Задайте вопрос ИИ по презентации..." style="margin:0;">
-                        <button class="btn" onclick="sendAiChatMessage()" style="width:auto; padding:8px 16px;">
-                            <span class="material-symbols-rounded">send</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- МОДАЛЬНОЕ ОКНО СЕТКИ СЛАЙДОВ (ПРОСМОТР ВСЕХ СЛАЙДОВ) -->
         <div id="slide-grid-modal" class="custom-alert-overlay">
             <div class="custom-alert-card" style="max-width:720px; text-align:left;">
@@ -338,9 +285,8 @@
                     </button>
                 </div>
 
-                <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Параметры ИИ & Google Script</label>
-                <input type="text" id="google-script-url-input" class="admin-input" placeholder="Google Script URL" style="margin-bottom:8px;">
-                <input type="password" id="ai-api-key-input" class="admin-input" placeholder="OpenAI Key (sk-...)" style="margin-bottom:12px;">
+                <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Параметры Google Script</label>
+                <input type="text" id="google-script-url-input" class="admin-input" placeholder="Google Script URL" style="margin-bottom:12px;">
                 <button class="btn" onclick="saveAiAndDbSettings()" style="width:100%; margin-bottom:20px; font-size:13px; padding:8px;">Сохранить параметры</button>
 
                 <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Интерфейс</label>
