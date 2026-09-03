@@ -24,9 +24,11 @@
                 </button>
                 
                 <div id="tools-menu" class="tools-menu hidden">
-                    <div class="tools-item" onclick="checkAI()">
-                        <span class="material-symbols-rounded" style="color: var(--accent-color);">smart_toy</span> Ask AI (ИИ)
-                    </div>
+                    <!-- ПЕРЕХОД В WORKGENS AI -->
+                    <a href="../WorkGens/index.html" class="tools-item" style="text-decoration: none;">
+                        <img src="ai.png" alt="AI" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle;"> WorkGens AI
+                    </a>
+                    
                     <label class="tools-item" style="cursor: pointer;">
                         <span class="material-symbols-rounded">upload_file</span> Загрузить Txt, Md
                         <input type="file" accept=".txt,.md" class="hidden" onchange="handleImportFile(event)">
@@ -51,7 +53,7 @@
             </div>
 
             <div class="brand-title">
-<span>My Keeps</span>
+                <span>My Keeps</span>
             </div>
         </div>
 
@@ -86,9 +88,8 @@
                     <span class="material-symbols-rounded" style="font-size: 16px;">check_box</span>
                 </button>
                 <div class="fmt-divider"></div>
-                <!-- ПАЛИТРА ЦВЕТА -->
                 <!-- МАТОВАЯ ПАЛИТРА ЦВЕТОВ -->
-<div class="color-picker-palette" id="create-color-palette"></div>
+                <div class="color-picker-palette" id="create-color-palette"></div>
                 <button class="fmt-btn" onclick="execFormat('removeFormat')" title="Очистить форматирование">
                     <span class="material-symbols-rounded" style="font-size: 16px;">format_clear</span>
                 </button>
@@ -144,7 +145,7 @@
                 </button>
                 <div class="fmt-divider"></div>
                 <!-- МАТОВАЯ ПАЛИТРА ЦВЕТОВ -->
-<div class="color-picker-palette" id="edit-color-palette"></div>
+                <div class="color-picker-palette" id="edit-color-palette"></div>
                 <button class="fmt-btn" onclick="execFormat('removeFormat')" title="Очистить форматирование">
                     <span class="material-symbols-rounded" style="font-size: 16px;">format_clear</span>
                 </button>
@@ -233,21 +234,13 @@
                 </select>
             </div>
 
-            <div style="text-align: left; margin-bottom: 14px;">
+            <div style="text-align: left; margin-bottom: 20px;">
                 <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Тип скруглений</label>
                 <select id="radius-select" class="forms-select">
                     <option value="sharp">Sharp (Острые)</option>
                     <option value="rounded">Rounded (Обычные)</option>
                     <option value="full">Full (Овальные)</option>
                 </select>
-            </div>
-
-            <div style="text-align: left; margin-bottom: 20px;">
-                <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Привязать ИИ ключ (заканчивается на ")")</label>
-                <div style="display: flex; gap: 8px; margin-top: 4px;">
-                    <input type="password" id="ai-key-input" class="admin-input" style="margin: 0;" placeholder="Введите ключ...">
-                    <button class="btn" onclick="saveAiKey()">Привязать</button>
-                </div>
             </div>
 
             <button class="btn" style="width: 100%;" onclick="saveSettings()">Сохранить изменения</button>
