@@ -62,7 +62,7 @@
 
         .container {
             width: 100%;
-            max-width: 960px;
+            max-width: 1100px;
             text-align: center;
             position: relative;
         }
@@ -171,7 +171,7 @@
         /* Сетка карточек */
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
             gap: 20px;
             width: 100%;
         }
@@ -200,7 +200,7 @@
             border-color: var(--accent-color);
         }
 
-        /* Обертка для иконок (теперь умещает и Material Icon, и вашу иконку) */
+        /* Обертка для иконок */
         .icon-wrapper {
             padding: 10px 16px;
             border-radius: 14px;
@@ -212,7 +212,7 @@
             transition: transform var(--transition-speed) ease;
         }
 
-        /* Стили для вашей личной иконки */
+        /* Стили для личных иконок */
         .custom-card-icon {
             width: 30px;
             height: 30px;
@@ -222,26 +222,30 @@
         .service-card:hover .icon-wrapper { transform: scale(1.08); }
         .icon-wrapper .material-symbols-rounded { font-size: 30px; }
 
-                .card-doc .icon-wrapper { 
-    background: #0f2447; 
-    color: #3b82f6; 
-}
-.card-slides .icon-wrapper { 
-    background: #3a2205; 
-    color: #f59e0b; 
-}
-.card-forms .icon-wrapper { 
-    background: #2a153c; 
-    color: #a855f7; 
-}
-.card-sheets .icon-wrapper { 
-    background: #072d20; 
-    color: #10b981; 
-}
-.card-keeps .icon-wrapper { 
-    background: #391124; 
-    color: #ec4899; 
-}
+        .card-doc .icon-wrapper { 
+            background: #0f2447; 
+            color: #3b82f6; 
+        }
+        .card-slides .icon-wrapper { 
+            background: #3a2205; 
+            color: #f59e0b; 
+        }
+        .card-forms .icon-wrapper { 
+            background: #2a153c; 
+            color: #a855f7; 
+        }
+        .card-sheets .icon-wrapper { 
+            background: #072d20; 
+            color: #10b981; 
+        }
+        .card-keeps .icon-wrapper { 
+            background: #391124; 
+            color: #ec4899; 
+        }
+        .card-workgens .icon-wrapper { 
+            background: #182232; 
+            color: #6366f1; 
+        }
 
         .service-card h2 {
             font-size: 1.15rem;
@@ -611,6 +615,19 @@
                 </div>
                 <h2>Keeps</h2>
                 <p>Быстрые заметки, списки задач и фрагменты.</p>
+                <div class="card-action">
+                    Открыть <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span>
+                </div>
+            </a>
+
+            <!-- WorkGens AI -->
+            <a href="./WorkGens/index.html" class="service-card card-workgens" onclick="navigateWithAnimation(event, './WorkGens/index.html', 'WorkGens AI', 'smart_toy', '#6366f1')">
+                <div class="icon-wrapper">
+                    <img src="WorkGens/icon.png" alt="Icon" class="custom-card-icon">
+                    <span class="material-symbols-rounded">smart_toy</span>
+                </div>
+                <h2>WorkGens AI</h2>
+                <p>Умный ассистент и генератор для всей экосистемы.</p>
                 <div class="card-action">
                     Открыть <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span>
                 </div>
